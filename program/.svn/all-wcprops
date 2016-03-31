@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/cresus_ex/!svn/ver/59/trunk/program
+END
+cresus_ex.c
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/cresus_ex/!svn/ver/43/trunk/program/cresus_ex.c
+END
+cresus_inv.c
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/cresus_ex/!svn/ver/26/trunk/program/cresus_inv.c
+END
+cresus_rsi.c
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/cresus_ex/!svn/ver/43/trunk/program/cresus_rsi.c
+END
+cresus_xx.c
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/cresus_ex/!svn/ver/59/trunk/program/cresus_xx.c
+END
+cresus_entry.c
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/cresus_ex/!svn/ver/43/trunk/program/cresus_entry.c
+END
+cresus_zz.c
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/cresus_ex/!svn/ver/55/trunk/program/cresus_zz.c
+END
+buy_points.txt
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/cresus_ex/!svn/ver/32/trunk/program/buy_points.txt
+END
+cresus_atr.c
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/cresus_ex/!svn/ver/43/trunk/program/cresus_atr.c
+END
+cresus_swing.c
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/cresus_ex/!svn/ver/53/trunk/program/cresus_swing.c
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/cresus_ex/!svn/ver/57/trunk/program/Makefile
+END
+tips.txt
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/cresus_ex/!svn/ver/29/trunk/program/tips.txt
+END
