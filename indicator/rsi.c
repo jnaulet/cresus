@@ -1,36 +1,25 @@
+/*
+ * Cresus EVO - rsi.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/04/2016
+ * Copyright (c) 2016 Joachim Naulet. All rights reserved.
+ *
+ */
+
 #include <math.h>
 #include <stdlib.h>
 
 #include "rsi.h"
 #include "mobile.h"
 
-int rsi_init(struct rsi *r, int period, const struct candle *c)
-{
-  /* Super() */
-  indicator_init(&r->parent, CANDLE_CLOSE, rsi_feed);
+static int rsi_feed(struct indicator *i, struct candle *c) {
   
-  r->value = 0.0;
-  r->last = candle_get_value(c, r->parent.value);
+  double h, b, sub;
+  struct rsi *r = __indicator_self__(i);
+
+  if(!r->last)
+    goto out;
   
-  average_init(&r->h, AVERAGE_EXP, period, 0);
-  average_init(&r->b, AVERAGE_EXP, period, 0);
-  
-  return 0;
-}
-
-void rsi_free(struct rsi *r)
-{
-  indicator_free(&r->parent);
-  average_free(&r->h);
-  average_free(&r->b);
-}
-
-int rsi_feed(struct indicator *i, const struct candle *c)
-{
-  double h, b;
-  struct rsi *r = (struct rsi*)i;
-  double diff = candle_get_value(c, r->parent.value) - r->last;
-
   /* RSI formula :
    * 100.0 - (100.0 / (1 + h / b))
    * or
@@ -38,14 +27,38 @@ int rsi_feed(struct indicator *i, const struct candle *c)
    * where h is the ema of ups of last n days
    * and b is the fabs ema of downs of last n days
    */
-  if(diff > 0) h = average_update(&r->h, diff);
-  if(diff < 0) b = average_update(&r->b, fabs(diff));
-  /* Compute RSI the esay way */
+  sub = c->close - r->last->close;
+  if(sub > 0) h = average_update(&r->h, sub);
+  if(sub < 0) b = average_update(&r->b, fabs(sub));
+  /* Compute RSI the easy way */
   r->value = (h / (h + b)) * 100.0;
-
+  
   /* TODO : add event management */
-  r->last = candle_get_value(c, r->parent.value);
+ out:
+  r->last = c;
   return 0;
+}
+
+int rsi_init(struct rsi *r, int period)
+{
+  /* Super() */
+  __indicator_super__(r, rsi_feed);
+  __indicator_set_string__(r, "rsi[%d]", period);
+  
+  r->value = 0.0;
+  r->last = NULL;
+  
+  average_init(&r->h, AVERAGE_EXP, period);
+  average_init(&r->b, AVERAGE_EXP, period);
+  
+  return 0;
+}
+
+void rsi_free(struct rsi *r)
+{
+  __indicator_free__(r);
+  average_free(&r->h);
+  average_free(&r->b);
 }
 
 double rsi_value(struct rsi *r) {

@@ -1,7 +1,14 @@
+/*
+ * Cresus EVO - zigzag.h 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/04/2016
+ * Copyright (c) 2016 Joachim Naulet. All rights reserved.
+ *
+ */
+
 #ifndef ZIGZAG_H
 #define ZIGZAG_H
 
-#include "framework/candle.h"
 #include "framework/indicator.h"
 
 typedef enum {
@@ -23,25 +30,28 @@ typedef enum {
   ZIGZAG_REF_TYPICAL
 } zigzag_ref_t;
 
+#define ZIGZAG_EVENT_CHDIR_UP   0
+#define ZIGZAG_EVENT_CHDIR_DOWN 1
+
 struct zigzag {
   
-  struct indicator parent;
+  __inherits_from_indicator__;
 
   zigzag_t type;
   double threshold;
+  candle_value_t cvalue;
   
   int ref_count; /* Candles since last ref */
-  struct candle ref, last_ref;
+  struct candle *ref, *last_ref;
 
   zigzag_dir_t direction; /* FIXME : use int ? */
 };
 
-int zigzag_init(struct zigzag *z, zigzag_t type, double thres,
-                candle_value_t value, const struct candle *seed);
-
+int zigzag_init(struct zigzag *z, zigzag_t type,
+		double thres, candle_value_t cvalue);
 void zigzag_free(struct zigzag *z);
 
-int zigzag_feed(struct indicator *i, const struct candle *candle);
+/* Indicator-specific */
 zigzag_dir_t zigzag_get_last_ref(struct zigzag *z, struct candle *last_ref);
 
 #endif

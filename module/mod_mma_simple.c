@@ -1,10 +1,10 @@
-//
-//  mod_mma_simple.c
-//  Cresus EVO
-//
-//  Created by Joachim Naulet on 21/10/2014.
-//  Copyright (c) 2014 Joachim Naulet. All rights reserved.
-//
+/*
+ * Cresus EVO - mod_mma_simple.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 10/21/2014
+ * Copyright (c) 2014 Joachim Naulet. All rights reserved.
+ *
+ */
 
 #include <stdio.h>
 #include "mod_mma_simple.h"

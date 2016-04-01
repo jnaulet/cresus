@@ -1,17 +1,50 @@
+/*
+ * Cresus EVO - candle.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/04/2016
+ * Copyright (c) 2016 Joachim Naulet. All rights reserved.
+ *
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 
 #include "candle.h"
 
-int candle_init(struct candle *c)
-{
-  memset(c, 0, sizeof *c);
+int candle_init(struct candle *c,
+		time_t time, granularity_t g,
+		double open, double close,
+		double high, double low,
+		double volume) {
+  
+  /* superclass */
+  __timeline_entry_super__(c, time, g);
+  
+  /* Set */
+  c->open = open;
+  c->close = close;
+  c->high = high;
+  c->low = low;
+  c->volume = volume;
+  
   return 0;
 }
 
-void candle_free(struct candle *c)
-{
+void candle_free(struct candle *c) {
+  
+  __timeline_entry_free__(c);
+}
+
+struct candle *candle_alloc(time_t time, granularity_t g,
+			    double open, double close,
+			    double high, double low,
+			    double volume) {
+
+  struct candle *c = malloc(sizeof(struct candle));
+  if(c) candle_init(c, time, g, open, close, high, low, volume);
+  
+  return c;
 }
 
 double candle_get_closest_inf(struct candle *c, double value)
@@ -57,43 +90,20 @@ double candle_get_value(const struct candle *c, candle_value_t value) {
 
 int candle_get_direction(const struct candle *c)
 {
+  /*
   if(c->open > c->close) return -1;
   if(c->open < c->close) return 1;
-
-  return 0;
+  */
+  return (c->close - c->open);
 }
 
-time_t candle_localtime(const struct candle *c)
-{
-  return c->timestamp + MINUTES(c->offset);
-}
+/* Debug */
 
-int candle_localtime_match(struct candle *c, time_t min, time_t max)
-{
-  time_t time = candle_localtime(c);
-  if(time >= min && time <= max)
-    return 0;
-  
-  return -1;
-}
+const char *candle_str(struct candle *c) {
 
-int candle_daytime_match(struct candle *c, time_t min, time_t max)
-{
-  time_t time = candle_localtime(c);
-  time -= DAY(time);
-
-  if(time >= min && time <= max)
-    return 0;
-
-  return -1;
-}
-
-/* For debug purposes */
-const char *candle_localtime_str(const struct candle *c, char *buf, size_t len)
-{
-  struct tm tm;
-  time_t time = candle_localtime(c);
-
-  strftime(buf, len, "%c", gmtime_r(&time, &tm));
-  return buf;
+  sprintf(c->str, "%u -> o%.1f c%.1f h%.1f l%.1f v%.0f",
+	  __timeline_entry__(c)->time,
+	  c->open, c->close, c->high, c->low, c->volume);
+	  
+  return c->str;
 }

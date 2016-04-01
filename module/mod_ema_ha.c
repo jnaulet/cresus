@@ -1,10 +1,10 @@
-//
-//  mod_ema_ha.c
-//  Cresus EVO
-//
-//  Created by Joachim Naulet on 27/01/2015.
-//  Copyright (c) 2015 Joachim Naulet. All rights reserved.
-//
+/*
+ * Cresus EVO - mod_ema_ha.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 01/27/2015
+ * Copyright (c) 2015 Joachim Naulet. All rights reserved.
+ *
+ */
 
 #include "mod_ema_ha.h"
 

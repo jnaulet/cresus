@@ -1,10 +1,10 @@
-//
-//  mod_zigzag.c
-//  Cresus EVO
-//
-//  Created by Joachim Naulet on 23/10/2014.
-//  Copyright (c) 2014 Joachim Naulet. All rights reserved.
-//
+/*
+ * Cresus EVO - mod_zigzag.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 10/23/2014
+ * Copyright (c) 2014 Joachim Naulet. All rights reserved.
+ *
+ */
 
 #include <stdio.h>
 #include "mod_zigzag.h"

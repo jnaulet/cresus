@@ -1,10 +1,10 @@
-//
-//  stochastic.c
-//  Cresus EVO
-//
-//  Created by Joachim Naulet on 19/11/2014.
-//  Copyright (c) 2014 Joachim Naulet. All rights reserved.
-//
+/*
+ * Cresus EVO - stochastic.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 11/19/2014
+ * Copyright (c) 2014 Joachim Naulet. All rights reserved.
+ *
+ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -12,36 +12,9 @@
 
 #include "stochastic.h"
 
-int stochastic_init(struct stochastic *s, int period, int k, int d,
-                    const struct candle *seed) {
+static int stochastic_feed(struct indicator *i, struct candle *candle) {
   
-  /* super() */
-  indicator_init(&s->parent, 0, stochastic_feed);
-  
-  s->k = k;
-  s->period = period;
-  /* FIXME */
-  average_init(&s->d, AVERAGE_MATH, period, 0.0);
-  average_init(&s->smooth_k, AVERAGE_MATH, period, 0.0);
-  
-  if((s->array = malloc(sizeof(*s->array) * period)))
-    return -1;
-  
-  s->index = 1;
-  memcpy(&s->array[0], seed, sizeof *seed);
-  
-  return 0;
-}
-
-void stochastic_free(struct stochastic *s) {
-  
-  indicator_free(&s->parent);
-  free(s->array);
-}
-
-int stochastic_feed(struct indicator *i, const struct candle *candle) {
-  
-  struct stochastic *s = (struct stochastic*)i;
+  struct stochastic *s = __indicator_self__(i);
   
   memcpy(&s->array[s->index], candle, sizeof *candle);
   s->index = (s->index + 1) % s->period;
@@ -55,7 +28,35 @@ int stochastic_feed(struct indicator *i, const struct candle *candle) {
   
   double pk = (candle->close - lo) / (hi - candle->close) * 100.0;
   double avg = average_update(&s->smooth_k, pk);
-  average_update(&s->d, avg);
+  if(average_is_available(&s->smooth_k))
+    average_update(&s->d, avg);
   
   return 0;
+}
+
+
+int stochastic_init(struct stochastic *s, int period, int k, int d) {
+  
+  /* super() */
+  __indicator_super__(s, stochastic_feed);
+  __indicator_set_string__(s, "sto[%d, %d, %d]", period, k, d);
+  
+  s->k = k;
+  s->index = 0;
+  s->period = period;
+
+  average_init(&s->d, AVERAGE_MATH, period);
+  average_init(&s->smooth_k, AVERAGE_MATH, period);
+  
+  if((s->array = malloc(sizeof(*s->array) * period)))
+    return -1;
+  
+  /* memcpy(&s->array[0], seed, sizeof *seed); */
+  return 0;
+}
+
+void stochastic_free(struct stochastic *s) {
+  
+  __indicator_free__(s);
+  free(s->array);
 }

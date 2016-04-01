@@ -1,10 +1,10 @@
-//
-//  module.c
-//  Cresus EVO
-//
-//  Created by Joachim Naulet on 20/10/2014.
-//  Copyright (c) 2014 Joachim Naulet. All rights reserved.
-//
+/*
+ * Cresus EVO - module.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 10/20/2014
+ * Copyright (c) 2014 Joachim Naulet. All rights reserved.
+ *
+ */
 
 #include <stdio.h>
 #include "module.h"
@@ -87,7 +87,7 @@ int module_add_indicator(struct module *m, struct indicator *i) {
   
   if(m->indicators < MODULE_MAX_INDICATOR){
     m->indicator[m->indicators++] = i;
-    indicator_register_event_handler(i, &m->parent);
+    //indicator_register_event_handler(i, &m->parent);
     return 0;
   }
   

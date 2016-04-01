@@ -1,3 +1,11 @@
+/*
+ * Cresus EVO - esi.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/04/2016
+ * Copyright (c) 2016 Joachim Naulet. All rights reserved.
+ *
+ */
+
 #include "esi.h"
 
 int esi_init(struct esi *e, mobile_t type, int smooth_p)

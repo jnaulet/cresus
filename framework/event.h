@@ -1,10 +1,10 @@
-//
-//  event.h
-//  Cresus EVO
-//
-//  Created by Joachim Naulet on 21/10/2014.
-//  Copyright (c) 2014 Joachim Naulet. All rights reserved.
-//
+/*
+ * Cresus EVO - event.h 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 10/21/2014
+ * Copyright (c) 2014 Joachim Naulet. All rights reserved.
+ *
+ */
 
 #ifndef EVENT_H
 #define EVENT_H

@@ -1,0 +1,21 @@
+#!/bin/sh
+project="Cresus EVO"
+author="Joachim Naulet"
+mail="jnaulet@rdinnovation.fr"
+date=$(date +%x)
+year=$(date +%Y)
+source=$1
+
+for file in $source; do \
+    echo "/*" > $file.header; \
+    echo " * "$project "-" $(basename $file) >> $file.header; \
+    echo " *" >> $file.header; \
+    echo " * Created by $author <$mail> on $date" >> $file.header; \
+    echo " * Copyright (c) $year $author. All rights reserved." >> $file.header; \
+    echo " *" >> $file.header; \
+    echo " */" >> $file.header; \
+    mv $file $file.tmp; \
+    cat $file.header $file.tmp > $file; \
+    rm $file.header $file.tmp; \
+done;
+    

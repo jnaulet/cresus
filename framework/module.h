@@ -1,15 +1,14 @@
-//
-//  module.h
-//  Cresus EVO
-//
-//  Created by Joachim Naulet on 20/10/2014.
-//  Copyright (c) 2014 Joachim Naulet. All rights reserved.
-//
+/*
+ * Cresus EVO - module.h 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 10/20/2014
+ * Copyright (c) 2014 Joachim Naulet. All rights reserved.
+ *
+ */
 
 #ifndef __Cresus_EVO__module__
 #define __Cresus_EVO__module__
 
-#include "event_handler.h"
 #include "trading/statistics.h"
 #include "trading/position.h"
 #include "trading/trade.h"

@@ -1,3 +1,11 @@
+/*
+ * Cresus EVO - smi.h 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/04/2016
+ * Copyright (c) 2016 Joachim Naulet. All rights reserved.
+ *
+ */
+
 #ifndef SMI_H
 #define SMI_H
 
@@ -6,12 +14,11 @@
  */
 
 #include "math/average.h"
-#include "framework/candle.h"
 #include "framework/indicator.h"
 
 struct smi {
   /* Parent */
-  struct indicator parent;
+  __inherits_from_indicator__;
 
   /* Pool */
   int count;
@@ -26,10 +33,8 @@ struct smi {
   double value;
 };
 
-int smi_init(struct smi *s, int period, int smooth, const struct candle *c);
+int smi_init(struct smi *s, int period, int smooth);
 void smi_free(struct smi *s);
-
-int smi_feed(struct indicator *i, const struct candle *c);
 
 /* Indicator-specific */
 double smi_value(struct smi *s);

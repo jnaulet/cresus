@@ -1,10 +1,17 @@
+/*
+ * Cresus EVO - mobile.h 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/04/2016
+ * Copyright (c) 2016 Joachim Naulet. All rights reserved.
+ *
+ */
+
 #ifndef MOBILE_H
 #define MOBILE_H
 
 /*
  * Mobile Average
  * Exponential & Simple
- *
  */
 
 #include "math/average.h"
@@ -31,25 +38,28 @@ typedef enum {
   MOBILE_POS_BELOW
 } mobile_pos_t;
 
-struct mobile {
-  
-  struct indicator parent;
+/* Indicator-specific events */
+#define MOBILE_EVENT_CHDIR_UP     0
+#define MOBILE_EVENT_CHDIR_DOWN   1
+#define MOBILE_EVENT_CROSSED_DOWN 2
+#define MOBILE_EVENT_CROSSED_UP   3
 
+struct mobile {
+  /* As always */
+  __inherits_from_indicator__;
+  
   mobile_t type;
   mobile_dir_t dir;
   mobile_pos_t pos;
+  candle_value_t cvalue;
 
   /* Average object */
   struct average avg;
 };
 
-int mobile_init(struct mobile *m, mobile_t type, int period,
-                candle_value_t value,
-                const struct candle *seed);
-
+int mobile_init(struct mobile *m, mobile_t type,
+		int period, candle_value_t cvalue);
 void mobile_free(struct mobile *m);
-
-int mobile_feed(struct indicator *i, const struct candle *candle);
 
 /* indicator-specific */
 double mobile_average(struct mobile *m);

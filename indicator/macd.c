@@ -1,46 +1,52 @@
-#include <math.h>
+/*
+ * Cresus EVO - macd.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/04/2016
+ * Copyright (c) 2016 Joachim Naulet. All rights reserved.
+ *
+ */
+
 #include <stdio.h>
 #include <string.h>
 
 #include "macd.h"
 
-int macd_init(struct macd *m, int fast_p, int slow_p, int signal_p,
-	      struct candle *seed)
-{
-  /* Super */
-  indicator_init(&m->parent, CANDLE_CLOSE, macd_feed);
-
-  /* FIXME : use get_candle_value ? */
-  average_init(&m->fast, AVERAGE_EXP, fast_p, seed->close);
-  average_init(&m->slow, AVERAGE_EXP, slow_p, seed->close);
-  average_init(&m->signal, AVERAGE_EXP, signal_p, 0.0); /* FIXME ? */
-
-  memset(&m->result, 0, sizeof m->result);
-  return 0;
-}
-
-void macd_free(struct macd *m)
-{
-  indicator_free(&m->parent);
-  average_free(&m->fast);
-  average_free(&m->slow);
-  average_free(&m->signal);
-}
-
-int macd_feed(struct indicator *i, const struct candle *c)
-{
-  struct macd *m = (struct macd*)i;
+static int macd_feed(struct indicator *i, struct candle *c) {
+  
+  struct macd *m = __indicator_self__(i);
   double fast = average_update(&m->fast, c->close);
   double slow = average_update(&m->slow, c->close);
   
   m->result.value = fast - slow;
   m->result.signal = average_update(&m->signal, m->result.value);
   m->result.histogram = m->result.value - m->result.signal;
-
+  
   /* State machine & events here */
-  //indicator_throw_event(&m->parent, EVENT_MOBILE_CHDIR_UP, candle);
   
   return 0;
+}
+
+int macd_init(struct macd *m, int fast_p, int slow_p, int signal_p) {
+
+  /* Super */
+  __indicator_super__(m, macd_feed);
+  __indicator_set_string__(m, "macd[%d, %d, %d]", fast_p, slow_p, signal_p);
+
+  /* Seed */
+  average_init(&m->fast, AVERAGE_EXP, fast_p);
+  average_init(&m->slow, AVERAGE_EXP, slow_p);
+  average_init(&m->signal, AVERAGE_EXP, signal_p);
+  
+  memset(&m->result, 0, sizeof m->result);
+  return 0;
+}
+
+void macd_free(struct macd *m)
+{
+  __indicator_free__(m);
+  average_free(&m->fast);
+  average_free(&m->slow);
+  average_free(&m->signal);
 }
 
 const char *macd_str(struct macd *m, char *buf, size_t len)

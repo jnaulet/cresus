@@ -1,10 +1,10 @@
-//
-//  mod_supres.c
-//  Cresus EVO
-//
-//  Created by Joachim Naulet on 13/11/2014.
-//  Copyright (c) 2014 Joachim Naulet. All rights reserved.
-//
+/*
+ * Cresus EVO - mod_supres.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 11/13/2014
+ * Copyright (c) 2014 Joachim Naulet. All rights reserved.
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>

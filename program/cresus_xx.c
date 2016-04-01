@@ -1,3 +1,11 @@
+/*
+ * Cresus EVO - cresus_xx.c 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/04/2016
+ * Copyright (c) 2016 Joachim Naulet. All rights reserved.
+ *
+ */
+
 #include <stdio.h>
 #include <float.h>
 #include <string.h>

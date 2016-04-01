@@ -1,15 +1,25 @@
+/*
+ * Cresus EVO - google.h 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/04/2016
+ * Copyright (c) 2016 Joachim Naulet. All rights reserved.
+ *
+ */
+
 #ifndef GOOGLE_H
 #define GOOGLE_H
 
 #include <stdio.h>
 #include <sys/types.h>
-
 #include "framework/input.h"
+
+/* TODO : find a way to clearly tell what objects this input returns */
+#define __google_timeline_entry_t__(x) (struct candle*)(x)
 
 struct google {
   /* Super */
-  struct input parent;
-  
+  __inherits_from_input__;
+  /* Loader */
   FILE *fp;
   struct {
     int interval_s;
@@ -20,7 +30,5 @@ struct google {
 
 int google_init(struct google *g, const char *filename);
 void google_free(struct google *g);
-
-int google_read(struct google *g, struct candle *cdl, size_t n);
 
 #endif

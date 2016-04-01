@@ -1,10 +1,10 @@
-//
-//  mod_stoploss.h
-//  Cresus EVO
-//
-//  Created by Joachim Naulet on 24/10/2014.
-//  Copyright (c) 2014 Joachim Naulet. All rights reserved.
-//
+/*
+ * Cresus EVO - mod_stoploss.h 
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 10/24/2014
+ * Copyright (c) 2014 Joachim Naulet. All rights reserved.
+ *
+ */
 
 #ifndef __Cresus_EVO__mod_stoploss__
 #define __Cresus_EVO__mod_stoploss__
