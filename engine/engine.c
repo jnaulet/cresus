@@ -17,7 +17,7 @@ int engine_init(struct engine *e, struct input *in) {
   return 0;
 }
 
-void engine_free(struct engine *e) {
+void engine_release(struct engine *e) {
   
   e->input = NULL;
   e->modules = 0;

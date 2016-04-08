@@ -15,21 +15,52 @@
  * RSD = (close / close_index) * 100.0
  */
 
+#include "framework/alloc.h"
 #include "framework/indicator.h"
 #include "framework/timeline_entry.h"
+
+/* Entries */
+
+struct rs_dorsey_entry {
+  /* As below */
+  __inherits_from_indicator_entry__;
+  /* Single value */
+  double value;
+};
+
+#define rs_dorsey_entry_alloc(entry, parent, value)	\
+  DEFINE_ALLOC(struct rs_dorsey_entry, entry,		\
+	       rs_dorsey_entry_init, parent, value)
+#define rs_dorsey_entry_free(entry)		\
+  DEFINE_FREE(entry, rs_dorsey_entry_release);
+
+static inline int rs_dorsey_entry_init(struct rs_dorsey_entry *entry,
+				       struct indicator *parent,
+				       double value) {
+  __indicator_entry_super__(entry, parent);
+  entry->value = value;
+  return 0;
+}
+
+static inline void rs_dorsey_entry_release(struct rs_dorsey_entry *entry){
+  __indicator_entry_release__(entry);
+}
+
+/* Maion object */
+
+#define rs_dorsey_alloc(r, id, ref)				\
+  DEFINE_ALLOC(struct rs_dorsey, r, rs_dorsey_init, id, ref)
+#define rs_dorsey_free(r)			\
+  DEFINE_FREE(r, rs_dorsey_release)
 
 struct rs_dorsey {
   /* As always, inherits from indicator */
   __inherits_from_indicator__;
-
-  double value;
-  struct candle *ref;
+  __list_head__(struct timeline_entry) *ref;
 };
 
-int rs_dorsey_init(struct rs_dorsey *r, struct candle *ref);
-void rs_dorsey_free(struct rs_dorsey *r);
-
-/* Indicator-specific */
-double rs_dorsey_value(struct rs_dorsey *r);
+int rs_dorsey_init(struct rs_dorsey *r, indicator_id_t id,
+		   __list_head__(struct timeline_entry) *ref);
+void rs_dorsey_release(struct rs_dorsey *r);
 
 #endif

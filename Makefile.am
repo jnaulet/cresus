@@ -1,9 +1,11 @@
-bin_PROGRAMS = cresus
-cresus_SOURCES = sample/development.c
-cresus_LDADD = libcresus.la
+bin_PROGRAMS = development development_cluster
+development_SOURCES = sample/development.c
+development_LDADD = libcresus.la
+development_cluster_SOURCES = sample/development_cluster.c
+development_cluster_LDADD = libcresus.la
 lib_LTLIBRARIES = libcresus.la
 libcresus_la_SOURCES = framework/indicator.c framework/timeline_entry.c \
-		       engine/candle.c engine/timeline.c \
+		       engine/candle.c engine/timeline.c engine/cluster.c \
                        math/average.c input/yahoo.c \
 		       indicator/atr.c indicator/bollinger.c \
                        indicator/heikin_ashi.c indicator/rs_dorsey.c \

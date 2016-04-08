@@ -150,10 +150,10 @@ int main(int argc, char **argv)
   statistics_printf(&stats);
 
   /* Free all */
-  google_free(&g);
-  zigzag_free(&zz);
-  portfolio_free(&pf);
-  statistics_free(&stats);
+  google_release(&g);
+  zigzag_release(&zz);
+  portfolio_release(&pf);
+  statistics_release(&stats);
 
   return 0;
 }

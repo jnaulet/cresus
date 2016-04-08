@@ -41,7 +41,7 @@ int statistics_init(struct statistics *s, double op_cost)
   return 0;
 }
 
-void statistics_free(struct statistics *s)
+void statistics_release(struct statistics *s)
 {
 }
 

@@ -31,7 +31,7 @@ int trade_init(struct trade *t, trade_t type,
   return 0;
 }
 
-void trade_free(struct trade *t) {
+void trade_release(struct trade *t) {
   
   t->type = TRADE_NONE;
   t->number = 0;

@@ -24,7 +24,7 @@ struct engine {
 };
 
 int engine_init(struct engine *e, struct input *in);
-void engine_free(struct engine *e);
+void engine_release(struct engine *e);
 
 int engine_add_module(struct engine *e, struct module *m);
 void engine_run(struct engine *e, int n);

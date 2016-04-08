@@ -11,10 +11,11 @@
 
 #include "zigzag.h"
 
-static int zigzag_feed(struct indicator *i, struct candle *candle) {
+static int zigzag_feed(struct indicator *i, struct timeline_entry *e) {
   
   double threshold;
   struct zigzag *z = __indicator_self__(i);
+  struct candle *candle = __timeline_entry_self__(e);
 
   if(!z->ref){
     z->ref = candle;
@@ -51,7 +52,7 @@ static int zigzag_feed(struct indicator *i, struct candle *candle) {
       /* Set dir */
       z->direction = ZIGZAG_DIR_DOWN;
       /* Throw event */
-      indicator_set_event(i, candle, ZIGZAG_EVENT_CHDIR_DOWN);
+      //indicator_set_event(i, candle, ZIGZAG_EVENT_CHDIR_DOWN);
     }
     break;
     
@@ -70,7 +71,7 @@ static int zigzag_feed(struct indicator *i, struct candle *candle) {
       z->ref_count = 0;
       /* Set direction */
       /* Throw event */
-      indicator_set_event(i, candle, ZIGZAG_EVENT_CHDIR_UP);
+      //indicator_set_event(i, candle, ZIGZAG_EVENT_CHDIR_UP);
     }
     break;
     
@@ -81,10 +82,12 @@ static int zigzag_feed(struct indicator *i, struct candle *candle) {
       z->ref = candle;
       z->ref_count = 0;
       /* Throw event */
+      /*
       if(z->direction == ZIGZAG_DIR_UP)
 	indicator_set_event(i, candle, ZIGZAG_EVENT_CHDIR_UP);
       else
 	indicator_set_event(i, candle, ZIGZAG_EVENT_CHDIR_DOWN);
+      */
     }
     break;
   }
@@ -92,11 +95,11 @@ static int zigzag_feed(struct indicator *i, struct candle *candle) {
   return z->direction;
 }
 
-int zigzag_init(struct zigzag *z, zigzag_t type,
+int zigzag_init(struct zigzag *z, indicator_id_t id, zigzag_t type,
 		double thres, candle_value_t cvalue) {
   
   /* Super */
-  __indicator_super__(z, zigzag_feed);
+  __indicator_super__(z, id, zigzag_feed);
   __indicator_set_string__(z, "zigzag[%.2f]", thres);
   
   z->type = type;
@@ -115,9 +118,9 @@ int zigzag_init(struct zigzag *z, zigzag_t type,
   return 0;
 }
 
-void zigzag_free(struct zigzag *z)
+void zigzag_release(struct zigzag *z)
 {
-  __indicator_free__(z);
+  __indicator_release__(z);
   z->ref_count = 0;
   z->direction = ZIGZAG_DIR_NONE;
 }

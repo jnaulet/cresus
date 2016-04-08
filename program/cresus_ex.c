@@ -91,18 +91,18 @@ int cresus_ex_init(struct cresus_ex *c)
   return 0;
 }
 
-void cresus_ex_free(struct cresus_ex *c)
+void cresus_ex_release(struct cresus_ex *c)
 {
-  yahoo_free(&c->yahoo);
+  yahoo_release(&c->yahoo);
 
-  rsi_free(&c->rsi);
-  //macd_free(&c->macd);
-  mobile_free(&c->mma);
-  mobile_free(&c->ema);
-  bollinger_free(&c->boll);
+  rsi_release(&c->rsi);
+  //macd_release(&c->macd);
+  mobile_release(&c->mma);
+  mobile_release(&c->ema);
+  bollinger_release(&c->boll);
 
   statistics_printf(&c->stats);
-  statistics_free(&c->stats);
+  statistics_release(&c->stats);
 
   printf("\n%d right, %d wrong (%.2lf%%), total %d\n", c->right, c->wrong,
 	 ((double)c->right / (c->right + c->wrong)) * 100.0,
@@ -253,6 +253,6 @@ int main(int argc, char **argv)
   while(cresus_ex_run(&cresus_ex) != -1)
     /* Nop */;
 
-  cresus_ex_free(&cresus_ex);
+  cresus_ex_release(&cresus_ex);
   return 0;
 }

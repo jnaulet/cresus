@@ -15,8 +15,12 @@
  */
 
 #include "math/average.h"
+#include "engine/candle.h"
+
+#include "framework/alloc.h"
 #include "framework/indicator.h"
 
+/* TODO : Is that useful ? */
 typedef enum {
   MOBILE_MMA,
   MOBILE_EMA
@@ -27,7 +31,7 @@ typedef enum {
   MOBILE_DIR_DOWN
 } mobile_dir_t;
 
-/* Warning
+/* Warning /!\
  * this is position of the mobile avg
  * compared to candle value
  * above means candle is below
@@ -44,22 +48,57 @@ typedef enum {
 #define MOBILE_EVENT_CROSSED_DOWN 2
 #define MOBILE_EVENT_CROSSED_UP   3
 
+/* Timeline entries object */
+
+struct mobile_entry {
+  /* As below */
+  __inherits_from_indicator_entry__;
+  /* Single value */
+  double value;
+  /* More info */
+  double direction;
+  /* Events ? */
+};
+
+#define mobile_entry_alloc(entry, parent, value, direction)		\
+  DEFINE_ALLOC(struct mobile_entry, entry,				\
+	       mobile_entry_init, parent, value, direction)
+#define mobile_entry_free(entry)			\
+  DEFINE_FREE(entry, mobile_indicator_entry_release)
+
+static inline int mobile_entry_init(struct mobile_entry *entry,
+				    struct indicator *parent,
+				    double value, double direction){
+  __indicator_entry_super__(entry, parent);
+  entry->value = value;
+  entry->direction = direction;
+  return 0;
+}
+
+static inline void mobile_entry_release(struct mobile_entry *entry) {
+  __indicator_entry_release__(entry);
+}
+
+/* Main object */
+
+#define mobile_alloc(m, id, type, period, cvalue)			\
+  DEFINE_ALLOC(struct mobile, m, mobile_init, id, type, period, cvalue)
+#define mobile_free(m)				\
+  DEFINE_FREE(m, mobile_release)
+
 struct mobile {
   /* As always */
   __inherits_from_indicator__;
-  
+  /* Basic data */
   mobile_t type;
-  mobile_dir_t dir;
-  mobile_pos_t pos;
   candle_value_t cvalue;
-
   /* Average object */
   struct average avg;
 };
 
-int mobile_init(struct mobile *m, mobile_t type,
+int mobile_init(struct mobile *m, indicator_id_t id, mobile_t type,
 		int period, candle_value_t cvalue);
-void mobile_free(struct mobile *m);
+void mobile_release(struct mobile *m);
 
 /* indicator-specific */
 double mobile_average(struct mobile *m);

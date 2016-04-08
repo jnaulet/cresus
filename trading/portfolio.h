@@ -26,7 +26,7 @@ struct portfolio {
 };
 
 int portfolio_init(struct portfolio *p); /* TODO : define size here */
-void portfolio_free(struct portfolio *p);
+void portfolio_release(struct portfolio *p);
 
 double portfolio_buy(struct portfolio *p, portfolio_t type, double value);
 double portfolio_sell(struct portfolio *p, double value);

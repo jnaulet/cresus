@@ -23,7 +23,7 @@ struct esi {
 };
 
 int esi_init(struct esi *e, mobile_t type, int smooth_p);
-void esi_free(struct esi *e);
+void esi_release(struct esi *e);
 
 double esi_feed(struct esi *e, double value);
 double esi_compute(struct esi *e);

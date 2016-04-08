@@ -118,9 +118,9 @@ int main(int argc, char **argv)
   statistics_printf(&stats);
 
   /* Free all */
-  yahoo_free(&y);
-  rsi_free(&rsi);
-  statistics_free(&stats);
+  yahoo_release(&y);
+  rsi_release(&rsi);
+  statistics_release(&stats);
 
   return 0;
 }

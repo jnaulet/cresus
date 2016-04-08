@@ -47,6 +47,6 @@ int main(int argc, char **argv)
   }
   
   /* Free all */
-  yahoo_free(&y);
+  yahoo_release(&y);
   return 0;
 }

@@ -10,19 +10,33 @@
 #define YAHOO_H
 
 #include <stdio.h>
+#include "framework/alloc.h"
 #include "framework/input.h"
 
 /* TODO : find a way to clearly tell what objects this input returns */
 #define __yahoo_timeline_entry_t__(x) (struct candle*)(x)
+
+/* Object is allocatable */
+
+#define yahoo_alloc(y, filename, from, to)			\
+  DEFINE_ALLOC(struct yahoo, y, yahoo_init, filename, from, to)
+#define yahoo_free(y)				\
+  DEFINE_FREE(y, yahoo_release)
 
 struct yahoo {
   /* Inherits from input */
   __inherits_from_input__;
   /* file loader */
   FILE *fp;
+  /* Yahoo file format is LIFO */
+  struct list list_entry;
+  struct list *current_entry;
+  /* Debug */
+  char filename[256];
 };
 
-int yahoo_init(struct yahoo *y, const char *filename);
-void yahoo_free(struct yahoo *y);
+int yahoo_init(struct yahoo *y, const char *filename,
+	       time_info_t from, time_info_t to);
+void yahoo_release(struct yahoo *y);
 
 #endif

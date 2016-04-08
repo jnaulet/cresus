@@ -21,6 +21,6 @@ struct mod_supres {
 };
 
 int mod_supres_init(struct mod_supres *m, const struct candle *seed);
-void mod_supres_free(struct mod_supres *m);
+void mod_supres_release(struct mod_supres *m);
 
 #endif /* defined(__Cresus_EVO__mod_supres__) */

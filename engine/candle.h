@@ -9,9 +9,11 @@
 #ifndef CANDLE_H
 #define CANDLE_H
 
-#include <time.h>
 #include <float.h>
+#include <stdlib.h>
 
+#include "framework/slist.h"
+#include "framework/indicator.h"
 #include "framework/timeline_entry.h"
 
 typedef enum {
@@ -27,6 +29,13 @@ typedef enum {
   /* Other info here */
 } candle_value_t;
 
+/* Object is allocatable */
+#define candle_alloc(c, time, g, open, close, high, low, volume)	\
+  DEFINE_ALLOC(struct candle, c, candle_init,				\
+	       time, g, open, close, high, low, volume)
+#define candle_free(c)				\
+  DEFINE_FREE(c, candle_release)
+
 struct candle {
   /* Inherits from timeline,
    * so we don't need time management */
@@ -37,32 +46,27 @@ struct candle {
   double high, low;
   double volume;
   
-  /* Misc */
-  int offset; /* In minutes (google mode) : remove ? */
-
+  /* Indicators information ? */
+  __slist_head__(struct indicator_entry) slist_indicator;
+  
   /* Debug */
   char str[256];
 };
 
-
 int candle_init(struct candle *c,
-		time_t time, granularity_t g,
+		time_info_t time, granularity_t g,
 		double open, double close,
 		double high, double low,
 		double volume);
-void candle_free(struct candle *c);
+void candle_release(struct candle *c);
 
-struct candle *candle_alloc(time_t time, granularity_t g,
-			    double open, double close,
-			    double high, double low,
-			    double volume);
+void candle_add_indicator_entry(struct candle *c,
+				struct indicator_entry *e);
 
-/* Is that useful ? TODO : Remove these 2 */
-double candle_get_closest_inf(struct candle *c, double value);
-double candle_get_closest_sup(struct candle *c, double value);
-
-double candle_get_value(const struct candle *c, candle_value_t value);
-int candle_get_direction(const struct candle *c);
+void candle_merge(struct candle *c, struct candle *c2);
+double candle_get_value(struct candle *c, candle_value_t value);
+int candle_get_direction(struct candle *c);
+struct indicator *candle_find_indicator(struct candle *c, indicator_id_t id);
 
 /* Debug */
 const char *candle_str(struct candle *c);

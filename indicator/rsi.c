@@ -12,11 +12,12 @@
 #include "rsi.h"
 #include "mobile.h"
 
-static int rsi_feed(struct indicator *i, struct candle *c) {
+static int rsi_feed(struct indicator *i, struct timeline_entry *e) {
   
   double h, b, sub;
   struct rsi *r = __indicator_self__(i);
-
+  struct candle *c = __timeline_entry_self__(e);
+  
   if(!r->last)
     goto out;
   
@@ -39,10 +40,10 @@ static int rsi_feed(struct indicator *i, struct candle *c) {
   return 0;
 }
 
-int rsi_init(struct rsi *r, int period)
+int rsi_init(struct rsi *r, indicator_id_t id, int period)
 {
   /* Super() */
-  __indicator_super__(r, rsi_feed);
+  __indicator_super__(r, id, rsi_feed);
   __indicator_set_string__(r, "rsi[%d]", period);
   
   r->value = 0.0;
@@ -54,11 +55,11 @@ int rsi_init(struct rsi *r, int period)
   return 0;
 }
 
-void rsi_free(struct rsi *r)
+void rsi_release(struct rsi *r)
 {
-  __indicator_free__(r);
-  average_free(&r->h);
-  average_free(&r->b);
+  __indicator_release__(r);
+  average_release(&r->h);
+  average_release(&r->b);
 }
 
 double rsi_value(struct rsi *r) {

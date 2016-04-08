@@ -14,6 +14,7 @@
  */
 
 #include "math/average.h"
+#include "engine/candle.h"
 #include "framework/indicator.h"
 
 struct smi {
@@ -33,8 +34,8 @@ struct smi {
   double value;
 };
 
-int smi_init(struct smi *s, int period, int smooth);
-void smi_free(struct smi *s);
+int smi_init(struct smi *s, indicator_id_t id, int period, int smooth);
+void smi_release(struct smi *s);
 
 /* Indicator-specific */
 double smi_value(struct smi *s);

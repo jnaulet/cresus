@@ -24,7 +24,7 @@ struct srsi {
   } *array;
 };
 
-int srsi_init(struct srsi *s, int max);
-void srsi_free(struct srsi *s);
+int srsi_init(struct srsi *s, indicator_id_t id, int max);
+void srsi_release(struct srsi *s);
 
 #endif /* defined(__Cresus_EVO__srsi__) */

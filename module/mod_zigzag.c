@@ -165,13 +165,13 @@ int mod_zigzag_init(struct mod_zigzag *m, const struct candle *seed) {
   return 0;
 }
 
-void mod_zigzag_free(struct mod_zigzag *m) {
+void mod_zigzag_release(struct mod_zigzag *m) {
   
-  module_free(&m->parent);
+  module_release(&m->parent);
   
-  stoploss_free(&m->stoploss);
-  mobile_free(&m->mma_price);
-  mobile_free(&m->mma_volume);
+  stoploss_release(&m->stoploss);
+  mobile_release(&m->mma_price);
+  mobile_release(&m->mma_volume);
   
-  zigzag_free(&m->zigzag);
+  zigzag_release(&m->zigzag);
 }

@@ -20,13 +20,13 @@ int mod_srsi_init(struct mod_srsi *m, const struct candle *seed) {
   return 0;
 }
 
-void mod_srsi_free(struct mod_srsi *m) {
+void mod_srsi_release(struct mod_srsi *m) {
   
   /* Display report */
   for(int i = 0; i < m->srsi.max; i++)
     printf("%d : %d / %d (%d)\n", i, m->srsi.array[i].bull,
            m->srsi.array[i].bear, m->srsi.array[i].total);
   
-  module_free(&m->parent);
-  srsi_free(&m->srsi);
+  module_release(&m->parent);
+  srsi_release(&m->srsi);
 }

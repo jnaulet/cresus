@@ -88,9 +88,9 @@ int volume_price_init(struct volume_price *vp)
   return 0;
 }
 
-void volume_price_free(struct volume_price *vp)
+void volume_price_release(struct volume_price *vp)
 {
-  google_free(&vp->google);
+  google_release(&vp->google);
 }
 
 int volume_price_run(struct volume_price *vp)

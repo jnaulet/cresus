@@ -21,7 +21,7 @@ struct mod_ema_ha {
 };
 
 int mod_ema_ha_init(struct mod_ema_ha *e, const struct candle *seed);
-void mod_ema_ha_free(struct mod_ema_ha *e);
+void mod_ema_ha_release(struct mod_ema_ha *e);
 
 
 #endif /* defined(__Cresus_EVO__mod_ema_ha__) */

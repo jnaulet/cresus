@@ -115,11 +115,11 @@ int main(int argc, char **argv)
   }
   
   /* Free all */
-  yahoo_free(&y);
-  rsi_free(&rsi);
-  esi_free(&esi);
-  atr_free(&atr);
-  macd_free(&macd);
+  yahoo_release(&y);
+  rsi_release(&rsi);
+  esi_release(&esi);
+  atr_release(&atr);
+  macd_release(&macd);
 
   return 0;
 }

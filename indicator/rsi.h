@@ -16,6 +16,7 @@
  */
 
 #include "math/average.h"
+#include "engine/candle.h"
 #include "framework/indicator.h"
 
 struct rsi {
@@ -30,8 +31,8 @@ struct rsi {
   double value;
 };
 
-int rsi_init(struct rsi *r, int period);
-void rsi_free(struct rsi *r);
+int rsi_init(struct rsi *r, indicator_id_t id, int period);
+void rsi_release(struct rsi *r);
 
 /* Indicator-specific */
 double rsi_value(struct rsi *r);

@@ -35,7 +35,7 @@ int position_init(struct position *p, position_t type,
                   const struct candle *candle,
                   candle_value_t value, int number);
 
-void position_free(struct position *p);
+void position_release(struct position *p);
 
 double position_get_value(struct position *p,
                           const struct candle *candle,

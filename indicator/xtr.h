@@ -26,7 +26,7 @@ struct xtr {
 };
 
 int xtr_init(struct xtr *x, int period, struct candle *cdl);
-void xtr_free(struct xtr *x);
+void xtr_release(struct xtr *x);
 
 struct candle *xtr_feed(struct xtr *x, struct candle *cdl);
 struct candle *xtr_compute(struct xtr *x);

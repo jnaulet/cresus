@@ -10,6 +10,7 @@
 #define BOLLINGER_H
 
 #include "math/average.h"
+#include "engine/candle.h"
 #include "framework/indicator.h"
 
 struct bollinger_value {
@@ -31,9 +32,9 @@ struct bollinger {
   char str[32]; /* FIXME */
 };
 
-int bollinger_init(struct bollinger *b, int period,
+int bollinger_init(struct bollinger *b, indicator_id_t id, int period,
 		   double stddev_factor, candle_value_t cvalue);
-void bollinger_free(struct bollinger *b);
+void bollinger_release(struct bollinger *b);
 
 /* Indicator-specific */
 struct bollinger_value *bollinger_get_value(struct bollinger *b);

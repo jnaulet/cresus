@@ -14,7 +14,7 @@ int portfolio_init(struct portfolio *p)
   return 0;
 }
 
-void portfolio_free(struct portfolio *p)
+void portfolio_release(struct portfolio *p)
 {
 }
 

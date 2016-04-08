@@ -64,10 +64,10 @@ int mod_supres_init(struct mod_supres *m, const struct candle *seed){
   return -1;
 }
 
-void mod_supres_free(struct mod_supres *m){
+void mod_supres_release(struct mod_supres *m){
   
-  module_free(&m->parent);
-  zigzag_free(&m->zigzag);
+  module_release(&m->parent);
+  zigzag_release(&m->zigzag);
   
   /* Print output */
   for(int i = 0; i < SUPRES_MAX; i++){

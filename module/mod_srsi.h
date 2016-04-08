@@ -19,6 +19,6 @@ struct mod_srsi {
 };
 
 int mod_srsi_init(struct mod_srsi *m, const struct candle *seed);
-void mod_srsi_free(struct mod_srsi *m);
+void mod_srsi_release(struct mod_srsi *m);
 
 #endif /* defined(__Cresus_EVO__mod_srsi__) */

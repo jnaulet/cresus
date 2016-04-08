@@ -9,6 +9,7 @@
 #ifndef SWING_H
 #define SWING_H
 
+#include "engine/candle.h"
 #include "framework/indicator.h"
 
 #define SWING_MAX 3
@@ -22,14 +23,13 @@ typedef enum {
 struct swing {
   /* This is an indicator */
   __inherits_from_indicator__;
-
-  int count;
+  /* Own data */
   swing_t type;
   struct candle *ref;
 };
 
-int swing_init(struct swing *s);
-void swing_free(struct swing *s);
+int swing_init(struct swing *s, indicator_id_t id);
+void swing_release(struct swing *s);
 
 /* Indicator-specific */
 swing_t swing_type_get(struct swing *s);

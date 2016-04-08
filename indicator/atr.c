@@ -10,10 +10,12 @@
 #include <stdio.h>
 
 #include "atr.h"
+#include "engine/candle.h"
 
-static int atr_feed(struct indicator *i, struct candle *c) {
-  
+static int atr_feed(struct indicator *i, struct timeline_entry *e) {
+
   struct atr *a = __indicator_self__(i);
+  struct candle *c = __timeline_entry_self__(e);
 
   if(!a->ref){
     a->value = c->high - c->low;
@@ -37,10 +39,10 @@ static int atr_feed(struct indicator *i, struct candle *c) {
   return 0;
 }
 
-int atr_init(struct atr *a, int period) {
+int atr_init(struct atr *a, indicator_id_t id, int period) {
   
   /* Super() */
-  __indicator_super__(a, atr_feed);
+  __indicator_super__(a, id, atr_feed);
   __indicator_set_string__(a, "atr[%d]", period);
   
   a->ref = NULL;
@@ -52,9 +54,9 @@ int atr_init(struct atr *a, int period) {
   return 0;
 }
 
-void atr_free(struct atr *a)
+void atr_release(struct atr *a)
 {
-  __indicator_free__(a);
+  __indicator_release__(a);
 }
 
 double atr_value(struct atr *a)

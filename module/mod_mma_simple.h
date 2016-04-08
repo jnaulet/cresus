@@ -22,6 +22,6 @@ struct mod_mma_simple {
 };
 
 int mod_mma_simple_init(struct mod_mma_simple *m, const struct candle *seed);
-void mod_mma_simple_free(struct mod_mma_simple *m);
+void mod_mma_simple_release(struct mod_mma_simple *m);
 
 #endif /* defined(__Cresus_EVO__mod_mma_simple__) */

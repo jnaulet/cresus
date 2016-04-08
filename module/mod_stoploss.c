@@ -79,9 +79,9 @@ int mod_stoploss_init(struct mod_stoploss *s, const struct candle *seed) {
   return 0;
 }
 
-void mod_stoploss_free(struct mod_stoploss *s) {
+void mod_stoploss_release(struct mod_stoploss *s) {
   
-  module_free(&s->parent);
-  mobile_free(&s->mobile);
-  stoploss_free(&s->stoploss);
+  module_release(&s->parent);
+  mobile_release(&s->mobile);
+  stoploss_release(&s->stoploss);
 }

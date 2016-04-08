@@ -53,7 +53,7 @@ int mod_ema_ha_init(struct mod_ema_ha *e, const struct candle *seed) {
   return 0;
 }
 
-void mod_ema_ha_free(struct mod_ema_ha *e) {
+void mod_ema_ha_release(struct mod_ema_ha *e) {
   
-  module_free(&e->parent);
+  module_release(&e->parent);
 }

@@ -57,7 +57,7 @@ int xtr_init(struct xtr *x, int period, struct candle *cdl)
   return !!x->pool;
 }
 
-void xtr_free(struct xtr *x)
+void xtr_release(struct xtr *x)
 {
   if(x->pool) free(x->pool);
 }

@@ -8,38 +8,34 @@
 
 #include "indicator.h"
 
-int indicator_init(struct indicator *i, indicator_feed_ptr feed) {
+int indicator_init(struct indicator *i, indicator_id_t id,
+		   indicator_feed_ptr feed) {
   
   /* Super */
   __slist_super__(i);
-  timeline_entry_init(&i->list_entry, 0, 0);
-  
+  __list_head_init__(&i->list_entry);
+
+  i->id = id;
   i->feed = feed;
   i->is_empty = 1;
   
   return 0;
 }
 
-void indicator_free(struct indicator *i) {
+void indicator_release(struct indicator *i) {
 
-  __slist_free__(i);
-  /* TODO : don't forget to free() timeline_entries */
+  __slist_release__(i);
+  __list_head_release__(&i->list_entry);
+  
+  /* TODO : don't forget to release() timeline_entries */
   i->feed = NULL;
 }
 
-int indicator_feed(struct indicator *i, struct candle *c) {
+int indicator_feed(struct indicator *i, struct timeline_entry *e) {
 
-  int ret = i->feed(i, c);
+  int ret = i->feed(i, e);
   i->is_empty = 0;
 
   return ret;
 }
 
-void indicator_set_event(struct indicator *i, struct candle *candle,
-			 int event) {
-  
-  /* Nothing to do now */
-  /* Set in candle or timeline maybe */
-  __list_add_tail__(__list__(&i->list_entry),
-		    __timeline_entry__(candle));
-}

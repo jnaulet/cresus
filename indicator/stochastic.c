@@ -12,9 +12,10 @@
 
 #include "stochastic.h"
 
-static int stochastic_feed(struct indicator *i, struct candle *candle) {
+static int stochastic_feed(struct indicator *i, struct timeline_entry *e) {
   
   struct stochastic *s = __indicator_self__(i);
+  struct candle *candle = __timeline_entry_self__(e);
   
   memcpy(&s->array[s->index], candle, sizeof *candle);
   s->index = (s->index + 1) % s->period;
@@ -35,10 +36,11 @@ static int stochastic_feed(struct indicator *i, struct candle *candle) {
 }
 
 
-int stochastic_init(struct stochastic *s, int period, int k, int d) {
+int stochastic_init(struct stochastic *s, indicator_id_t id,
+		    int period, int k, int d) {
   
   /* super() */
-  __indicator_super__(s, stochastic_feed);
+  __indicator_super__(s, id, stochastic_feed);
   __indicator_set_string__(s, "sto[%d, %d, %d]", period, k, d);
   
   s->k = k;
@@ -55,8 +57,8 @@ int stochastic_init(struct stochastic *s, int period, int k, int d) {
   return 0;
 }
 
-void stochastic_free(struct stochastic *s) {
+void stochastic_release(struct stochastic *s) {
   
-  __indicator_free__(s);
+  __indicator_release__(s);
   free(s->array);
 }

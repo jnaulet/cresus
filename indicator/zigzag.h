@@ -9,6 +9,7 @@
 #ifndef ZIGZAG_H
 #define ZIGZAG_H
 
+#include "engine/candle.h"
 #include "framework/indicator.h"
 
 typedef enum {
@@ -47,9 +48,9 @@ struct zigzag {
   zigzag_dir_t direction; /* FIXME : use int ? */
 };
 
-int zigzag_init(struct zigzag *z, zigzag_t type,
+int zigzag_init(struct zigzag *z, indicator_id_t id, zigzag_t type,
 		double thres, candle_value_t cvalue);
-void zigzag_free(struct zigzag *z);
+void zigzag_release(struct zigzag *z);
 
 /* Indicator-specific */
 zigzag_dir_t zigzag_get_last_ref(struct zigzag *z, struct candle *last_ref);

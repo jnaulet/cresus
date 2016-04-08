@@ -38,7 +38,7 @@ int trade_init(struct trade *t, trade_t type,
                const struct candle *candle,
                candle_value_t value, int number);
 
-void trade_free(struct trade *t);
+void trade_release(struct trade *t);
 
 void trade_feed(struct trade *t, const struct candle *candle);
 double trade_get_value(struct trade *t);

@@ -88,10 +88,10 @@ int main(int argc, char **argv)
   }
   
   /* Free all */
-  yahoo_free(&y);
-  rsi_free(&rsi);
-  atr_free(&atr);
-  macd_free(&macd);
+  yahoo_release(&y);
+  rsi_release(&rsi);
+  atr_release(&atr);
+  macd_release(&macd);
 
   return 0;
 }

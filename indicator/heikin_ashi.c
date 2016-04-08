@@ -12,9 +12,10 @@
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-static int heikin_ashi_feed(struct indicator *i, struct candle *c) {
+static int heikin_ashi_feed(struct indicator *i, struct timeline_entry *e) {
   
   struct heikin_ashi *h = __indicator_self__(i);
+  struct candle *c = __timeline_entry_self__(e);
 
   if(i->is_empty){
     /* First data */
@@ -34,23 +35,23 @@ static int heikin_ashi_feed(struct indicator *i, struct candle *c) {
   heikin_ashi_dir_t dir = ((h->value.open - h->value.close) < 0 ?
                            HEIKIN_ASHI_DIR_UP : HEIKIN_ASHI_DIR_DOWN);
   
-  /* Event management */
+  /* Event management
   if(dir != h->dir){
     h->dir = dir;
     if(dir == HEIKIN_ASHI_DIR_UP)
       indicator_set_event(i, c, HEIKIN_ASHI_EVENT_CHDIR_UP);
     else
       indicator_set_event(i, c, HEIKIN_ASHI_EVENT_CHDIR_DOWN);
-  }
+      }*/
   
  out:
   return 1;
 }
 
-int heikin_ashi_init(struct heikin_ashi *h) {
+int heikin_ashi_init(struct heikin_ashi *h, indicator_id_t id) {
   
   /* Init parent */
-  __indicator_super__(h, heikin_ashi_feed);
+  __indicator_super__(h, id, heikin_ashi_feed);
   __indicator_set_string__(h, "heikin-ashi");
 
   /*
@@ -64,9 +65,9 @@ int heikin_ashi_init(struct heikin_ashi *h) {
   return 0;
 }
 
-void heikin_ashi_free(struct heikin_ashi *h) {
+void heikin_ashi_release(struct heikin_ashi *h) {
   
-  __indicator_free__(h);
+  __indicator_release__(h);
 }
 
 int heikin_ashi_get(struct heikin_ashi *h, struct candle *candle) {

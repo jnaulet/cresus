@@ -78,8 +78,8 @@ int mod_mma_simple_init(struct mod_mma_simple *m, const struct candle *seed) {
   return 0;
 }
 
-void mod_mma_simple_free(struct mod_mma_simple *m) {
+void mod_mma_simple_release(struct mod_mma_simple *m) {
   
-  mobile_free(&m->mma);
-  module_free(&m->parent);
+  mobile_release(&m->mma);
+  module_release(&m->parent);
 }

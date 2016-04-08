@@ -51,7 +51,7 @@ int pattern_init(struct pattern *p, struct candle *cdl)
   return 0;
 }
 
-void pattern_free(struct pattern *p)
+void pattern_release(struct pattern *p)
 {
 }
 
@@ -108,6 +108,6 @@ int main(int argc, char **argv)
   }
   
   /* Free all */
-  google_free(&g);
+  google_release(&g);
   return 0;
 }

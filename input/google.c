@@ -128,8 +128,8 @@ int google_init(struct google *g, const char *filename)
   return 0;
 }
 
-void google_free(struct google *g)
+void google_release(struct google *g)
 {
-  __input_free__(g);
+  __input_release__(g);
   if(g->fp) fclose(g->fp);
 }

@@ -41,7 +41,7 @@ struct statistics {
 };
 
 int statistics_init(struct statistics *s, double op_cost);
-void statistics_free(struct statistics *s);
+void statistics_release(struct statistics *s);
 
 /* API */
 void statistics_feed(struct statistics *s, double result);

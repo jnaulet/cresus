@@ -11,11 +11,12 @@
 
 #include "smi.h"
 
-static int smi_feed(struct indicator *i, struct candle *c) {
+static int smi_feed(struct indicator *i, struct timeline_entry *e) {
   
   double hi = 0.0;
   double lo = DBL_MAX;
   struct smi *s = __indicator_self__(i);
+  struct candle *c = __timeline_entry_self__(e);
 
   memcpy(&s->pool[s->index], c, sizeof *c);
   s->index = (s->index + 1) % s->period;
@@ -44,10 +45,10 @@ static int smi_feed(struct indicator *i, struct candle *c) {
   return 0;
 }
 
-int smi_init(struct smi *s, int period, int smooth) {
+int smi_init(struct smi *s, indicator_id_t id, int period, int smooth) {
   
   /* Super() */
-  __indicator_super__(s, smi_feed);
+  __indicator_super__(s, id, smi_feed);
   __indicator_set_string__(s, "smi[%d, %d]", period, smooth);
     
   s->count = 0;
@@ -66,13 +67,13 @@ int smi_init(struct smi *s, int period, int smooth) {
   return 0;
 }
 
-void smi_free(struct smi *s)
+void smi_release(struct smi *s)
 {
-  __indicator_free__(s);
-  average_free(&s->smpd);
-  average_free(&s->_smpd);
-  average_free(&s->str);
-  average_free(&s->_str);
+  __indicator_release__(s);
+  average_release(&s->smpd);
+  average_release(&s->_smpd);
+  average_release(&s->str);
+  average_release(&s->_str);
   
   if(s->pool)
     free(s->pool);

@@ -14,6 +14,7 @@ int average_init(struct average *a, average_t type, int period) {
   
   a->index = 0;
   a->count = 0;
+  a->value = 0;
   a->type = type;
   a->period = period;
 
@@ -33,7 +34,7 @@ int average_init(struct average *a, average_t type, int period) {
   return 0;
 }
 
-void average_free(struct average *a) {
+void average_release(struct average *a) {
   
   if(a->type == AVERAGE_MATH)
     free(a->pool);
@@ -69,19 +70,25 @@ static double __average_update_math(struct average *a, double value) {
 
 static double __average_update_exp(struct average *a, double value) {
 
-  a->value = a->k * value + (1 - a->k) * a->value;
+  if(average_is_available(a))
+    a->value = a->k * value + (1 - a->k) * a->value;
+  else
+    a->value = value;
+  
   return a->value;
 }
 
 double average_update(struct average *a, double value) {
-  
+
+  double ret = 0.0;
   switch(a->type){
-  case AVERAGE_MATH : return __average_update_math(a, value);
-  case AVERAGE_EXP : return __average_update_exp(a, value);
+  case AVERAGE_MATH : ret = __average_update_math(a, value); break;
+  case AVERAGE_EXP : ret = __average_update_exp(a, value); break;
   }
 
-  a->count++; /* FIXME : risk of bug after a certain amout of data */
-  return 0.0;
+  /* ? 1 : 0's not needed but i find this easier to read */
+  a->count += ((a->count < a->period) ? 1 : 0);
+  return ret;
 }
 
 double average_value(struct average *a) {

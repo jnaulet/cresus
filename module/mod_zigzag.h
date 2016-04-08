@@ -27,6 +27,6 @@ struct mod_zigzag {
 };
 
 int mod_zigzag_init(struct mod_zigzag *m, const struct candle *seed);
-void mod_zigzag_free(struct mod_zigzag *m);
+void mod_zigzag_release(struct mod_zigzag *m);
 
 #endif /* defined(__Cresus_EVO__mod_zigzag__) */

@@ -29,6 +29,6 @@ struct google {
 };
 
 int google_init(struct google *g, const char *filename);
-void google_free(struct google *g);
+void google_release(struct google *g);
 
 #endif

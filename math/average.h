@@ -28,7 +28,7 @@ struct average {
 };
 
 int average_init(struct average *a, average_t type, int period);
-void average_free(struct average *a);
+void average_release(struct average *a);
 
 int average_is_available(struct average *a);
 double average_update(struct average *a, double value);

@@ -27,7 +27,7 @@ int position_init(struct position *p, position_t type,
   return 0;
 }
 
-void position_free(struct position *p) {
+void position_release(struct position *p) {
   
   p->type = POSITION_NONE;
   p->value = 0.0;

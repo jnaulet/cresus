@@ -11,21 +11,37 @@
 
 #include "yahoo.h"
 #include "engine/candle.h"
+#include "framework/verbose.h"
 
-static struct timeline_entry *__yahoo_read(struct input *in) {
-  
-  char buf[256];
-  char *str = buf;
-
-  struct tm tm;
-  int year, month, day;
-  double open, close, high, low, volume;
+static struct timeline_entry *yahoo_read(struct input *in) {
   
   struct yahoo *y = __input_self__(in);
   
+  y->current_entry = y->list_entry.next;
+  if(y->current_entry == &y->list_entry)
+    return NULL; /* EOF */
+  
+  /* Don't forget we'll put it in another list */
+  list_del(y->current_entry);
+  return __list_self__(y->current_entry);
+}
+
+static int yahoo_load_entry(struct yahoo *y,
+			    struct timeline_entry **ret,
+			    time_info_t time_min,
+			    time_info_t time_max) {
+  
+  char buf[256];
+  char *str = buf;
+  struct candle *candle = NULL;
+
+  time_info_t time = 0;
+  int year, month, day;
+  double open, close, high, low, volume;
+  
   if(!fgets(buf, sizeof buf, y->fp))
     /* End of file */
-    return NULL;
+    return -1;
   
   /* Cut string */
   char *stime = strsep(&str, ",");
@@ -42,38 +58,82 @@ static struct timeline_entry *__yahoo_read(struct input *in) {
   sscanf(shi, "%lf", &high);
   sscanf(slo, "%lf", &low);
   sscanf(svol, "%lf", &volume);
-  
-  /* TODO : Set EOD timestamp */
-  memset(&tm, 0, sizeof tm);
-  tm.tm_min = 30;
-  tm.tm_hour = 17;
-  tm.tm_mday = day;
-  tm.tm_mon = month - 1;
-  tm.tm_year = year - 1900;
 
-  /* Create candle (at last !) */
-  return candle_alloc(mktime(&tm), GRANULARITY_DAY, /* No intraday on yahoo */
-		      open, close, high, low, volume);
+  /* Dummy values for control */
+  TIME_SET_SECOND(time, 1);
+  TIME_SET_MINUTE(time, 30);
+  TIME_SET_HOUR(time, 17);
+  
+  TIME_SET_DAY(time, day);
+  TIME_SET_MONTH(time, month);
+  TIME_SET_YEAR(time, year);
+  
+  /* No intraday on yahoo */
+  if(TIMECMP(time, time_min, GRANULARITY_DAY) >= 0 &&
+     TIMECMP(time, time_max, GRANULARITY_DAY) <= 0){
+    /* Create candle (at last !) */
+    if(candle_alloc(candle, time, GRANULARITY_DAY,
+		    open, close, high, low, volume)){
+      /* Candle is allocated & init */
+      *ret = __timeline_entry__(candle);
+      PR_DBG("%s %.2d/%.2d/%.4d loaded\n", y->filename,
+	     TIME_GET_MONTH(time), TIME_GET_DAY(time), TIME_GET_YEAR(time));
+      
+      return 1;
+    }
+    
+  }else
+    return 0;
+  
+  return -1;
 }
 
+static int yahoo_load(struct yahoo *y) {
+  
+  int n;
+  char info[256];
+  struct timeline_entry *entry;
+  
+  /* Yahoo is LIFO with first line showing format */
+  fgets(info, sizeof info, y->fp);
+  
+  for(n = 0;;){
+    switch(yahoo_load_entry(y, &entry,
+			    __input__(y)->from,
+			    __input__(y)->to)) {
+    case 0 : break;
+    case -1 : goto out;
+    default :
+      __list_add__(&y->list_entry, entry);
+      n++;
+      break;
+    }
+  }
+  
+ out:
+  return n;
+}
 
-int yahoo_init(struct yahoo *y, const char *filename) {
+int yahoo_init(struct yahoo *y, const char *filename,
+	       time_info_t from, time_info_t to) {
   
   /* super */
-  __input_super__(y, __yahoo_read);
+  __input_super__(y, yahoo_read, from, to);
+  __list_head_init__(&y->list_entry);
   
-  if(!(y->fp = fopen(filename, "r")))
+  strncpy(y->filename, filename, sizeof(y->filename));
+  if(!(y->fp = fopen(y->filename, "r"))){
+    PR_ERR("unable to open file %s\n", y->filename);
     return -1;
-
-  /* FIXME : read first line */
-  char buf[256];
-  fgets(buf, sizeof buf, y->fp);
+  }
   
+  /* Load all data */
+  yahoo_load(y);
   return 0;
 }
 
-void yahoo_free(struct yahoo *y) {
+void yahoo_release(struct yahoo *y) {
   
-  __input_free__(y);
+  __input_release__(y);
   if(y->fp) fclose(y->fp);
 }

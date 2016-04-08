@@ -23,6 +23,6 @@ struct mod_stoploss {
 };
 
 int mod_stoploss_init(struct mod_stoploss *s, const struct candle *seed);
-void mod_stoploss_free(struct mod_stoploss *s);
+void mod_stoploss_release(struct mod_stoploss *s);
 
 #endif /* defined(__Cresus_EVO__mod_stoploss__) */

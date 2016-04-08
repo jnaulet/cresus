@@ -134,11 +134,11 @@ int main(int argc, char **argv)
   statistics_printf(&stats);
 
   /* Free all */
-  yahoo_free(&y);
-  atr_free(&atr);
-  zigzag_free(&zz);
-  portfolio_free(&pf);
-  statistics_free(&stats);
+  yahoo_release(&y);
+  atr_release(&atr);
+  zigzag_release(&zz);
+  portfolio_release(&pf);
+  statistics_release(&stats);
 
   return 0;
 }

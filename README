@@ -1,0 +1,12 @@
+Cresus was originally a stock market bot research software developped in 2013 that was not giving total satisfaction to its owner, who wanted something which could easily manipulate tons & tons of data & indicators.
+
+So here is Cresus EVO (at least v3, if i remember well), a simple lib that allows anyone to manipulate lots of stock market data, especially from Yahoo.
+This is a great solution, because the tools are free, but the algorithm(s) can be keeped secret by their owners.
+
+For the moment, the library is quite stable but needs serious improvements.
+Some leftovers from cresus v0.1 (2013) are still there, waiting to be integrated or destroyed, depending on how the project will evolve.
+Some manipulations are not practical, some will give strange or incorrect results if some data is missing, etc.
+
+This is a work in progress and some kind of C software architecture research project, too.
+
+As usual, this piece of sotware is provided "as is", with no garantee at all, except the one that it will probably crash if you don't use it properly ;)

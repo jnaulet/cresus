@@ -8,10 +8,12 @@
 
 #include <stdlib.h>
 #include "srsi.h"
+#include "engine/candle.h"
 
-static int srsi_feed(struct indicator *i, struct candle *c) {
+static int srsi_feed(struct indicator *i, struct timeline_entry *e) {
   
   struct srsi *s = __indicator_self__(i);
+  struct candle *c = __timeline_entry_self__(e);
   int start = (c->open < c->close ? c->open : c->close);
   int end = (c->close < c->open ? c->open : c->close);
   
@@ -28,10 +30,10 @@ static int srsi_feed(struct indicator *i, struct candle *c) {
   return 0;
 }
 
-int srsi_init(struct srsi *s, int max) {
+int srsi_init(struct srsi *s, indicator_id_t id, int max) {
   
   /* super() */
-  __indicator_super__(s, srsi_feed);
+  __indicator_super__(s, id, srsi_feed);
   __indicator_set_string__(s, "srsi[%d]", max);
   
   s->len = 0;
@@ -43,8 +45,8 @@ int srsi_init(struct srsi *s, int max) {
   return 0;
 }
 
-void srsi_free(struct srsi *s) {
+void srsi_release(struct srsi *s) {
   
-  __indicator_free__(s);
+  __indicator_release__(s);
   free(s->array);
 }

@@ -14,9 +14,9 @@ int esi_init(struct esi *e, mobile_t type, int smooth_p)
   return mobile_init(&e->smooth, type, smooth_p, e->last);
 }
 
-void esi_free(struct esi *e)
+void esi_release(struct esi *e)
 {
-  mobile_free(&e->smooth);
+  mobile_release(&e->smooth);
 }
 
 double esi_feed(struct esi *e, double value)
