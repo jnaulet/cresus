@@ -35,6 +35,10 @@
 #define __timeline_entry_str__(self, buf, len)		\
   timeline_entry_str(__timeline_entry__(self), buf, len)
 
+#define __timeline_entry_relative_self__(entry, n)		\
+  __timeline_entry_self__((struct timeline_entry*)		\
+			  __list_relative__((entry), n))
+
 struct timeline_entry {
   /* parent */
   __inherits_from_list__;
@@ -49,7 +53,7 @@ int timeline_entry_init(struct timeline_entry *e, time_info_t time, granularity_
 void timeline_entry_release(struct timeline_entry *e);
 
 /* Methods */
-int timeline_entry_timecmp(struct timeline_entry *e, time_info_t time);
+time_info_t timeline_entry_timecmp(struct timeline_entry *e, time_info_t time);
 struct timeline_entry *timeline_entry_find(struct timeline_entry *t, time_info_t time);
 const char *timeline_entry_str(struct timeline_entry *e, char *buf, size_t len);
 

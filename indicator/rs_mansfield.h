@@ -66,13 +66,14 @@ struct rs_mansfield {
   __inherits_from_indicator__;
   
   struct average mma;
-  __list_head__(struct timeline_entry) *ref;
+  list_head_t(struct timeline_entry) *ref;
+  struct list *ref_ptr;
 
   double value;
 };
 
 int rs_mansfield_init(struct rs_mansfield *r, indicator_id_t id, int period,
-		      __list_head__(struct timeline_entry) *ref);
+		      list_head_t(struct timeline_entry) *ref);
 void rs_mansfield_release(struct rs_mansfield *r);
 
 /* Indicator-specific */

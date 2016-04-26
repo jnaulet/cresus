@@ -36,9 +36,9 @@
 
 /* Basic slist object */
 
-#define __slist_head__(type) struct slist /* Type is indicative */
-#define __slist_head_init__(x) slist_init(x)
-#define __slist_head_release__(x) slist_release(x)
+#define slist_head_t(type) struct slist /* Type is indicative */
+#define slist_head_init(x) slist_init(x)
+#define slist_head_release(x) slist_release(x)
 
 struct slist {
   __slist_is_superclass__;
@@ -47,6 +47,7 @@ struct slist {
 
 static inline int slist_init(struct slist *s) {
   s->next = NULL;
+  return 0;
 }
 
 static inline void slist_release(struct slist *s) {
@@ -62,7 +63,7 @@ static inline void slist_del(struct slist *s) {
   s->next = s->next->next;
 }
 
-#define slist_is_head(head, ptr) (ptr == head)
+#define slist_is_empty(head) ((head)->next == NULL)
 #define slist_for_each(head, ptr)				\
   for(ptr = (head)->next; (ptr) != NULL; ptr = (ptr)->next)
 

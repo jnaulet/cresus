@@ -64,7 +64,7 @@ struct mobile_entry {
   DEFINE_ALLOC(struct mobile_entry, entry,				\
 	       mobile_entry_init, parent, value, direction)
 #define mobile_entry_free(entry)			\
-  DEFINE_FREE(entry, mobile_indicator_entry_release)
+  DEFINE_FREE(entry, mobile_entry_release)
 
 static inline int mobile_entry_init(struct mobile_entry *entry,
 				    struct indicator *parent,

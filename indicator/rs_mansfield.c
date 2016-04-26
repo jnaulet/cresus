@@ -8,6 +8,7 @@
 
 #include "rs_mansfield.h"
 #include "engine/candle.h"
+#include "framework/verbose.h"
 
 /*
  * RSM = ((RSD(today) / mma(RSD(today), n)) - 1) * 100.0
@@ -19,10 +20,18 @@ static int rs_mansfield_feed(struct indicator *i, struct timeline_entry *e) {
   struct candle *c = __timeline_entry_self__(e);
   struct rs_mansfield *r = __indicator_self__(i);
 
+  /* TODO : make this simpler */
+  
   if(i->is_empty)
-    r->ref = __list__(e);
-
-  if((entry = timeline_entry_find(__list_self__(r->ref), e->time))){
+    /* Increment in list */
+    r->ref_ptr = r->ref->next;
+  
+  if(list_is_head(r->ref_ptr)){
+    PR_ERR("timeline_entry ref list is empty\n");
+    goto err;
+  }
+  
+  if((entry = timeline_entry_find(__list_self__(r->ref_ptr), e->time))){
     struct candle *cref = __timeline_entry_self__(entry);
     double rsd = c->close / cref->close;
     double last = average_value(&r->mma);
@@ -36,15 +45,16 @@ static int rs_mansfield_feed(struct indicator *i, struct timeline_entry *e) {
     }
     
     /* Set new ref */
-    r->ref = __list__(entry);
+    r->ref_ptr = __list__(entry);
     return 0;
   }
   
+ err:
   return -1;
 }
 
 int rs_mansfield_init(struct rs_mansfield *r, indicator_id_t id, int period,
-		      __list_head__(struct timeline_entry) *ref) {
+		      list_head_t(struct timeline_entry) *ref) {
 
   __indicator_super__(r, id, rs_mansfield_feed);
   __indicator_set_string__(r, "rsm[%d]", period);
@@ -52,6 +62,7 @@ int rs_mansfield_init(struct rs_mansfield *r, indicator_id_t id, int period,
   average_init(&r->mma, AVERAGE_MATH, period);
   
   r->ref = ref;
+  r->ref_ptr = ref;
   r->value = 0.0;
   
   return 0;

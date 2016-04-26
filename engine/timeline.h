@@ -27,6 +27,9 @@
   timeline_init(__timeline__(self), name, input);
 #define __timeline_release__(self) timeline_release(__timeline__(self));
 
+#define __timeline_append_entry__(x, entry)	\
+  timeline_append_entry(__timeline__(x), entry)
+
 #define TIMELINE_NAME_MAX 256
 
 /* Object is allocatable */
@@ -43,22 +46,25 @@ struct timeline {
   struct input *in;
   char name[TIMELINE_NAME_MAX];
   /* Main data / graph */
-  __list_head__(struct timeline_entry) list_entry;
+  list_head_t(struct timeline_entry) list_entry;
   struct timeline_entry *ref;
   /* Secondary graphs */
-  __slist_head__(struct indicator) slist_indicator;
+  slist_head_t(struct indicator) slist_indicator;
 };
 
 int timeline_init(struct timeline *t, const char *name, struct input *in);
 void timeline_release(struct timeline *t);
 
-int timeline_add_indicator(struct timeline *t, struct indicator *i);
+void timeline_add_indicator(struct timeline *t, struct indicator *i);
 
-/* TODO : find something better. timeline shoud pilot input maybe ? */
+int timeline_entry_current(struct timeline *t, struct timeline_entry **ret);
 int timeline_entry_next(struct timeline *t, struct timeline_entry **ret);
 int timeline_entry_by_time(struct timeline *t, time_info_t time, struct timeline_entry **ret);
 
-struct timeline_entry *timeline_step(struct timeline *t, struct timeline_entry *entry);
+void timeline_append_entry(struct timeline *t, struct timeline_entry *entry);
+void timeline_trim_entry(struct timeline *t, struct timeline_entry *entry);
+
+struct timeline_entry *timeline_step(struct timeline *t);
 int timeline_execute(struct timeline *t);
 
 #endif

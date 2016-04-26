@@ -13,9 +13,6 @@
 #include "framework/alloc.h"
 #include "framework/input.h"
 
-/* TODO : find a way to clearly tell what objects this input returns */
-#define __yahoo_timeline_entry_t__(x) (struct candle*)(x)
-
 /* Object is allocatable */
 
 #define yahoo_alloc(y, filename, from, to)			\
@@ -29,7 +26,7 @@ struct yahoo {
   /* file loader */
   FILE *fp;
   /* Yahoo file format is LIFO */
-  struct list list_entry;
+  list_head_t(struct candle) list_entry;
   struct list *current_entry;
   /* Debug */
   char filename[256];

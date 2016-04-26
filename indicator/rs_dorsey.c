@@ -33,7 +33,7 @@ static int rs_dorsey_feed(struct indicator *i, struct timeline_entry *e) {
 }
 
 int rs_dorsey_init(struct rs_dorsey *r, indicator_id_t id,
-		   __list_head__(struct timeline_entry) *ref) {
+		   list_head_t(struct timeline_entry) *ref) {
 
   /* super() */
   __indicator_super__(r, id, rs_dorsey_feed);

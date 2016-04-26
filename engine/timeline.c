@@ -1,5 +1,5 @@
 /*
- * Cresus EVO - timeline_entry.c 
+ * Cresus EVO - timeline.c
  *
  * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/05/16
  * Copyright (c) 2016 Joachim Naulet. All rights reserved.
@@ -21,21 +21,27 @@ int timeline_init(struct timeline *t, const char *name, struct input *in) {
   t->ref = NULL;
   t->in = in;
   /* Internals */
-  __list_head_init__(&t->list_entry);
-  __slist_head_init__(&t->slist_indicator);
+  list_head_init(&t->list_entry);
+  slist_head_init(&t->slist_indicator);
   
   return 0;
 }
 
 void timeline_release(struct timeline *t) {
 
-  __list_head_release__(&t->list_entry);
-  __slist_head_release__(&t->slist_indicator);
+  list_head_release(&t->list_entry);
+  slist_head_release(&t->slist_indicator);
 }
 
-int timeline_add_indicator(struct timeline *t, struct indicator *i) {
+void timeline_add_indicator(struct timeline *t, struct indicator *i) {
 
   __slist_insert__(&t->slist_indicator, i);
+}
+
+int timeline_entry_current(struct timeline *t, struct timeline_entry **ret) {
+
+  *ret = t->ref; /* Current candle */
+  return (t->ref == NULL ? -1 : 0);
 }
 
 int timeline_entry_next(struct timeline *t, struct timeline_entry **ret) {
@@ -56,6 +62,10 @@ int timeline_entry_next(struct timeline *t, struct timeline_entry **ret) {
 int timeline_entry_by_time(struct timeline *t, time_info_t time,
 			   struct timeline_entry **ret) {
 
+  char buf[64];
+  PR_DBG("requested time is %s (%llx)\n",
+	 time2str(time, GRANULARITY_DAY, buf), time);
+  
   do {
     /* Try to find a matching entry */
     struct timeline_entry *entry = t->ref;
@@ -64,9 +74,13 @@ int timeline_entry_by_time(struct timeline *t, time_info_t time,
       continue;
     
     /* Granularity is provided by input entry, beware */
-    int res = timeline_entry_timecmp(entry, time);
+    time_info_t res = timeline_entry_timecmp(entry, time);
     if(!res){
       /* Cache data. Is that the right place ? */
+      PR_DBG("found entry->time = %s (%llx) - %lld\n",
+	     time2str(entry->time, GRANULARITY_DAY, buf), entry->time,
+	     TIMECMP(entry->time, time, GRANULARITY_DAY));
+      
       *ret = entry;
       return 1;
       
@@ -86,19 +100,37 @@ int timeline_entry_by_time(struct timeline *t, time_info_t time,
   return -1;
 }
 
-struct timeline_entry *timeline_step(struct timeline *t,
-				     struct timeline_entry *entry) {
+void timeline_append_entry(struct timeline *t,
+			   struct timeline_entry *entry) {
   
-  struct indicator *indicator;
-  /* Add candle to list */
+  /* Simply add candle to list */
   list_add_tail(&t->list_entry, __list__(entry));
-  /* And execute indicators */
+  t->ref = entry; /* FIXME */
+}
+
+void timeline_trim_entry(struct timeline *t,
+			 struct timeline_entry *entry) {
+
+  t->ref = __list_self__(__list__(entry)->prev); /* FIXME */
+  __list_del__(entry);
+
+  char buf[256]; /* debug */
+  PR_DBG("%s %s trimmed off\n", t->name,
+	 time2str(entry->time, entry->granularity, buf));
+}
+
+struct timeline_entry *timeline_step(struct timeline *t) {
+
+  struct indicator *indicator;
+  /* t->ref = &t->list_entry.prev; */
+  
+  /* Execute indicators */
   __slist_for_each__(&t->slist_indicator, indicator){
-    indicator_feed(indicator, entry);
-    /* PR_DBG("indicator %s\n", indicator->str); */
+    indicator_feed(indicator, t->ref);
+    PR_DBG("%s feed indicator %s\n", t->name, indicator->str);
   }
   
-  return entry;
+  return t->ref;
 }
 
 int timeline_execute(struct timeline *t) {
@@ -108,7 +140,7 @@ int timeline_execute(struct timeline *t) {
   
   for(n = 0;; n++){
     if(timeline_entry_next(t, &entry) != -1)
-      timeline_step(t, entry);
+      timeline_step(t);
     
     else
       break;

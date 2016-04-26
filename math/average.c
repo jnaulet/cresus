@@ -47,6 +47,8 @@ int average_is_available(struct average *a) {
 
   if(a->type == AVERAGE_MATH)
     return (a->count >= a->period);
+
+  return 0;
 }
 
 static double __average_update_math(struct average *a, double value) {

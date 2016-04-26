@@ -58,7 +58,7 @@ struct indicator {
   /* Status */
   int is_empty;
   /* Data / graph */
-  __list_head__(struct timeline_entry) list_entry;
+  list_head_t(struct timeline_entry) list_entry;
 };
 
 int indicator_init(struct indicator *i, indicator_id_t id,
@@ -88,12 +88,16 @@ struct indicator_entry {
   __indicator_entry_is_superclass__;
   /* Say who is parent ? */
   struct indicator *indicator;
+  /* Maybe this one's of better use */
+  indicator_id_t iid;
 };
 
-static inline void indicator_entry_init(struct indicator_entry *entry,
-					struct indicator *parent) {
+static inline int indicator_entry_init(struct indicator_entry *entry,
+				       struct indicator *parent) {
   __slist_super__(entry);
   entry->indicator = parent;
+  entry->iid = parent->id;
+  return 0; /* alloc rulz */
 }
 
 static inline void indicator_entry_release(struct indicator_entry *entry) {

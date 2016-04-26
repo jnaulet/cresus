@@ -10,7 +10,8 @@
 #include <stdio.h>
 #include <float.h>
 
-#include "statistics.h"
+#include "sim/statistics.h"
+#include "framework/verbose.h"
 
 int statistics_init(struct statistics *s, double op_cost)
 {
@@ -94,23 +95,23 @@ void statistics_feed(struct statistics *s, double result)
 
 int statistics_printf(struct statistics *s)
 {
-  fprintf(stderr, "Gross profit          %+.2lf\n", s->gross_profit);
-  fprintf(stderr, "Gross loss            %+.2lf\n", s->gross_loss);
-  fprintf(stderr, "Operations cost       %+.2lf\n", s->total_op_cost);
-  fprintf(stderr, "Total net profit      %+.2lf\n", s->total_net_profit);
-  fprintf(stderr, "Total num of trades   %d\n",     s->total_number_of_trades);
-  fprintf(stderr, "Num winning trades    %d\n",     s->number_winning_trades);
-  fprintf(stderr, "Num losing trades     %d\n",     s->number_losing_trades);
-  fprintf(stderr, "Max consec winners    %d\n",     s->max_consec_winners);
-  fprintf(stderr, "Max consec losers     %d\n",     s->max_consec_losers);
-  fprintf(stderr, "Largest winning trade %+.2lf\n", s->largest_winning_trade);
-  fprintf(stderr, "Largest losing trade  %+.2lf\n", s->largest_losing_trade);
-  fprintf(stderr, "Average winning trade %+.2lf\n", s->average_winning_trade);
-  fprintf(stderr, "Average losing trade  %+.2lf\n", s->average_losing_trade);
-  fprintf(stderr, "Drawdown              %+.2lf\n", s->drawdown);
-  fprintf(stderr, "Profit factor         %.2lf\n",  s->profit_factor);
-  fprintf(stderr, "Account size required %.2lf\n",  s->account_size_required);
-  fprintf(stderr, "Return on account     %+.2lf\n", s->return_on_account);
+  PR_INFO("Gross profit          %+.2lf\n", s->gross_profit);
+  PR_INFO("Gross loss            %+.2lf\n", s->gross_loss);
+  PR_INFO("Operations cost       %+.2lf\n", s->total_op_cost);
+  PR_INFO("Total net profit      %+.2lf\n", s->total_net_profit);
+  PR_INFO("Total num of trades   %d\n",     s->total_number_of_trades);
+  PR_INFO("Num winning trades    %d\n",     s->number_winning_trades);
+  PR_INFO("Num losing trades     %d\n",     s->number_losing_trades);
+  PR_INFO("Max consec winners    %d\n",     s->max_consec_winners);
+  PR_INFO("Max consec losers     %d\n",     s->max_consec_losers);
+  PR_INFO("Largest winning trade %+.2lf\n", s->largest_winning_trade);
+  PR_INFO("Largest losing trade  %+.2lf\n", s->largest_losing_trade);
+  PR_INFO("Average winning trade %+.2lf\n", s->average_winning_trade);
+  PR_INFO("Average losing trade  %+.2lf\n", s->average_losing_trade);
+  PR_INFO("Drawdown              %+.2lf\n", s->drawdown);
+  PR_INFO("Profit factor         %.2lf\n",  s->profit_factor);
+  PR_INFO("Account size required %.2lf\n",  s->account_size_required);
+  PR_INFO("Return on account     %+.2lf\n", s->return_on_account);
 
   return 0;
 }

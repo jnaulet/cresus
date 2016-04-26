@@ -30,7 +30,7 @@ int candle_init(struct candle *c,
   c->volume = volume;
 
   /* Indicators */
-  __slist_head_init__(&c->slist_indicator);
+  slist_head_init(&c->slist_indicator);
   
   return 0;
 }
@@ -38,7 +38,7 @@ int candle_init(struct candle *c,
 void candle_release(struct candle *c) {
   
   __timeline_entry_release__(c);
-  __slist_head_release__(&c->slist_indicator);
+  slist_head_release(&c->slist_indicator);
 }
 
 void candle_add_indicator_entry(struct candle *c,
@@ -84,27 +84,27 @@ int candle_get_direction(struct candle *c)
   return (c->close - c->open);
 }
 
-struct indicator *candle_find_indicator(struct candle *c,
-					indicator_id_t id) {
-
-  struct indicator *indicator;
-  __slist_for_each__(&c->slist_indicator, indicator){
-    if(indicator->id == id)
-      return indicator;
+struct indicator_entry *candle_find_indicator_entry(struct candle *c,
+						    indicator_id_t id) {
+  
+  struct indicator_entry *entry;
+  __slist_for_each__(&c->slist_indicator, entry){
+    if(entry->indicator->id == id)
+      return entry;
   }
-
-  PR_WARN("can't find indicator %d\n", id);
+  
+  PR_WARN("can't find any indicator %d entry\n", id);
   return NULL;
 }
 
 /* Debug */
 
-const char *candle_str(struct candle *c) {
+const char *candle_str(struct candle *c, char *buf) {
 
-  char buf[256];
-  sprintf(c->str, "%s o%.1f c%.1f h%.1f l%.1f v%.0f",
-	  __timeline_entry_str__(c, buf, sizeof buf),
+  char tmp[256];
+  sprintf(buf, "%s o%.1f c%.1f h%.1f l%.1f v%.0f",
+	  __timeline_entry_str__(c, tmp, sizeof tmp),
 	  c->open, c->close, c->high, c->low, c->volume);
-	  
-  return c->str;
+  
+  return buf;
 }

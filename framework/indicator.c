@@ -13,7 +13,7 @@ int indicator_init(struct indicator *i, indicator_id_t id,
   
   /* Super */
   __slist_super__(i);
-  __list_head_init__(&i->list_entry);
+  list_head_init(&i->list_entry);
 
   i->id = id;
   i->feed = feed;
@@ -25,7 +25,7 @@ int indicator_init(struct indicator *i, indicator_id_t id,
 void indicator_release(struct indicator *i) {
 
   __slist_release__(i);
-  __list_head_release__(&i->list_entry);
+  list_head_release(&i->list_entry);
   
   /* TODO : don't forget to release() timeline_entries */
   i->feed = NULL;

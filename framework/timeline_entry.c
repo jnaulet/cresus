@@ -1,3 +1,11 @@
+/*
+ * Cresus EVO - timeline_entry.c
+ * 
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 04/05/16
+ * Copyright (c) 2016 Joachim Naulet. All rights reserved.
+ *
+ */
+
 #include "timeline_entry.h"
 
 int timeline_entry_init(struct timeline_entry *e, time_info_t time,
@@ -16,7 +24,8 @@ void timeline_entry_release(struct timeline_entry *e) {
   __list_release__(e);
 }
 
-int timeline_entry_timecmp(struct timeline_entry *e, time_info_t time) {
+time_info_t timeline_entry_timecmp(struct timeline_entry *e,
+				   time_info_t time) {
   
   return TIMECMP(e->time, time, e->granularity);
 }
@@ -56,12 +65,12 @@ timeline_entry_find_backwards(struct timeline_entry *e, time_info_t time) {
 struct timeline_entry *
 timeline_entry_find(struct timeline_entry *e, time_info_t time) {
   
-  int tm = timeline_entry_timecmp(e, time);
-  if(!tm)
+  time_info_t cmp;
+  if(!(cmp = timeline_entry_timecmp(e, time)))
     /* time is the same */
     goto out;
   
-  if(tm < 0)
+  if(cmp < 0)
     return timeline_entry_find_forward(e, time);
   /* else */
   return timeline_entry_find_backwards(e, time);
@@ -73,16 +82,6 @@ timeline_entry_find(struct timeline_entry *e, time_info_t time) {
 /* Debug functions */
 const char *timeline_entry_str(struct timeline_entry *e,
 			       char *buf, size_t len) {
-
-  /* TODO : use granularity */
-  snprintf(buf, len, "%.2d/%.2d/%.4d %.2d:%.2d:%.2d ::%.3d",
-	   TIME_GET_MONTH(e->time),
-	   TIME_GET_DAY(e->time),
-	   TIME_GET_YEAR(e->time),
-	   TIME_GET_HOUR(e->time),
-	   TIME_GET_MINUTE(e->time),
-	   TIME_GET_SECOND(e->time),
-	   TIME_GET_MSEC(e->time));
-  
-  return buf;
+  /* FIXME : use len */
+  return time2str(e->time, e->granularity, buf);
 }

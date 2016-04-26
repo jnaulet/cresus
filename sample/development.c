@@ -21,6 +21,8 @@
 #include "indicator/rs_dorsey.h"
 #include "indicator/rs_mansfield.h"
 
+#include "framework/verbose.h"
+
 #define EMA40 0
 #define EMA14 1
 #define EMA5  2
@@ -31,14 +33,16 @@
 static void run_timeline(struct timeline *t) {
 
   /* Step by step loop */
+  char buf[256]; /* debug */
   struct timeline_entry *entry;
   while(timeline_entry_next(t, &entry) != -1){
     int n = 0;
     struct indicator_entry *ientry;
     struct candle *c = __timeline_entry_self__(entry);
     /* Execute */
-    timeline_step(t, entry);
-    printf("%s - ", candle_str(__timeline_entry_self__(entry)));
+    timeline_append_entry(t, entry);
+    timeline_step(t);
+    printf("%s - ", candle_str(__timeline_entry_self__(entry), buf));
     /* Then check results */
     __slist_for_each__(&c->slist_indicator, ientry){
       /* Beware, some parsing will be required here to determine who's who */
@@ -71,13 +75,15 @@ static void run_timeline(struct timeline *t) {
 
 int main(int argc, char **argv) {
 
+  VERBOSE_LEVEL(DBG);
+  
   /*
    * Data
    */
   struct yahoo *yahoo;
   struct timeline *timeline;
 
-  if(yahoo_alloc(yahoo, "data/FCHI.yahoo", TIME_MIN, TIME_MAX)){
+  if(yahoo_alloc(yahoo, "data/%5EFCHI.yahoo", TIME_MIN, TIME_MAX)){
     if(timeline_alloc(timeline, "^FCHI", __input__(yahoo))){
       struct mobile *m;
       /* Add a series of EMAs */
