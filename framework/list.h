@@ -30,15 +30,23 @@
   list_add_tail((list), __list__(entry))
 #define __list_del__(entry)			\
   list_del(__list__(entry))
+
 /* Iteration */
-#define __list_for_each__(head, self)			\
-  for(struct list *ptr = (head)->next;			\
-      ptr != (head) && (self = __list_self__(ptr));	\
-      ptr = ptr->next)
-#define __list_for_each_prev__(head, self)		\
-  for(struct list *ptr = (head)->prev;			\
-      ptr != (head) && (self = __list_self__(ptr));	\
-      ptr = ptr->prev)
+#define __list_for_each__(head, self)					\
+  for(self = __list_self__((head)->next);				\
+      (self) && !__list_is_head__(self);				\
+      self = __list_self__(__list__(self)->next))
+#define __list_for_each_prev__(head, self)			\
+  for(struct list *__ptr__ = (head)->prev;			\
+      __ptr__ != (head) && (self = __list_self__(__ptr__));	\
+      __ptr__ = __ptr__->prev)
+#define __list_for_each_safe__(head, self, safe)			\
+  for(self = __list_self__((head)->next),				\
+	(self) && (safe = __list__(self)->next);			\
+      (self) && !__list_is_head__(self);				\
+      self = __list_self__(safe),					\
+	(self) && (safe = __list__(self)->next))
+  
 /* Relative functions */
 #define __list_relative__(entry, n)			\
   __list_self__(list_relative(__list__(entry), n))
@@ -101,6 +109,16 @@ static inline void list_head_release(list_head_t(void) *l) {
 /* #define list_is_head(head, ptr) ((ptr) == (head)) */
 #define list_is_head(list) ((list) == (list)->head)
 #define __list_is_head__(entry) (__list__(entry) == __list__(entry)->head)
+
+/* Iteration */
+
+#define list_for_each(head, l)				\
+  for(l = (head)->next; (l) != (head); l = (l)->next)
+#define list_for_each_prev(head, l)			\
+  for(l = (head)->prev; (l) != (head); l = (l)->prev)
+#define list_for_each_safe(head, l, n)		\
+  for(l = (head)->next, n = (l)->next;		\
+      (l) != (head); l = (n), n = (l)->next)
 
 /* Relative functions */
 

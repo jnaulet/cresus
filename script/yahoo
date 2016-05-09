@@ -27,4 +27,5 @@ e=$(date +%d)
 f=$(date +%Y)
 
 url=$(echo "${url_prefix}s=${s}&a=${a}&b=${b}&c=${c}&d=${d}&e=${e}&f=${f}${url_suffix}");
-curl ${url} -o data/${stock}.yahoo
+#curl ${url} -o data/${stock}.yahoo
+wget ${url} -O data/${stock}.yahoo

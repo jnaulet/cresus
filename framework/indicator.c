@@ -9,14 +9,15 @@
 #include "indicator.h"
 
 int indicator_init(struct indicator *i, indicator_id_t id,
-		   indicator_feed_ptr feed) {
+		   indicator_feed_ptr feed, indicator_reset_ptr reset) {
   
   /* Super */
   __slist_super__(i);
   list_head_init(&i->list_entry);
-
+  
   i->id = id;
   i->feed = feed;
+  i->reset = reset;
   i->is_empty = 1;
   
   return 0;
@@ -39,3 +40,8 @@ int indicator_feed(struct indicator *i, struct timeline_entry *e) {
   return ret;
 }
 
+void indicator_reset(struct indicator *i) {
+
+  i->is_empty = 1;
+  i->reset(i);
+}

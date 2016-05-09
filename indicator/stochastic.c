@@ -35,12 +35,20 @@ static int stochastic_feed(struct indicator *i, struct timeline_entry *e) {
   return 0;
 }
 
+static void stochastic_reset(struct indicator *i) {
+
+  struct stochastic *s = __indicator_self__(i);
+  /* Reset */
+  s->index = 0;
+  average_reset(&s->d);
+  average_reset(&s->smooth_k);
+}
 
 int stochastic_init(struct stochastic *s, indicator_id_t id,
 		    int period, int k, int d) {
   
   /* super() */
-  __indicator_super__(s, id, stochastic_feed);
+  __indicator_super__(s, id, stochastic_feed, stochastic_reset);
   __indicator_set_string__(s, "sto[%d, %d, %d]", period, k, d);
   
   s->k = k;

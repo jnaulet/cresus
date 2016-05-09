@@ -25,11 +25,17 @@ static int bollinger_feed(struct indicator *i, struct timeline_entry *e) {
   return (b->value.mma != 0.0 ? 1 : 0);
 }
 
+static void bollinger_reset(struct indicator *i) {
+
+  struct bollinger *b = __indicator_self__(i);
+  average_reset(&b->avg);
+}
+
 int bollinger_init(struct bollinger *b, indicator_id_t id, int period,
                    double stddev_factor, candle_value_t cvalue) {
   
   /* super */
-  __indicator_super__(b, id, bollinger_feed);
+  __indicator_super__(b, id, bollinger_feed, bollinger_reset);
   __indicator_set_string__(b, "boll[%d, %.1f]", period, stddev_factor);
   
   b->stddev_factor = stddev_factor;

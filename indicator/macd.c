@@ -37,11 +37,20 @@ static int macd_feed(struct indicator *i, struct timeline_entry *e) {
   return 0;
 }
 
+static void macd_reset(struct indicator *i) {
+
+  struct macd *m = __indicator_self__(i);
+  /* Reset averages */
+  average_reset(&m->fast);
+  average_reset(&m->slow);
+  average_reset(&m->signal);
+}
+
 int macd_init(struct macd *m, indicator_id_t id,
 	      int fast_p, int slow_p, int signal_p) {
 
   /* Super */
-  __indicator_super__(m, id, macd_feed);
+  __indicator_super__(m, id, macd_feed, macd_reset);
   __indicator_set_string__(m, "macd[%d,%d,%d]", fast_p, slow_p, signal_p);
 
   /* Seed */

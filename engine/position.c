@@ -7,9 +7,10 @@
  */
 
 #include "position.h"
+#include "framework/verbose.h"
 
 int position_init(struct position *p, struct timeline *t,
-		  position_t type, int n) {
+		  position_t type, double n) {
 
   /* super() */
   __list_super__(p);
@@ -35,10 +36,19 @@ void position_release(struct position *p) {
 
 static int position_exec(struct position *p, struct candle **c) {
 
+  int ret;
   struct timeline_entry *entry;
-  int ret = timeline_entry_current(p->t, &entry);
+  if((ret = timeline_entry_current(p->t, &entry)) < 0){
+    PR_WARN("%s position for %s can't be executed\n",
+	    p->type == POSITION_LONG ? "LONG" : "SHORT", p->t->name);
+    
+    goto out;
+  }
+
+  /* Set return value */
   *c = __timeline_entry_self__(entry);
   
+ out:
   return ret;
 }
 
@@ -52,26 +62,55 @@ int position_out(struct position *p) {
   return position_exec(p, &p->out);
 }
 
-double position_value(struct position *p) {
+int position_nop(struct position *p) {
 
-  double out, ret;
+  return 0;
+}
+
+static double position_out_value(struct position *p) {
+
+  double out;
   
   if(p->out == NULL){
     /* If we're not out of position */
     struct candle *c;
     struct timeline_entry *e;
-    /* TODO : check */
-    timeline_entry_current(p->t, &e);
-    c = __timeline_entry_self__(e);
-    out = c->open;
+    
+    if(timeline_entry_current(p->t, &e) != -1){
+      c = __timeline_entry_self__(e);
+      out = c->open;
+    }else
+      out = p->in->open;
   }else
     out = p->out->open;
 
+  return out;
+}
+
+double position_value(struct position *p) {
+
+  double ret;
+  double out = position_out_value(p);
+  
   /* FIXME : forced candle open value comparison */
   if(p->type == POSITION_LONG)
     ret = (out - p->in->open);
   else
     ret = (p->in->open - out);
+  
+  return ret;
+}
+
+double position_factor(struct position *p) {
+
+  double ret;
+  double out = position_out_value(p);
+  
+  /* FIXME : forced candle open value comparison */
+  if(p->type == POSITION_LONG)
+    ret = (out / p->in->open);
+  else
+    ret = (p->in->open / out);
   
   return ret;
 }

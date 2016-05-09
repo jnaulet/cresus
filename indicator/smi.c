@@ -45,10 +45,23 @@ static int smi_feed(struct indicator *i, struct timeline_entry *e) {
   return 0;
 }
 
+static void smi_reset(struct indicator *i) {
+
+  struct smi *s = __indicator_self__(i);
+  /* Reset internal average */
+  s->count = 0;
+  s->index = 0;
+  /* Reset other averages */
+  average_reset(&s->smpd);
+  average_reset(&s->_smpd);
+  average_reset(&s->str);
+  average_reset(&s->_str);
+}
+
 int smi_init(struct smi *s, indicator_id_t id, int period, int smooth) {
   
   /* Super() */
-  __indicator_super__(s, id, smi_feed);
+  __indicator_super__(s, id, smi_feed, smi_reset);
   __indicator_set_string__(s, "smi[%d, %d]", period, smooth);
     
   s->count = 0;

@@ -1,107 +1,60 @@
-/*
- * Cresus EVO - development_sim.c
- *
- * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 05/04/16
- * Copyright (c) 2016 Joachim Naulet. All rights reserved.
- *
- */
-
 #include "sim/sim.h"
 #include "input/yahoo.h"
 #include "engine/cluster.h"
 #include "engine/timeline.h"
-#include "indicator/mobile.h"
-#include "indicator/roc.h"
-#include "indicator/jtrend.h"
+#include "indicator/zigzag.h"
 #include "framework/verbose.h"
 
 #include <getopt.h>
 #include <string.h>
 
-#define EMA    1
-#define ROC    2
-#define JTREND 3
+#define ZIGZAG 1
+#define START_TIME VAL_YEAR(2012)|VAL_MONTH(1)|VAL_DAY(1)
 
-#define START_TIME VAL_YEAR(2012) | VAL_MONTH(1) | VAL_DAY(1)
+#define ZIGZAG_THRES 0.03 /* 1/100th */
+#define ZIGZAG_WINDOW 10
 
-/* Main info */
-#define PERIOD  60
-#define AVERAGE 8
-
-/* Global */
-static trend_t __trend__;
-
-static int trend_set(trend_t trend) {
-  
-  trend_t old = __trend__;
-  __trend__ = trend;
-  /* Choose what's best here */
-  return (__trend__ != old);
-}
-
+static double zz_thres = ZIGZAG_THRES;
+static int zz_window = ZIGZAG_WINDOW;
 
 static struct timeline *
-timeline_create(const char *filename, const char *name, time_info_t min,
-		list_head_t(struct timeline_entry) *ref_index) {
+timeline_create(const char *filename, const char *name, time_info_t min) {
 
   struct yahoo *yahoo;
+  struct zigzag *zigzag;
   struct timeline *timeline;
   
-  struct mobile *mobile;
-  struct jtrend *jtrend;
-
   /* TODO : Check return values */
   yahoo_alloc(yahoo, filename, START_TIME, TIME_MAX); /* load everything */
   timeline_alloc(timeline, name, __input__(yahoo));
   /* Indicators alloc */
-  mobile_alloc(mobile, EMA, MOBILE_EMA, 30, CANDLE_CLOSE);
-  jtrend_alloc(jtrend, JTREND, PERIOD, AVERAGE, ref_index);
+  zigzag_alloc(zigzag, ZIGZAG, zz_thres, CANDLE_CLOSE);
   /* And insert */
-  timeline_add_indicator(timeline, __indicator__(mobile));
-  timeline_add_indicator(timeline, __indicator__(jtrend));
+  timeline_add_indicator(timeline, __indicator__(zigzag));
   
   return timeline;
 }
 
-static void timeline_destroy(struct timeline *t) {
+/* more final functions */
+
+static void add_timeline_to_cluster(struct cluster *c, const char *path,
+				    const char *name, time_info_t time) {
+  
+  struct timeline *sub;
+  sub = timeline_create(path, name, time);
+  cluster_add_timeline(c, sub);
 }
 
-static void timeline_display_info(struct timeline *t) {
+/* Global */
 
-  char buf[256]; /* debug */
+static zigzag_dir_t __trend__;
+
+static int trend_set(zigzag_dir_t trend) {
   
-  /* FIXME : change interface */
-  struct timeline_entry *entry;
-  if(timeline_entry_current(t, &entry) != -1){
-    struct indicator_entry *ientry;
-    struct candle *candle = __timeline_entry_self__(entry);
-    /* Indicators management */
-    /* This interface is not easy to use. Find something better */
-    candle_indicator_for_each(candle, ientry) {
-      switch(ientry->iid){
-      case EMA : PR_WARN("%s EMA is %.2f\n", t->name,
-			 ((struct mobile_entry*)
-			  __indicator_entry_self__(ientry))->value);
-	break;
-	
-      case JTREND : {
-	struct jtrend_entry *e = __indicator_entry_self__(ientry);
-	PR_WARN("%s JTREND is %.2f, %.2f\n", t->name,
-		e->value, e->ref_value);
-	
-	if(e->value > 0 && e->ref_value > 0){
-	  PR_ERR("Taking LONG position on %s at %s\n",
-		 t->name, candle_str(candle, buf));
-	}
-	
-	if(e->value < 0 && e->ref_value < 0){
-	  PR_ERR("Taking SHORT position on %s at %s\n",
-		 t->name, candle_str(candle, buf));
-	}}
-	break;
-      }
-    }
-  }
+  zigzag_dir_t old = __trend__;
+  __trend__ = trend;
+  /* Choose what's best here */
+  return (__trend__ != old);
 }
 
 /* sim interface */
@@ -114,18 +67,19 @@ static int sim_feed(struct sim *s, struct cluster *c) {
   struct timeline *t;
   struct timeline_entry *entry;
   struct indicator_entry *ientry;
+  struct zigzag_entry *zref = NULL;
   
   /* TODO : better management of this ? */
   if(timeline_entry_current(__timeline__(c), &entry) != -1){
     struct candle *candle = __timeline_entry_self__(entry);
-    if((ientry = candle_find_indicator_entry(candle, ROC))){
-      struct roc_entry *rentry = __indicator_entry_self__(ientry);
-      PR_WARN("%s ROC is %.2f\n", __timeline__(c)->name, rentry->value);
+    if((ientry = candle_find_indicator_entry(candle, ZIGZAG))){
+      zref = __indicator_entry_self__(ientry);
+      PR_WARN("%s ZIGZAG is %.2f\n", __timeline__(c)->name, zref->value);
       /* Manage cluster's status here */
-      if(trend_set(rentry->value > 0 ? TREND_UP : TREND_DOWN)){
+      if(trend_set(zref->dir)){
 	/* We got a change here */
 	PR_INFO("General trend switched to %s\n",
-		__trend__ == TREND_UP ? "up" : "down");
+		__trend__ == ZIGZAG_UP ? "up" : "down");
 	/* Close all positions */
 	sim_close_all_positions(s);
       }
@@ -145,18 +99,17 @@ static int sim_feed(struct sim *s, struct cluster *c) {
     if(timeline_entry_current(t, &entry) != -1){
       struct position *p;
       struct candle *candle = __timeline_entry_self__(entry);
-      if((ientry = candle_find_indicator_entry(candle, JTREND))){
-	struct jtrend_entry *jentry = __indicator_entry_self__(ientry);
-	PR_WARN("%s JTREND is %.2f, %.2f\n", t->name,
-		jentry->value, jentry->ref_value);
-
+      if((ientry = candle_find_indicator_entry(candle, ZIGZAG))){
+	struct zigzag_entry *zentry = __indicator_entry_self__(ientry);
+	PR_WARN("%s ZZ is %.2f\n", t->name, zentry->value);
+	
 	/* Always check if something's open */
 	sim_find_opened_position(s, t, &p);
 
 	/* LONG positions */
-	if(__trend__ == TREND_UP){
-	  
-	  if(jentry->value > 0.0){	    
+	if(__trend__ == ZIGZAG_UP){
+	  if(zentry->value > zref->value &&
+	     zref->n_since_last_ref <= zz_window){
 	    if(p == NULL){
 	      sim_open_position(s, t, POSITION_LONG, 1);
 	      PR_ERR("Taking LONG position on %s at %s\n",
@@ -172,8 +125,9 @@ static int sim_feed(struct sim *s, struct cluster *c) {
 	}
 
 	/* SHORT positions */
-	if(__trend__ == TREND_DOWN){
-	  if(jentry->value < 0.0){	    
+	if(__trend__ == ZIGZAG_DOWN){
+	  if(zentry->value < zref->value &&
+	     zref->n_since_last_ref <= zz_window){
 	    if(p == NULL){
 	      sim_open_position(s, t, POSITION_SHORT, 1);
 	      PR_ERR("Taking SHORT position on %s at %s\n",
@@ -190,37 +144,22 @@ static int sim_feed(struct sim *s, struct cluster *c) {
       }
     }
   }
-  
-  return 0;
-}
-
-/* more final functions */
-
-static void add_timeline_to_cluster(struct cluster *c, const char *path,
-				    const char *name, time_info_t time) {
-
-  struct timeline *sub;
-  sub = timeline_create(path, name, time, &__timeline__(c)->list_entry);
-  cluster_add_timeline(c, sub);
 }
 
 int main(int argc, char **argv) {
 
   int c;
   struct sim sim;
-  struct roc roc;
+  struct zigzag zigzag;
   struct cluster cluster;
-
-  int period = PERIOD;
-  int average = AVERAGE;
   
   /* VERBOSE_LEVEL(WARN); */
   
-  while((c = getopt(argc, argv, "vp:a:")) != -1){
+  while((c = getopt(argc, argv, "vp:w:")) != -1){
     switch(c){
+    case 'p' : sscanf(optarg, "%lf", &zz_thres); break;
     case 'v' : VERBOSE_LEVEL(DBG); break;
-    case 'p' : period = atoi(optarg); break;
-    case 'a' : average = atoi(optarg); break;
+    case 'w' : sscanf(optarg, "%d", &zz_window); break;
     }
   }
   
@@ -228,11 +167,11 @@ int main(int argc, char **argv) {
   struct yahoo *yahoo;
   time_info_t time = START_TIME;
   /* Load ref data */
-  yahoo_alloc(yahoo, "data/%5EFCHI.yahoo", START_TIME, TIME_MAX);
+  yahoo_alloc(yahoo, "data/%5EFCHI.yahoo", time, TIME_MAX);
   cluster_init(&cluster, "my cluster", __input__(yahoo), time, TIME_MAX);
   /* Init general roc indicator */
-  roc_init(&roc, ROC, period, average);
-  timeline_add_indicator(__timeline__(&cluster), __indicator__(&roc));
+  zigzag_init(&zigzag, ZIGZAG, zz_thres, CANDLE_CLOSE);
+  timeline_add_indicator(__timeline__(&cluster), __indicator__(&zigzag));
   
   /* Sub-timelines */
   add_timeline_to_cluster(&cluster, "data/AC.yahoo",    "AC", time);

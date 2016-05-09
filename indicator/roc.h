@@ -25,21 +25,18 @@ struct roc_entry {
   __inherits_from_indicator_entry__;
   /* Data */
   double value;
-  double average;
 };
 
-#define roc_entry_alloc(entry, parent, value, average)	\
-  DEFINE_ALLOC(struct roc_entry, entry, roc_entry_init, \
-	       parent, value, average)
+#define roc_entry_alloc(entry, parent, value)				\
+  DEFINE_ALLOC(struct roc_entry, entry, roc_entry_init, parent, value)
 #define roc_entry_free(entry)			\
   DEFINE_FREE(entry, roc_entry_free)
 
 static inline int roc_entry_init(struct roc_entry *entry,
 				 struct indicator *parent,
-				 double value, double average) {
+				 double value) {
   __indicator_entry_super__(entry, parent);
   entry->value = value;
-  entry->average = average;
   return 0;
 }
 
@@ -49,7 +46,7 @@ static inline void roc_entry_release(struct roc_entry *entry) {
 
 /* Main object */
 
-#define roc_alloc(roc, id, period, average)	\
+#define roc_alloc(roc, id, period, average)			\
   DEFINE_ALLOC(struct roc, roc, roc_init, id, period, average)
 #define roc_free(roc)				\
   DEFINE_FREE(roc, roc_release)
@@ -65,7 +62,7 @@ struct roc {
 int roc_init(struct roc *r, indicator_id_t id, int period, int average);
 void roc_release(struct roc *r);
 
-int roc_compute(struct roc *r, struct timeline_entry *e,
-		double *rvalue, double *raverage);
+int roc_compute(struct roc *r, struct timeline_entry *e, double *rvalue);
+void roc_reset(struct roc *r);
 
 #endif

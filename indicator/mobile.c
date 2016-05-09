@@ -74,11 +74,17 @@ static int mobile_feed(struct indicator *i, struct timeline_entry *e) {
   return 0;
 }
 
+static void mobile_reset(struct indicator *i) {
+
+  struct mobile *m = __indicator_self__(i);
+  average_reset(&m->avg);
+}
+
 int mobile_init(struct mobile *m, indicator_id_t id, mobile_t type,
 		int period, candle_value_t cvalue) {
   
   /* Super */
-  __indicator_super__(m, id, mobile_feed);
+  __indicator_super__(m, id, mobile_feed, mobile_reset);
   __indicator_set_string__(m, "%cma[%d]",
 			   ((type == MOBILE_EMA) ? 'e' : 'm'),
 			   period);

@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 
   /* 01/01/2000 */
   time_info_t time = TIME_INIT(2000, 1, 1, 0, 0, 0, 0);
-  cluster_init(&cluster, "my cluster", time, TIME_MAX);
+  cluster_init(&cluster, "my cluster", NULL, time, TIME_MAX);
   t0 = timeline_ref_create("data/%5EFCHI.yahoo", "^FCHI", time);
   t1 = timeline_create("data/AF.yahoo", "AF", time, &t0->list_entry);
   t2 = timeline_create("data/AIR.yahoo", "AIR", time, &t0->list_entry);

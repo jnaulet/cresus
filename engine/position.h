@@ -33,18 +33,20 @@ struct position {
   struct candle *in;
   struct candle *out;
   
-  int n;
+  double n;
   position_t type;
 };
 
 int position_init(struct position *p, struct timeline *t,
-		  position_t type, int n);
+		  position_t type, double n);
 void position_release(struct position *p);
 
 typedef int (*position_action_t)(struct position *p);
 int position_in(struct position *p); /* position_action_t */
 int position_out(struct position *p); /* position_action_t */
+int position_nop(struct position *p); /* position_action_t */
 
 double position_value(struct position *p);
+double position_factor(struct position *p);
 
 #endif

@@ -126,4 +126,12 @@ const char *time2str(time_info_t t, granularity_t g, char *buf) {
 #define TIME_FOR_EACH(start, stop, g, time)		\
   for(time = start; time < stop; TIMEADD(time, g, 1))
 
+/* Trend */
+
+typedef enum {
+  TREND_NONE,
+  TREND_UP,
+  TREND_DOWN
+} trend_t;
+
 #endif

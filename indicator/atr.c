@@ -39,10 +39,16 @@ static int atr_feed(struct indicator *i, struct timeline_entry *e) {
   return 0;
 }
 
+static void atr_reset(struct indicator *i) {
+
+  struct atr *a = __indicator_self__(i);
+  a->ref = NULL;
+}
+
 int atr_init(struct atr *a, indicator_id_t id, int period) {
   
   /* Super() */
-  __indicator_super__(a, id, atr_feed);
+  __indicator_super__(a, id, atr_feed, atr_reset);
   __indicator_set_string__(a, "atr[%d]", period);
   
   a->ref = NULL;

@@ -21,9 +21,9 @@
 #define __indicator_self__(x) (x)->__self_indicator__
 #define __indicator_self_init__(x, self) (x)->__self_indicator__ = self
 
-#define __indicator_super__(self, id, feed)		\
+#define __indicator_super__(self, id, feed, reset)	\
   __indicator_self_init__(__indicator__(self), self);	\
-  indicator_init(__indicator__(self), id, feed)
+  indicator_init(__indicator__(self), id, feed, reset)
 #define __indicator_release__(self)		\
   indicator_release(__indicator__(self))
 
@@ -44,6 +44,7 @@
 struct indicator; /* FIXME : find something more elegant */
 typedef unsigned int indicator_id_t;
 typedef int (*indicator_feed_ptr)(struct indicator*, struct timeline_entry*);
+typedef void (*indicator_reset_ptr)(struct indicator*);
 
 struct indicator {
   /* Inherits from slist */
@@ -51,7 +52,9 @@ struct indicator {
   __indicator_is_superclass__;
 
 #define INDICATOR_STR_MAX 64
+  /* Fn pointers */
   indicator_feed_ptr feed;
+  indicator_reset_ptr reset;
   /* Unique Id & name */
   indicator_id_t id;
   char str[INDICATOR_STR_MAX];
@@ -62,10 +65,11 @@ struct indicator {
 };
 
 int indicator_init(struct indicator *i, indicator_id_t id,
-		   indicator_feed_ptr feed);
+		   indicator_feed_ptr feed, indicator_reset_ptr reset);
 void indicator_release(struct indicator *i);
 
 int indicator_feed(struct indicator *i, struct timeline_entry *e);
+void indicator_reset(struct indicator *i);
 
 /* Indicators generated sub-object */
 

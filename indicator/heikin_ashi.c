@@ -48,10 +48,16 @@ static int heikin_ashi_feed(struct indicator *i, struct timeline_entry *e) {
   return 1;
 }
 
+static void heikin_ashi_reset(struct indicator *i) {
+
+  struct heikin_ashi *h = __indicator_self__(i);
+  /* Nothing to do */
+}
+
 int heikin_ashi_init(struct heikin_ashi *h, indicator_id_t id) {
   
   /* Init parent */
-  __indicator_super__(h, id, heikin_ashi_feed);
+  __indicator_super__(h, id, heikin_ashi_feed, heikin_ashi_reset);
   __indicator_set_string__(h, "heikin-ashi");
 
   /*

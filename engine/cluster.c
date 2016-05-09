@@ -10,11 +10,11 @@
 #include "cluster.h"
 #include "framework/verbose.h"
 
-int cluster_init(struct cluster *c, const char *name,
+int cluster_init(struct cluster *c, const char *name, struct input *in,
 		 time_info_t time_min, time_info_t time_max) {
-
+  
   /* Super */
-  __timeline_super__(c, name, NULL);
+  __timeline_super__(c, name, in);
   slist_head_init(&c->slist_timeline);
   /* Set options */
   c->ref = &__timeline__(c)->list_entry;
@@ -97,9 +97,53 @@ static int cluster_prepare_step(struct cluster *c, time_info_t time,
   return 1;
 }
 
+static int cluster_step_ref(struct cluster *c,
+			    struct timeline_entry **ret) {
+  
+  int res;
+  char buf[256]; /* debug */
+
+  struct timeline *t;
+  struct timeline_entry *e;
+  
+  /* No calendar, using ref */
+  if(timeline_entry_next(__timeline__(c), &e) < 0)
+    /* No more data */
+    return -1;
+
+  /* Add data to our own list */
+  timeline_append_entry(__timeline__(c), e);
+  timeline_step(__timeline__(c));
+  
+  /* Parse internal list */
+  __slist_for_each__(&c->slist_timeline, t){
+    struct timeline_entry *entry;
+    if((res = timeline_entry_by_time(t, e->time, &entry)) <= 0){
+      PR_WARN("not enough data available in %s for %s\n", t->name,
+	      time2str(e->time, e->granularity, buf));
+      
+      /* Reset indicators for this entry that has a problem */
+      /* TODO : How to signal we have to ignore taken positions ? */
+      timeline_reset_indicators(t);
+      continue;
+    }
+    
+    /* Add entry in timeline */
+    timeline_append_entry(t, entry);
+    timeline_step(t);
+  }
+  
+  *ret = e; /* TODO : remove this */
+  return 1;
+}
+
 static int cluster_execute_step(struct cluster *c) {
 
   struct timeline *t;
+
+  /* Don't forget that we inherit from timeline */
+  timeline_step(__timeline__(c));
+  
   /* Execute indicators */
   __slist_for_each__(&c->slist_timeline, t){
     /* Step all timelines */
@@ -115,22 +159,30 @@ int cluster_step(struct cluster *c) {
   int ret;
   struct timeline_entry *entry;
   time_info_t time = calendar_time(&c->cal);
-  
-  /* Loop-read to ignore missing data */
-  do {
-    ret = cluster_prepare_step(c, time, &entry);
-    calendar_next(&c->cal, &time);
-  }while(!ret);
-  
-  if(ret < 0){ /* EOF */
-    PR_ERR("no more data in input(s)\n");
-    goto out;
-  }
 
-  /* Execute when possible */
-  ret = cluster_execute_step(c);
-  /* Don't forget that we inherit from timeline */
-  timeline_step(__timeline__(c));
+  if(__timeline__(c)->in != NULL){
+    /* Ref acts as a calendar */
+    if((ret = cluster_step_ref(c, &entry)) < 0){
+      PR_ERR("no more data in ref input(s)\n");
+      goto out;
+    }
+    
+  }else{
+    /* No ref. 
+     * Using calendar & loop-read to ignore missing data */
+    do {
+      ret = cluster_prepare_step(c, time, &entry);
+      calendar_next(&c->cal, &time);
+    }while(!ret);
+    
+    if(ret < 0){ /* EOF */
+      PR_ERR("no more data in input(s)\n");
+      goto out;
+    }
+    
+    /* Execute when possible */
+    ret = cluster_execute_step(c);
+  }
   
  out:
   return ret;

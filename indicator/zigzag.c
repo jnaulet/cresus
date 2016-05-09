@@ -11,110 +11,87 @@
 
 #include "zigzag.h"
 
+static void zigzag_chdir(struct zigzag *z, zigzag_dir_t dir,
+			 struct candle *c) {
+  
+  z->base_ref = z->ref;
+  z->dir = dir;  
+  z->ref = c;
+  z->ref_count = 0;
+}
+
 static int zigzag_feed(struct indicator *i, struct timeline_entry *e) {
   
   double threshold;
+  struct zigzag_entry *zz;
   struct zigzag *z = __indicator_self__(i);
   struct candle *candle = __timeline_entry_self__(e);
-
+  double value = candle_get_value(candle, z->cvalue);
+  
   if(!z->ref){
     z->ref = candle;
+    zigzag_chdir(z, ZIGZAG_NONE, candle);
+    /* Nothing left to do */
     return 0;
   }
   
+  /* Compute limits (every time ? */
+  double base_ref_value = candle_get_value(z->base_ref, z->cvalue);
   double ref_value = candle_get_value(z->ref, z->cvalue);
-  double candle_value = candle_get_value(candle, z->cvalue);
-  /* Now compute gap size */
-  double gap = candle_value - ref_value;
-  
-  if(z->type == ZIGZAG_PERCENT)
-    threshold = z->threshold * ref_value;
-  else /* ZIGZAG_ABSOLUTE */
-    threshold = z->threshold;
+  double hi_limit = (1.0 + z->threshold) * ref_value;
+  double lo_limit = (1.0 - z->threshold) * ref_value;
 
-  z->ref_count++; /* FIXME */
+  switch(z->dir){
+  case ZIGZAG_NONE :
+    if(value > hi_limit) zigzag_chdir(z, ZIGZAG_UP, candle);
+    if(value < lo_limit) zigzag_chdir(z, ZIGZAG_DOWN, candle);
+    break;
 
-  switch(z->direction){
-  case ZIGZAG_DIR_UP :
-    /* Up-ing reference */
-    if(candle_value > ref_value){
-      /* Reset ref */
-      z->ref = candle;
-      z->ref_count = 0;
-    }
-    
-    /* Changing direction */
-    if(gap <= -(threshold)){
-      /* Save ref */
-      z->last_ref = z->ref;
-      z->ref = candle;
-      z->ref_count = 0;
-      /* Set dir */
-      z->direction = ZIGZAG_DIR_DOWN;
-      /* Throw event */
-      //indicator_set_event(i, candle, ZIGZAG_EVENT_CHDIR_DOWN);
-    }
+  case ZIGZAG_UP :
+    if(value > ref_value) z->ref = candle;
+    if(value < lo_limit) zigzag_chdir(z, ZIGZAG_DOWN, candle);
     break;
     
-  case ZIGZAG_DIR_DOWN :
-    /* Down-ing reference */
-    if(candle_value < ref_value){
-      z->ref = candle;
-      z->ref_count = 0;
-    }
-    
-    /* Changing direction */
-    if(gap >= threshold){
-      /* Save ref */
-      z->last_ref = z->ref;
-      z->ref = candle;
-      z->ref_count = 0;
-      /* Set direction */
-      /* Throw event */
-      //indicator_set_event(i, candle, ZIGZAG_EVENT_CHDIR_UP);
-    }
-    break;
-    
-  case ZIGZAG_DIR_NONE :
-    if(fabs(gap) >= threshold){
-      z->direction = (gap > 0 ? ZIGZAG_DIR_UP : ZIGZAG_DIR_DOWN);
-      /* Reset ref */
-      z->ref = candle;
-      z->ref_count = 0;
-      /* Throw event */
-      /*
-      if(z->direction == ZIGZAG_DIR_UP)
-	indicator_set_event(i, candle, ZIGZAG_EVENT_CHDIR_UP);
-      else
-	indicator_set_event(i, candle, ZIGZAG_EVENT_CHDIR_DOWN);
-      */
-    }
+  case ZIGZAG_DOWN :
+    if(value < ref_value) z->ref = candle;
+    if(value > hi_limit) zigzag_chdir(z, ZIGZAG_UP, candle);
     break;
   }
+
+  if(zigzag_entry_alloc(zz, i, z->dir, (value / base_ref_value), z->ref_count))
+    candle_add_indicator_entry(candle, __indicator_entry__(zz));
   
-  return z->direction;
+  z->ref_count++;
+  return 0;
 }
 
-int zigzag_init(struct zigzag *z, indicator_id_t id, zigzag_t type,
-		double thres, candle_value_t cvalue) {
+static void zigzag_reset(struct indicator *i) {
+
+  struct zigzag *z = __indicator_self__(i);
+  /* RAZ */
+  z->dir = ZIGZAG_NONE;
+  /* Refs */
+  z->ref = NULL;
+  z->base_ref = NULL;
+  z->ref_count = 0;
+}
+
+int zigzag_init(struct zigzag *z, indicator_id_t id,
+		double threshold, candle_value_t cvalue) {
   
   /* Super */
-  __indicator_super__(z, id, zigzag_feed);
-  __indicator_set_string__(z, "zigzag[%.2f]", thres);
-  
-  z->type = type;
+  __indicator_super__(z, id, zigzag_feed, zigzag_reset);
+  __indicator_set_string__(z, "zigzag[%.1f%%]", threshold * 100.0);
+
+  z->dir = ZIGZAG_NONE;
   z->cvalue = cvalue;
-  z->threshold = (type == ZIGZAG_PERCENT ? thres / 100.0 : thres);
+  z->threshold = threshold;
 
   /* Refs */
-  /* z->ref = seed;
-     z->last_ref = seed;*/
   z->ref = NULL;
-  z->last_ref = NULL;
+  z->base_ref = NULL;
   z->ref_count = 0;
   
-  z->direction = ZIGZAG_DIR_NONE;
-
   return 0;
 }
 
@@ -122,12 +99,5 @@ void zigzag_release(struct zigzag *z)
 {
   __indicator_release__(z);
   z->ref_count = 0;
-  z->direction = ZIGZAG_DIR_NONE;
+  z->dir = ZIGZAG_NONE;
 }
-
-zigzag_dir_t zigzag_get_last_ref(struct zigzag *z, struct candle *last_ref)
-{
-  memcpy(last_ref, &z->last_ref, sizeof *last_ref);
-  return z->direction;
-}
-

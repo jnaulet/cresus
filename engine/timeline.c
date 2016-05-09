@@ -23,6 +23,7 @@ int timeline_init(struct timeline *t, const char *name, struct input *in) {
   /* Internals */
   list_head_init(&t->list_entry);
   slist_head_init(&t->slist_indicator);
+  t->status = TIMELINE_STATUS_RESET;
   
   return 0;
 }
@@ -36,6 +37,19 @@ void timeline_release(struct timeline *t) {
 void timeline_add_indicator(struct timeline *t, struct indicator *i) {
 
   __slist_insert__(&t->slist_indicator, i);
+}
+
+void timeline_reset_indicators(struct timeline *t) {
+
+  struct indicator *indicator;
+  
+  __slist_for_each__(&t->slist_indicator, indicator){
+    indicator_reset(indicator);
+    PR_DBG("%s reset indicator %s\n", t->name, indicator->str);
+  }
+
+  /* Set status to reset */
+  t->status = TIMELINE_STATUS_RESET;
 }
 
 int timeline_entry_current(struct timeline *t, struct timeline_entry **ret) {
@@ -122,30 +136,18 @@ void timeline_trim_entry(struct timeline *t,
 struct timeline_entry *timeline_step(struct timeline *t) {
 
   struct indicator *indicator;
-  /* t->ref = &t->list_entry.prev; */
-  
-  /* Execute indicators */
-  __slist_for_each__(&t->slist_indicator, indicator){
-    indicator_feed(indicator, t->ref);
-    PR_DBG("%s feed indicator %s\n", t->name, indicator->str);
-  }
-  
-  return t->ref;
-}
-
-int timeline_execute(struct timeline *t) {
-  
-  int n;
   struct timeline_entry *entry;
-  
-  for(n = 0;; n++){
-    if(timeline_entry_next(t, &entry) != -1)
-      timeline_step(t);
-    
-    else
-      break;
-  }
-  
-  return n;
-}
 
+  if(timeline_entry_next(t, &entry) != -1){
+    /* Execute indicators */
+    __slist_for_each__(&t->slist_indicator, indicator){
+      indicator_feed(indicator, t->ref);
+      PR_DBG("%s feed indicator %s\n", t->name, indicator->str);
+    }
+    
+    t->status = TIMELINE_STATUS_RUN;
+    return entry;
+  }
+
+  return NULL;
+}

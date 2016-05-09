@@ -53,10 +53,18 @@ static int rs_mansfield_feed(struct indicator *i, struct timeline_entry *e) {
   return -1;
 }
 
+static void rs_mansfield_reset(struct indicator *i) {
+
+  struct rs_mansfield *r = __indicator_self__(i);
+  /* Reset insights */
+  average_reset(&r->mma);
+  r->value = 0.0;
+}
+
 int rs_mansfield_init(struct rs_mansfield *r, indicator_id_t id, int period,
 		      list_head_t(struct timeline_entry) *ref) {
 
-  __indicator_super__(r, id, rs_mansfield_feed);
+  __indicator_super__(r, id, rs_mansfield_feed, rs_mansfield_reset);
   __indicator_set_string__(r, "rsm[%d]", period);
   
   average_init(&r->mma, AVERAGE_MATH, period);

@@ -40,6 +40,16 @@ void average_release(struct average *a) {
     free(a->pool);
 }
 
+void average_reset(struct average *a) {
+
+  /* Reset math values */
+  a->index = 0;
+  a->count = 0;
+  a->value = 0;
+  /* And exp, too */
+  a->k = 2.0 / (a->period + 1);
+}
+
 int average_is_available(struct average *a) {
 
   if(a->type == AVERAGE_EXP)

@@ -62,10 +62,18 @@ static int swing_feed(struct indicator *i, struct timeline_entry *e) {
   return 0;
 }
 
+static void swing_reset(struct indicator *i) {
+
+  struct swing *s = __indicator_self__(i);
+  /* RAZ */
+  s->ref = NULL;
+  s->type = SWING_NONE;
+}
+
 int swing_init(struct swing *s, indicator_id_t id) {
   
   /* Super() */
-  __indicator_super__(s, id, swing_feed);
+  __indicator_super__(s, id, swing_feed, swing_reset);
   __indicator_set_string__(s, "swing");
   
   s->ref = NULL;
