@@ -26,10 +26,8 @@ static struct timeline_entry *yahoo_read(struct input *in) {
   return __list_self__(y->current_entry);
 }
 
-static int yahoo_load_entry(struct yahoo *y,
-			    struct timeline_entry **ret,
-			    time_info_t time_min, /* FIXME */
-			    time_info_t time_max) {
+static int yahoo_load_entry(struct yahoo *ctx,
+			    struct timeline_entry **ret) {
   
   char buf[256];
   char *str = buf;
@@ -39,7 +37,7 @@ static int yahoo_load_entry(struct yahoo *y,
   int year, month, day;
   double open, close, high, low, volume;
   
-  if(!fgets(buf, sizeof buf, y->fp))
+  if(!fgets(buf, sizeof buf, ctx->fp))
     /* End of file */
     return -1;
   
@@ -50,6 +48,11 @@ static int yahoo_load_entry(struct yahoo *y,
   char *slo = strsep(&str, ",");
   char *sclose = strsep(&str, ",");
   char *svol = strsep(&str, ","); /* End */
+
+  /* Check we got the right format */
+  if(!stime || !sopen || !shi || !slo ||
+     !sclose || !svol)
+    return 0;
   
   /* Set values */
   sscanf(stime, "%d-%d-%d", &year, &month, &day);
@@ -69,14 +72,13 @@ static int yahoo_load_entry(struct yahoo *y,
   TIME_SET_YEAR(time, year);
   
   /* No intraday on yahoo */
-  if(TIMECMP(time, time_min, GRANULARITY_DAY) >= 0 &&
-     TIMECMP(time, time_max, GRANULARITY_DAY) <= 0){
+  if(input_in_boundaries(__input__(ctx), time, GRANULARITY_DAY)){
     /* Create candle (at last !) */
     if(candle_alloc(candle, time, GRANULARITY_DAY,
 		    open, close, high, low, volume)){
       /* Candle is allocated & init */
       *ret = __timeline_entry__(candle);
-      PR_DBG("%s %.2d/%.2d/%.4d loaded\n", y->filename,
+      PR_DBG("%s %.2d/%.2d/%.4d loaded\n", ctx->filename,
 	     TIME_GET_MONTH(time), TIME_GET_DAY(time), TIME_GET_YEAR(time));
       
       return 1;
@@ -98,9 +100,7 @@ static int yahoo_load(struct yahoo *y) {
   fgets(info, sizeof info, y->fp);
   
   for(n = 0;;){
-    switch(yahoo_load_entry(y, &entry,
-			    __input__(y)->from,
-			    __input__(y)->to)) {
+    switch(yahoo_load_entry(y, &entry)){
     case 0 : break;
     case -1 : goto out;
     default :

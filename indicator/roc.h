@@ -46,10 +46,10 @@ static inline void roc_entry_release(struct roc_entry *entry) {
 
 /* Main object */
 
-#define roc_alloc(roc, id, period, average)			\
-  DEFINE_ALLOC(struct roc, roc, roc_init, id, period, average)
-#define roc_free(roc)				\
-  DEFINE_FREE(roc, roc_release)
+#define roc_alloc(r, id, period, average)			\
+  DEFINE_ALLOC(struct roc, r, roc_init, id, period, average)
+#define roc_free(r)				\
+  DEFINE_FREE(r, roc_release)
 
 struct roc {
   /* Inherits from indicator */

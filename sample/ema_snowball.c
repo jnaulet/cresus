@@ -25,10 +25,11 @@
 static int n;
 static int last_month = -1;
 static int average = SNOWBALL_EMA;
+static int max = SNOWBALL_MAX;
 static double share = 0;
 static double amount = 0;
 
-#define SIGMA(n) (int)(n * (double)((n + 1)/2.0))
+#define SIGMA(n) (n * (double)((n + 1)/2.0))
 
 /* sim interface */
 
@@ -46,9 +47,9 @@ static int snowball_feed(struct engine *e,
     last_month = TIME_GET_MONTH(entry->time);
     e->amount += 500.0; /* Add 500€ to capital every month */
     amount += 500.0;
-    share = e->amount / SIGMA(average);
-    PR_INFO("Capital now divided in %d shares of value %.2lf\n",
-	    average, SIGMA(average), share);
+    share = e->amount / max; //e->amount / SIGMA(max);
+    PR_INFO("Capital now divided in %.2lf shares of value %.2lf\n",
+	    share, SIGMA(average));
   }
   /* What do the indicators say ? */
   if((i = candle_find_indicator_entry(c, EMA))){
@@ -56,7 +57,7 @@ static int snowball_feed(struct engine *e,
     //PR_WARN("EMA is %.2f going %.2f\n", m->value, m->direction);
     if(m->direction <= 0 && e->amount > share){
       engine_place_order(e, ORDER_BUY, ORDER_BY_AMOUNT, share);
-      PR_INFO("Took for %.3lf of positions at %.2lf\n", share, c->close);
+      PR_INFO("Took for %.3lf of %d positions at %.2lf\n", share, n, c->close);
       n = n + 1;
     }else
       n = 1;
@@ -97,10 +98,11 @@ int main(int argc, char **argv) {
 
   /* VERBOSE_LEVEL(WARN); */
   
-  while((c = getopt(argc, argv, "va:")) != -1){
+  while((c = getopt(argc, argv, "va:m:")) != -1){
     switch(c){
     case 'v' : VERBOSE_LEVEL(DBG); break;
     case 'a' : average = atoi(optarg); break;
+    case 'm' : max = atoi(optarg); break;
     }
   }
   
@@ -109,7 +111,7 @@ int main(int argc, char **argv) {
   engine_init(&engine, t);
 
   /* TODO : move this */
-  engine.amount = 10000.0;
+  engine.amount = 0; //10000.0;
   engine.npos = 0;
   
   /* Run straight */

@@ -45,11 +45,11 @@ static inline void jtrend_entry_release(struct jtrend_entry *entry) {
 
 /* Main object */
 
-#define jtrend_alloc(jtrend, id, period, average, ref)			\
-  DEFINE_ALLOC(struct jtrend, jtrend, jtrend_init, id,			\
+#define jtrend_alloc(jt, id, period, average, ref)			\
+  DEFINE_ALLOC(struct jtrend, jt, jtrend_init, id,			\
 	       period, average, ref)
-#define jtrend_free(jtrend)			\
-  DEFINE_FREE(jtrend, jtrend_release)
+#define jtrend_free(jt)				\
+  DEFINE_FREE(jt, jtrend_release)
 
 struct jtrend {
   /* Anyway */

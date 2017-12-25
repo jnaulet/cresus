@@ -6,4 +6,5 @@ add_library(framework OBJECT
   indicator.c
   timeline_entry.c
   verbose.c
+  time_info.c
   )

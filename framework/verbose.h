@@ -10,6 +10,7 @@
 #define VERBOSE_H
 
 extern int __verbose__;
+extern int __verbose_color__;
 
 /* Values */
 #define DBG  0
@@ -27,14 +28,23 @@ extern int __verbose__;
 
 #define PR(level, format, font, ...)					\
   if(level >= __verbose__)						\
-    fprintf(stderr, font "%s: " format NO_FONT,				\
-	    __func__, ##__VA_ARGS__)
+    if(__verbose_color__)						\
+      fprintf(stderr, font "%s: " format NO_FONT,			\
+	      __func__, ##__VA_ARGS__);					\
+      else								\
+	fprintf(stderr, "%s: " format,					\
+		__func__, ##__VA_ARGS__)
 
 #define VERBOSE_LEVEL(level) __verbose__ = level
+#define VERBOSE_COLOR(bool) __verbose_color__ = bool
 
 #define PR_DBG(format, ...)  PR(DBG, format, DBG_FONT, ##__VA_ARGS__)
 #define PR_INFO(format, ...) PR(INFO, format, INFO_FONT, ##__VA_ARGS__)
 #define PR_WARN(format, ...) PR(WARN, format, WARN_FONT, ##__VA_ARGS__)
 #define PR_ERR(format, ...)  PR(ERR, format, ERR_FONT, ##__VA_ARGS__)
+
+#define PR_BUY(level, value, format, ...)		\
+  fprintf(stdout, "Buy %.2lf %d " format "\n", value,	\
+	  level, ##__VA_ARGS__)
 
 #endif

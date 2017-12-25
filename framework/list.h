@@ -36,10 +36,10 @@
   for(self = __list_self__((head)->next);				\
       (self) && !__list_is_head__(self);				\
       self = __list_self__(__list__(self)->next))
-#define __list_for_each_prev__(head, self)			\
-  for(struct list *__ptr__ = (head)->prev;			\
-      __ptr__ != (head) && (self = __list_self__(__ptr__));	\
-      __ptr__ = __ptr__->prev)
+#define __list_for_each_prev__(head, self)				\
+  for(self = __list_self__((head)->prev);				\
+      (self) && !__list_is_head__(self);				\
+      self = __list_self__(__list__(self)->prev))
 #define __list_for_each_safe__(head, self, safe)			\
   for(self = __list_self__((head)->next),				\
 	(self) && (safe = __list__(self)->next);			\

@@ -6,7 +6,9 @@ add_library(indicator OBJECT
   atr.c
   bollinger.c
   heikin_ashi.c
+  hilo.c
   jtrend.c
+  linear_reg.c
   macd.c
   mobile.c
   roc.c

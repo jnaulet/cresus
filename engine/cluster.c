@@ -11,8 +11,8 @@
 #include "framework/verbose.h"
 
 int cluster_init(struct cluster *c, const char *name, struct input *in,
-		 time_info_t time_min, time_info_t time_max) {
-  
+		 time_info_t time_min, time_info_t time_max)
+{  
   /* Super */
   __timeline_super__(c, name, in);
   slist_head_init(&c->slist_timeline);
@@ -24,8 +24,8 @@ int cluster_init(struct cluster *c, const char *name, struct input *in,
   return 0;
 }
 
-void cluster_release(struct cluster *c) {
-
+void cluster_release(struct cluster *c)
+{
   __timeline_release__(c);
   slist_head_release(&c->slist_timeline);
 
@@ -33,14 +33,14 @@ void cluster_release(struct cluster *c) {
   calendar_release(&c->cal);
 }
 
-int cluster_add_timeline(struct cluster *c, struct timeline *t) {
-
+int cluster_add_timeline(struct cluster *c, struct timeline *t)
+{
   __slist_insert__(&c->slist_timeline, t);
   return 0;
 }
 
-static void cluster_delete_by_time(struct cluster *c, time_info_t time) {
-  
+static void cluster_delete_by_time(struct cluster *c, time_info_t time)
+{  
   struct timeline *t;
   __slist_for_each__(&c->slist_timeline, t){
     struct timeline_entry *entry;
@@ -52,8 +52,8 @@ static void cluster_delete_by_time(struct cluster *c, time_info_t time) {
 }
 
 static int cluster_prepare_step(struct cluster *c, time_info_t time,
-				struct timeline_entry **ret) {
-  
+				struct timeline_entry **ret)
+{  
   int res;
   char buf[256]; /* debug */
   struct timeline *t;
@@ -86,7 +86,7 @@ static int cluster_prepare_step(struct cluster *c, time_info_t time,
       /* Merge candles */
       candle_merge(candle, __timeline_entry_self__(entry));
       PR_INFO("added candle %s %s in cluster\n", t->name,
-	      timeline_entry_str(entry, buf, sizeof buf));
+	      timeline_entry_str(entry);
     }
   }
 
@@ -98,8 +98,8 @@ static int cluster_prepare_step(struct cluster *c, time_info_t time,
 }
 
 static int cluster_step_ref(struct cluster *c,
-			    struct timeline_entry **ret) {
-  
+			    struct timeline_entry **ret)
+{  
   int res;
   char buf[256]; /* debug */
 
@@ -137,8 +137,8 @@ static int cluster_step_ref(struct cluster *c,
   return 1;
 }
 
-static int cluster_execute_step(struct cluster *c) {
-
+static int cluster_execute_step(struct cluster *c)
+{
   struct timeline *t;
 
   /* Don't forget that we inherit from timeline */
@@ -154,8 +154,8 @@ static int cluster_execute_step(struct cluster *c) {
   return 0;
 }
 
-int cluster_step(struct cluster *c) {
-
+int cluster_step(struct cluster *c)
+{
   int ret;
   struct timeline_entry *entry;
   time_info_t time = calendar_time(&c->cal);

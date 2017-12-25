@@ -17,8 +17,8 @@ int candle_init(struct candle *c,
 		time_info_t time, granularity_t g,
 		double open, double close,
 		double high, double low,
-		double volume) {
-  
+		double volume)
+{  
   /* superclass */
   __timeline_entry_super__(c, time, g);
   
@@ -35,20 +35,20 @@ int candle_init(struct candle *c,
   return 0;
 }
 
-void candle_release(struct candle *c) {
-  
+void candle_release(struct candle *c)
+{  
   __timeline_entry_release__(c);
   slist_head_release(&c->slist_indicator);
 }
 
 void candle_add_indicator_entry(struct candle *c,
-				struct indicator_entry *e) {
-
+				struct indicator_entry *e)
+{
   __slist_insert__(&c->slist_indicator, e);
 }
 
-void candle_merge(struct candle *c, struct candle *c2) {
-
+void candle_merge(struct candle *c, struct candle *c2)
+{
   c->open += c2->open;
   c->close += c2->close;
   c->high += c2->high;
@@ -56,8 +56,8 @@ void candle_merge(struct candle *c, struct candle *c2) {
   c->volume += c2->volume;
 }
 
-double candle_get_value(struct candle *c, candle_value_t value) {
-  
+double candle_get_value(struct candle *c, candle_value_t value)
+{  
   switch(value) {
   case CANDLE_OPEN : return c->open;
   case CANDLE_CLOSE : return c->close;
@@ -85,8 +85,8 @@ int candle_get_direction(struct candle *c)
 }
 
 struct indicator_entry *candle_find_indicator_entry(struct candle *c,
-						    indicator_id_t id) {
-  
+						    indicator_id_t id)
+{  
   struct indicator_entry *entry;
   __slist_for_each__(&c->slist_indicator, entry){
     if(entry->indicator->id == id)
@@ -99,12 +99,18 @@ struct indicator_entry *candle_find_indicator_entry(struct candle *c,
 
 /* Debug */
 
-const char *candle_str(struct candle *c, char *buf) {
+static char str[256];
 
-  char tmp[256];
-  sprintf(buf, "%s o%.1f c%.1f h%.1f l%.1f v%.0f",
-	  __timeline_entry_str__(c, tmp, sizeof tmp),
-	  c->open, c->close, c->high, c->low, c->volume);
+const char *candle_str(struct candle *c)
+{
+  return candle_str_r(c, str);
+}
+
+const char *candle_str_r(struct candle *c, char *buf)
+{
+  sprintf(buf, "%s o%.2f c%.2f h%.2f l%.2f v%.0f",
+	  __timeline_entry_str__(c), c->open, c->close,
+	  c->high, c->low, c->volume);
   
   return buf;
 }

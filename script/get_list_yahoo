@@ -1,6 +1,0 @@
-#!/bin/sh
-
-while read -r line; do
-    src=$(echo ${line} | sed s/#.*//)
-    ./script/yahoo ${src};
-done < $1

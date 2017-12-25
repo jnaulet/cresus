@@ -9,13 +9,11 @@
 #ifndef CALENDAR_H
 #define CALENDAR_H
 
-#include "framework/types.h"
+#include "framework/time_info.h"
 
 struct calendar {
   time_info_t time;
   granularity_t g;
-  /* Debug */
-  char str[256];
 };
 
 int calendar_init(struct calendar *c, time_info_t time, granularity_t g);

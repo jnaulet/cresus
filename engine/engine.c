@@ -18,6 +18,11 @@ int engine_init(struct engine *ctx, struct timeline *t) {
   list_head_init(&ctx->list_position_opened);
   list_head_init(&ctx->list_position_to_close);
   list_head_init(&ctx->list_position_closed);
+
+  /* Internals */
+  ctx->amount = 0;
+  ctx->earnings = 0;
+  ctx->npos = 0;
   
   return 0;
 }
@@ -31,6 +36,7 @@ void engine_release(struct engine *ctx) {
   list_head_release(&ctx->list_position_closed);
 }
 
+/* OBSOLETE */
 static void engine_xfer_positions(struct engine *ctx,
 				  list_head_t(struct position) *dst,
 				  list_head_t(struct position) *src,
@@ -58,12 +64,17 @@ static void engine_run_order(struct engine *ctx, struct order *o,
     if(o->by == ORDER_BY_NB){
       /* Buy n positions */
       ctx->npos += o->value;
-      ctx->amount -= (o->value * c->open);
+      ctx->amount += (o->value * c->open);
     }else{
       /* Buy for x$ of positions */
-      ctx->amount -= o->value;
+      ctx->amount += o->value;
       ctx->npos += (o->value / c->open);
     }
+    break;
+
+  case ORDER_SELL_ALL:
+    ctx->earnings += (ctx->npos * c->open);
+    ctx->npos = 0;
     break;
     
   default:
@@ -78,6 +89,8 @@ void engine_run(struct engine *ctx, engine_feed_ptr feed) {
   struct timeline_entry *entry;
   
   while((entry = timeline_step(ctx->timeline)) != NULL){
+    /* FIXME */
+    struct candle *c = __timeline_entry_self__(entry);
     /* First : check if there are opening positions */
     __list_for_each_safe__(&ctx->list_order, order, safe){
       engine_run_order(ctx, order, entry);
@@ -86,6 +99,7 @@ void engine_run(struct engine *ctx, engine_feed_ptr feed) {
     
     /* Then : feed the engine */
     feed(ctx, ctx->timeline, entry);
+    ctx->close = c->close;
   }
 }
 

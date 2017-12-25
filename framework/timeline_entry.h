@@ -11,6 +11,7 @@
 
 #include "list.h"
 #include "types.h"
+#include "time_info.h"
 
 /* This is a superclass */
 
@@ -32,8 +33,10 @@
   timeline_entry_timecmp(__timeline_entry__(self), time)
 #define __timeline_entry_find__(self, time)		\
   timeline_entry_find(__timeline_entry__(self), time)
-#define __timeline_entry_str__(self, buf, len)		\
-  timeline_entry_str(__timeline_entry__(self), buf, len)
+#define __timeline_entry_str__(self)		\
+  timeline_entry_str(__timeline_entry__(self))
+#define __timeline_entry_str_r__(self, buf, len)		\
+  timeline_entry_str_r(__timeline_entry__(self), buf, len)
 
 #define __timeline_entry_relative_self__(entry, n)		\
   __timeline_entry_self__((struct timeline_entry*)		\
@@ -55,6 +58,7 @@ void timeline_entry_release(struct timeline_entry *e);
 /* Methods */
 time_info_t timeline_entry_timecmp(struct timeline_entry *e, time_info_t time);
 struct timeline_entry *timeline_entry_find(struct timeline_entry *t, time_info_t time);
-const char *timeline_entry_str(struct timeline_entry *e, char *buf, size_t len);
+const char *timeline_entry_str(struct timeline_entry *e);
+const char *timeline_entry_str_r(struct timeline_entry *e, char *buf, size_t len);
 
 #endif

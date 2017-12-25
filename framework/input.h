@@ -23,40 +23,40 @@
   input_init(__input__(self), read, from, to)
 #define __input_release__(self) input_release(__input__(self))
 
-/* methods */
+/* Methods */
 #define __input_read__(self) input_read(__input__(self))
 
 /* Typedefs */
 struct input; /* FIXME : find another way */
 typedef struct timeline_entry *(*input_read_ptr)(struct input *in);
-/* typedef int (*input_load_ptr)(struct input *in, time_t from, time_t to); */
 
 struct input {
   __input_is_superclass__;
   input_read_ptr read;
   time_info_t from, to;
-  /* input_load_ptr load; */
 };
 
 static inline int input_init(struct input *in, input_read_ptr read,
-			     time_info_t from, time_info_t to) {
+			     time_info_t from, time_info_t to)
+{
   in->read = read;
   in->from = from;
   in->to = to;
   return 0;
 }
 
-static inline void input_release(struct input *in) {
+static inline void input_release(struct input *in)
+{
 }
 
-static inline struct timeline_entry *input_read(struct input *in) {
+static inline struct timeline_entry *input_read(struct input *in)
+{
   return in->read(in);
 }
 
-/*
-static inline int input_load(struct input *in, time_t from, time_t to) {
-  return in->load(in, from, to);
-}
-*/
+/* Shortcut macros */
+#define input_in_boundaries(self, time, gr)			\
+  (TIMECMP(time, (self)->from, gr) >= 0 &&			\
+   TIMECMP(time, (self)->to, gr) <= 0)
 
 #endif /* defined(__Cresus_EVO__input__) */

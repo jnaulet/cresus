@@ -15,6 +15,7 @@
 typedef enum {
   ORDER_BUY,
   ORDER_SELL,
+  ORDER_SELL_ALL,
   ORDER_SELLSHORT,
   ORDER_EXITSHORT
 } order_t;
@@ -38,7 +39,11 @@ struct order {
   double value;
 };
 
-int order_init(struct order *ctx, order_t type, order_by_t by, double value);
+int order_init(struct order *ctx, order_t type,
+	       order_by_t by, double value);
 void order_release(struct order *ctx);
+
+const char *order_str(struct order *ctx);
+const char *order_str_r(struct order *ctx, char *buf);
 
 #endif

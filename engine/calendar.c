@@ -78,5 +78,5 @@ int calendar_next(struct calendar *c, time_info_t *time) {
 
 const char *calendar_str(struct calendar *c) {
 
-  return time2str(c->time, c->g, c->str);
+  return time_info2str(c->time, c->g);
 }
