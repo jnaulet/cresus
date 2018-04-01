@@ -74,12 +74,10 @@ static struct candle *b4b_parse_entry(struct b4b *ctx, char *str)
   TIME_SET_MONTH(time, month);
   TIME_SET_YEAR(time, year);
 
-  if(input_in_boundaries(__input__(ctx), time, GRANULARITY_DAY))
-    /* Filtered by time */
-    if(candle_alloc(c, time, GRANULARITY_DAY,
-		    open, close, high, low, volume))
-      return c;
-
+  if(candle_alloc(c, time, GRANULARITY_DAY,
+                  open, close, high, low, volume))
+    return c;
+  
  err:
   return NULL;
 }
@@ -107,13 +105,12 @@ static struct timeline_entry *b4b_read(struct input *in)
   return NULL;
 }
 
-int b4b_init(struct b4b *ctx, const char *filename,
-	     time_info_t from, time_info_t to)
+int b4b_init(struct b4b *ctx, const char *filename)
 {
   char dummy[256];
   
   /* super */
-  __input_super__(ctx, b4b_read, from, to);
+  __input_super__(ctx, b4b_read);
 
   strncpy(ctx->filename, filename, sizeof(ctx->filename));
   if(!(ctx->fp = fopen(ctx->filename, "r"))){

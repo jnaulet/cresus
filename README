@@ -1,3 +1,38 @@
+==== Cresus ====
+
+Cresus (or libcresus) is an API written in C designed to provide stock market functions for backtest applications. Some sample code is provided in the "system" directory.
+
+=== Requirements ===
+
+This software requires the json-parser library to be installed on your system : https://github.com/udp/json-parser
+
+=== Build & install ===
+
+To build this software, type in :
+
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+
+To install in /usr/local :
+
+$ make install
+
+Libcresus provides support for yahoo (csv) & mdgms (json) input files. Default is yahoo v7.
+For more information on this, just open input/inwrap.h
+
+=== Provided examples ===
+
+To run the provided examples :
+
+$ buy_monthly [-o file_type] <file> [-n start_year] [-m occurrence] [-F amount] [-q]
+$ buy_red_filtered [-o file_type] <file> [-n start_year] [-l level_min]
+$ buy_red_sell_green_filtered [-o file_type] <file> [-n start_year] [-b level_buy] [-s level_sell]
+$ sell_in_may [-o file_type] <file> [-n start_year] [-F amount]
+
+=== Original description ===
+
 Cresus was originally a stock market bot research software developped in 2013 that was not giving total satisfaction to its owner, who wanted something which could easily manipulate tons & tons of data & indicators.
 
 So here is Cresus EVO (at least v3, if i remember well), a simple lib that allows anyone to manipulate lots of stock market data, especially from Yahoo.

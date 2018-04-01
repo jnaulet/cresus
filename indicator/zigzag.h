@@ -15,7 +15,6 @@
 
 /* Common */
 
-/* TODO : use trend_t instead */
 typedef enum {
   ZIGZAG_NONE,
   ZIGZAG_UP,

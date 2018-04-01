@@ -56,11 +56,14 @@ static inline void rs_dorsey_entry_release(struct rs_dorsey_entry *entry){
 struct rs_dorsey {
   /* As always, inherits from indicator */
   __inherits_from_indicator__;
+  /* Reference chart */
   list_head_t(struct timeline_entry) *ref;
+  /* Internals */
+  double ratio_prev;
 };
 
-int rs_dorsey_init(struct rs_dorsey *r, indicator_id_t id,
+int rs_dorsey_init(struct rs_dorsey *ctx, indicator_id_t id,
 		   list_head_t(struct timeline_entry) *ref);
-void rs_dorsey_release(struct rs_dorsey *r);
+void rs_dorsey_release(struct rs_dorsey *ctx);
 
 #endif

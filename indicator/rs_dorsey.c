@@ -9,47 +9,52 @@
 #include "rs_dorsey.h"
 #include "engine/candle.h"
 
-static int rs_dorsey_feed(struct indicator *i, struct timeline_entry *e) {
-
-  struct timeline_entry *entry;
-  struct rs_dorsey *r = __indicator_self__(i);
+static int rs_dorsey_feed(struct indicator *i, struct timeline_entry *e)
+{
+  struct timeline_entry *ref_entry;
+  struct rs_dorsey *ctx = __indicator_self__(i);
   struct candle *c = __timeline_entry_self__(e);
+ 
+  if((ref_entry = timeline_entry_find(__list_self__(ctx->ref), e->time))){
+    struct rs_dorsey_entry *entry;
+    struct candle *ref_c = __timeline_entry_self__(ref_entry);
+    double ratio = c->close / ref_c->close * 100.0;
+    double value = ratio / ctx->ratio_prev - 1.0; /* Ref is 0 */
+    
+    if(!i->is_empty){
+      if(rs_dorsey_entry_alloc(entry, i, value))
+	candle_add_indicator_entry(c, __indicator_entry__(entry));
+      /* Set new ref for better performance */
+      ctx->ref = __list__(ref_entry);
+    }
 
-  if(i->is_empty)
-    r->ref = __list__(e);
-  
-  if((entry = timeline_entry_find(__list_self__(r->ref), e->time))){
-    struct rs_dorsey_entry *rsd;
-    struct candle *cref = __timeline_entry_self__(entry);
-    double value = c->close / cref->close;
-    if(rs_dorsey_entry_alloc(rsd, i, value))
-      candle_add_indicator_entry(c, __indicator_entry__(rsd));
-    /* Set new ref */
-    r->ref = __list__(entry);
+    /* Update ratio & diff for next round */
+    ctx->ratio_prev = ratio;
     return 0;
   }
-  
+
   return -1;
 }
 
-static void rs_dorsey_reset(struct indicator *i) {
-
-  struct rs_dorsey *r = __indicator_self__(i);
+static void rs_dorsey_reset(struct indicator *i)
+{
+  struct rs_dorsey *ctx = __indicator_self__(i);
   /* Nothing to do */
 }
 
-int rs_dorsey_init(struct rs_dorsey *r, indicator_id_t id,
-		   list_head_t(struct timeline_entry) *ref) {
-
+int rs_dorsey_init(struct rs_dorsey *ctx, indicator_id_t id,
+		   list_head_t(struct timeline_entry) *ref)
+{
   /* super() */
-  __indicator_super__(r, id, rs_dorsey_feed, rs_dorsey_reset);
-  __indicator_set_string__(r, "rsd[i]");
+  __indicator_super__(ctx, id, rs_dorsey_feed, rs_dorsey_reset);
+  __indicator_set_string__(ctx, "rsd[]");
   
-  r->ref = ref->next;
+  ctx->ref = ref->next;
+  ctx->ratio_prev = 0.0;
   return 0;
 }
 
-void rs_dorsey_release(struct rs_dorsey *r) {
-
-  __indicator_release__(r);
+void rs_dorsey_release(struct rs_dorsey *ctx)
+{
+  __indicator_release__(ctx);
 }

@@ -1,7 +1,7 @@
 /*
- * Cresus EVO - buy_monthly.c
+ * Cresus EVO - sell_in_may.c
  *
- * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 25/02/2018
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 20/04/2018
  * Copyright (c) 2016 Joachim Naulet. All rights reserved.
  *
  *
@@ -18,25 +18,32 @@
 #include "input/inwrap.h"
 #include "engine/engine.h"
 #include "framework/verbose.h"
-#include "framework/common_opt.h"
 
 static int amount = 250;
-static int occurrence = 1;
+static int current_month = -1;
+time_info_t year_min = TIME_INIT(1900, 1, 1, 0, 0, 0, 0);
+
+/* Stats */
+static int quiet = 0;
 
 static int feed(struct engine *e,
 		struct timeline *t,
 		struct timeline_entry *entry)
 {
   /* Step by step loop */
-  static int last_month = -1;
+  time_info_t time = VAL_YEAR(year_min);
   struct candle *c = __timeline_entry_self__(entry);
+
+#define MONTH 6 /* June seems to work better */
   
   /* Execute */
   int month = TIME_GET_MONTH(entry->time);
-  if(month != last_month && !(month % occurrence))
-    engine_set_order(e, BUY, amount, CASH, NULL);
+  if(month != current_month){
+    if(month != MONTH) engine_set_order(e, BUY, amount, CASH, NULL);
+    else engine_set_order(e, SELL, CASH, 100000, NULL); /* FIXME */
+  }
   
-  last_month = month;
+  current_month = month;
   return 0;
 }
 
@@ -51,7 +58,7 @@ static struct timeline *timeline_create(const char *filename,
   inwrap_t t = inwrap_t_from_str(type);
   
   if(inwrap_alloc(inwrap, filename, t)){
-    if(timeline_alloc(timeline, "buy_monthly", __input__(inwrap))){
+    if(timeline_alloc(timeline, "sell_in_may", __input__(inwrap))){
       /* Ok */
       return timeline;
     }
@@ -68,32 +75,38 @@ int main(int argc, char **argv)
    * Data
    */
   int c;
-  char *filename;
-  struct common_opt opt;
+  char *filename, *type;
   
   struct timeline *t;
   struct engine engine;
 
-  if(argc < 2)
-    goto usage;
+  if(argc < 2){
+    fprintf(stdout, "Usage: %s -o type filename\n", argv[0]);
+    return -1;
+  }
 
-  /* Options */
-  common_opt_init(&opt, "m:");
-  while((c = common_opt_getopt(&opt, argc, argv)) != -1){
+  while((c = getopt(argc, argv, "o:n:F:q")) != -1){
     switch(c){
-    case 'm': occurrence = atoi(optarg); break;
-    default: break;
+    case 'o': type = optarg; break;
+    case 'n': year_min = VAL_YEAR(atoi(optarg)); break;
+    case 'F': amount = atoi(optarg); break;
+    case 'q': quiet = 1; break;
+    default:
+      PR_ERR("Unknown option %c\n", c);
+      return -1;
     }
   }
-  
-  /* Command line params */
+
+  /* Filename is only real param */
   filename = argv[optind];
-  if(opt.fixed_amount.set) amount = opt.fixed_amount.i;
-  if(!opt.input_type.set) goto usage;
   
-  if((t = timeline_create(filename, opt.input_type.s))){
+  if((t = timeline_create(filename, type))){
     engine_init(&engine, t);
-    engine_set_common_opt(&engine, &opt);
+    /* Options */
+    engine_set_transaction_fee(&engine, 2.50);
+    engine_set_quiet(&engine, quiet);
+    engine_set_start_time(&engine, year_min);
+
     /* Run */
     engine_run(&engine, feed);
     
@@ -105,8 +118,4 @@ int main(int argc, char **argv)
   }
   
   return 0;
-
- usage:
-  fprintf(stdout, "Usage: %s -o type filename\n", argv[0]);
-  return -1;
 }

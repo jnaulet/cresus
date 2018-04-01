@@ -71,21 +71,16 @@ static int yahoo_load_entry(struct yahoo *ctx,
   TIME_SET_MONTH(time, month);
   TIME_SET_YEAR(time, year);
   
-  /* No intraday on yahoo */
-  if(input_in_boundaries(__input__(ctx), time, GRANULARITY_DAY)){
-    /* Create candle (at last !) */
-    if(candle_alloc(candle, time, GRANULARITY_DAY,
-		    open, close, high, low, volume)){
-      /* Candle is allocated & init */
-      *ret = __timeline_entry__(candle);
-      PR_DBG("%s %.2d/%.2d/%.4d loaded\n", ctx->filename,
-	     TIME_GET_MONTH(time), TIME_GET_DAY(time), TIME_GET_YEAR(time));
-      
-      return 1;
-    }
+  /* Create candle (at last !) */
+  if(candle_alloc(candle, time, GRANULARITY_DAY,
+                  open, close, high, low, volume)){
+    /* Candle is allocated & init */
+    *ret = __timeline_entry__(candle);
+    PR_DBG("%s %.2d/%.2d/%.4d loaded\n", ctx->filename,
+           TIME_GET_MONTH(time), TIME_GET_DAY(time), TIME_GET_YEAR(time));
     
-  }else
-    return 0;
+    return 1;
+  }
   
   return -1;
 }
@@ -114,11 +109,10 @@ static int yahoo_load(struct yahoo *y) {
   return n;
 }
 
-int yahoo_init(struct yahoo *y, const char *filename,
-	       time_info_t from, time_info_t to) {
+int yahoo_init(struct yahoo *y, const char *filename) {
   
   /* super */
-  __input_super__(y, yahoo_read, from, to);
+  __input_super__(y, yahoo_read);
   list_head_init(&y->list_entry);
   
   strncpy(y->filename, filename, sizeof(y->filename));

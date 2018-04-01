@@ -15,22 +15,25 @@
 #include "b4b.h"
 #include "yahoo.h"
 #include "yahoo_v7.h"
-#include "json.h"
+#include "mdgms.h"
+#include "xtrade.h"
+#include "euronext.h"
+#include "kraken.h"
 
 /* Object is allocatable */
 
-#define inwrap_alloc(ctx, filename, type, from, to)			\
-  DEFINE_ALLOC(struct inwrap, ctx, inwrap_init, filename,		\
-	       type, from, to)
-#define inwrap_free(ctx)			\
+#define inwrap_alloc(ctx, filename, type)			\
+  DEFINE_ALLOC(struct inwrap, ctx, inwrap_init, filename, type)
+#define inwrap_free(ctx)		\
   DEFINE_FREE(ctx, inwrap_release)
 
 typedef enum {
-  INWRAP_YAHOO,
   INWRAP_YAHOO_V7,
   INWRAP_B4B,
-  INWRAP_JSON,
-  INWRAP_GOOGLE
+  INWRAP_MDGMS,
+  INWRAP_XTRADE,
+  INWRAP_EURONEXT,
+  INWRAP_KRAKEN
 } inwrap_t;
 
 struct inwrap {
@@ -38,15 +41,15 @@ struct inwrap {
   __inherits_from_input__;
   /* Suported types */  
   inwrap_t type;
-  struct yahoo yahoo;
   struct yahoo_v7 yahoo_v7;
   struct b4b b4b;
-  struct json json;
-  // struct google google;
+  struct mdgms mdgms;
+  struct xtrade xtrade;
+  struct euronext euronext;
+  struct kraken kraken;
 };
 
-int inwrap_init(struct inwrap *ctx, const char *filename,
-	       inwrap_t type, time_info_t from, time_info_t to);
+int inwrap_init(struct inwrap *ctx, const char *filename, inwrap_t type);
 void inwrap_release(struct inwrap *ctx);
 
 #include <string.h>
@@ -54,11 +57,12 @@ void inwrap_release(struct inwrap *ctx);
 static inline inwrap_t inwrap_t_from_str(const char *str)
 {
   if(str){
-    if(!strcmp("yahoo", str)) return INWRAP_YAHOO;
+    if(!strcmp("yahoo", str)) return INWRAP_YAHOO_V7;
     if(!strcmp("b4b", str)) return INWRAP_B4B;
-    if(!strcmp("google", str)) return INWRAP_GOOGLE;
-    if(!strcmp("json", str) ||
-       !strcmp("mdgms", str)) return INWRAP_JSON;
+    if(!strcmp("mdgms", str)) return INWRAP_MDGMS;
+    if(!strcmp("xtrade", str)) return INWRAP_XTRADE;
+    if(!strcmp("euronext", str)) return INWRAP_EURONEXT;
+    if(!strcmp("kraken", str)) return INWRAP_KRAKEN;
   }
   return INWRAP_YAHOO_V7;
 }

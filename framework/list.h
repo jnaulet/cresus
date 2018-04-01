@@ -46,6 +46,12 @@
       (self) && !__list_is_head__(self);				\
       self = __list_self__(safe),					\
 	(self) && (safe = __list__(self)->next))
+#define __list_for_each_prev_safe__(head, self, safe)			\
+  for(self = __list_self__((head)->prev),				\
+	(self) && (safe = __list__(self)->prev);			\
+      (self) && !__list_is_head__(self);				\
+      self = __list_self__(safe),					\
+	(self) && (safe = __list__(self)->prev))
   
 /* Relative functions */
 #define __list_relative__(entry, n)			\

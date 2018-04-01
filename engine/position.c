@@ -6,111 +6,62 @@
  *
  */
 
+#include <string.h>
 #include "position.h"
 #include "framework/verbose.h"
 
-int position_init(struct position *p, struct timeline *t,
-		  position_t type, double n) {
-
+int position_init(struct position *ctx, position_t type,
+		  position_req_t req, double n, struct cert *cert)
+{
   /* super() */
-  __list_super__(p);
-  
-  p->t = t;
-  p->in = NULL;
-  p->out = NULL;
-  
-  p->n = n;
-  p->type = type;
+  __list_super__(ctx);
+
+  ctx->req = req;
+  ctx->type = type;
+  ctx->status = POSITION_REQUESTED;
+  /* Content */
+  if(req == POSITION_REQ_SHARES) ctx->request.shares = n;
+  else ctx->request.cash = n;
+  /* Value */
+  ctx->value = 0;
+  /* Certificates */
+  if(!cert) cert_zero(&ctx->cert);
+  else memcpy(&ctx->cert, cert, sizeof(ctx->cert));
   
   return 0;
 }
 
-void position_release(struct position *p) {
-
-  __list_release__(p);
-  p->in = NULL;
-  p->out = NULL;
+void position_release(struct position *ctx)
+{
+  __list_release__(ctx);
 }
 
-/* FIXME : find better names */
+double position_unit_value(struct position *ctx)
+{
+  if(ctx->type == POSITION_BUY ||
+     ctx->type == POSITION_SELL)
+    return cert_long_value(&ctx->cert, ctx->value);
+  
+  if(ctx->type == POSITION_SELLSHORT ||
+     ctx->type == POSITION_EXITSHORT)
+    return cert_short_value(&ctx->cert, ctx->value);
+  
+  return 0.0;
+}
 
-static int position_exec(struct position *p, struct candle **c) {
-
-  int ret;
-  struct timeline_entry *entry;
-  if((ret = timeline_entry_current(p->t, &entry)) < 0){
-    PR_WARN("%s position for %s can't be executed\n",
-	    p->type == POSITION_LONG ? "LONG" : "SHORT", p->t->name);
-    
+double position_current_value(struct position *ctx, double cur)
+{
+  if(ctx->status != POSITION_CONFIRMED)
     goto out;
-  }
-
-  /* Set return value */
-  *c = __timeline_entry_self__(entry);
   
+  if(ctx->type == POSITION_BUY ||
+     ctx->type == POSITION_SELL)
+    return ctx->n * ((cur - ctx->cert.funding) / ctx->cert.ratio);
+  
+  if(ctx->type == POSITION_SELLSHORT ||
+     ctx->type == POSITION_EXITSHORT)
+    return ctx->n * ((ctx->cert.funding - cur) / ctx->cert.ratio);
+
  out:
-  return ret;
-}
-
-int position_in(struct position *p) {
-
-  return position_exec(p, &p->in);
-}
-
-int position_out(struct position *p) {
-
-  return position_exec(p, &p->out);
-}
-
-int position_nop(struct position *p) {
-
-  return 0;
-}
-
-static double position_out_value(struct position *p) {
-
-  double out;
-  
-  if(p->out == NULL){
-    /* If we're not out of position */
-    struct candle *c;
-    struct timeline_entry *e;
-    
-    if(timeline_entry_current(p->t, &e) != -1){
-      c = __timeline_entry_self__(e);
-      out = c->open;
-    }else
-      out = p->in->open;
-  }else
-    out = p->out->open;
-
-  return out;
-}
-
-double position_value(struct position *p) {
-
-  double ret;
-  double out = position_out_value(p);
-  
-  /* FIXME : forced candle open value comparison */
-  if(p->type == POSITION_LONG)
-    ret = (out - p->in->open);
-  else
-    ret = (p->in->open - out);
-  
-  return ret;
-}
-
-double position_factor(struct position *p) {
-
-  double ret;
-  double out = position_out_value(p);
-  
-  /* FIXME : forced candle open value comparison */
-  if(p->type == POSITION_LONG)
-    ret = (out / p->in->open);
-  else
-    ret = (p->in->open / out);
-  
-  return ret;
+  return 0.0;
 }

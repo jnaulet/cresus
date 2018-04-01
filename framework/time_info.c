@@ -26,6 +26,15 @@ time_info_t time_info_epoch(time_t time)
   return t;
 }
 
+int time_info_dayofweek(time_info_t t)
+{
+  static int x[] = { 0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4 };
+  int m = TIME_GET_MONTH(t);
+  int y = TIME_GET_YEAR(t) - (m < 3);
+  int d = TIME_GET_DAY(t);
+  return (y + y / 4 - y / 100 + y / 400 + x[m-1] + d) % 7;
+}
+
 const char *time_info2str_r(time_info_t t, granularity_t g, char *buf)
 {
   *buf = 0;								

@@ -26,7 +26,7 @@ add_library(cresus SHARED
 
 target_link_libraries(cresus m jsonparser)
 
-add_subdirectory(sample)
+# add_subdirectory(sample)
 add_subdirectory(system)
 
 install(TARGETS cresus DESTINATION lib)

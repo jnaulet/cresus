@@ -1,5 +1,5 @@
 /*
- * Cresus EVO - json.c 
+ * Cresus EVO - mdgms.c 
  * 
  * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 11/01/2018
  * Copyright (c) 2016 Joachim Naulet. All rights reserved.
@@ -13,22 +13,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "json.h"
+#include "mdgms.h"
 #include "engine/candle.h"
 #include "framework/verbose.h"
 
-typedef enum {
-  JSON_TIMESTAMP,
-  JSON_FIRST,
-  JSON_LAST,
-  JSON_HIGH,
-  JSON_LOW
-} json_t;
-
-static struct timeline_entry *json_read(struct input *in)
+static struct timeline_entry *mdgms_read(struct input *in)
 {
   struct candle *c;
-  struct json *ctx = __input_self__(in);
+  struct mdgms *ctx = __input_self__(in);
   
   /* TODO: check !!! */
   json_value *ts = ctx->value->u.object.values[0].value;
@@ -54,25 +46,22 @@ static struct timeline_entry *json_read(struct input *in)
   ctx->i++;
   
   time_info_t time = time_info_epoch(t);
-  if(input_in_boundaries(in, time, GRANULARITY_DAY))
-    /* Filter by time (FIXME ?) */
-    if(candle_alloc(c, time, GRANULARITY_DAY,
-		    open, close, high, low, vol))
-      return __timeline_entry__(c);
-
+  if(candle_alloc(c, time, GRANULARITY_DAY,
+                  open, close, high, low, vol))
+    return __timeline_entry__(c);
+  
  err:
   return NULL;
 }
 
-int json_init(struct json *ctx, const char *filename,
-	      time_info_t from, time_info_t to)
+int mdgms_init(struct mdgms *ctx, const char *filename)
 {
   int fd;
   size_t size;
   struct stat stat;
 
   /* super */
-  __input_super__(ctx, json_read, from, to);
+  __input_super__(ctx, mdgms_read);
   
   /* internals */
   ctx->i = 0;
@@ -104,7 +93,7 @@ int json_init(struct json *ctx, const char *filename,
   return -1;
 }
 
-void json_release(struct json *ctx)
+void mdgms_release(struct mdgms *ctx)
 {  
   __input_release__(ctx);
   json_value_free(ctx->value);

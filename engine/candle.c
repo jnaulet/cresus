@@ -93,7 +93,7 @@ struct indicator_entry *candle_find_indicator_entry(struct candle *c,
       return entry;
   }
   
-  PR_WARN("can't find any indicator %d entry\n", id);
+  //PR_WARN("can't find any indicator %d entry\n", id);
   return NULL;
 }
 

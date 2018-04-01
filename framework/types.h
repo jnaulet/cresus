@@ -10,6 +10,8 @@
 #define TYPES_H
 
 #define BITMASK(n) ((1ll << n) - 1)
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 /* Trend */
 

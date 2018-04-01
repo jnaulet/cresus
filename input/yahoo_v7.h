@@ -15,8 +15,8 @@
 
 /* Object is allocatable */
 
-#define yahoo_v7_alloc(ctx, filename, from, to)				\
-  DEFINE_ALLOC(struct yahoo_v7, ctx, yahoo_v7_init, filename, from, to)
+#define yahoo_v7_alloc(ctx, filename)				\
+  DEFINE_ALLOC(struct yahoo_v7, ctx, yahoo_v7_init, filename)
 #define yahoo_v7_free(ctx)			\
   DEFINE_FREE(ctx, yahoo_v7_release)
 
@@ -30,8 +30,7 @@ struct yahoo_v7 {
   char filename[256];
 };
 
-int yahoo_v7_init(struct yahoo_v7 *ctx, const char *filename,
-		  time_info_t from, time_info_t to);
+int yahoo_v7_init(struct yahoo_v7 *ctx, const char *filename);
 void yahoo_v7_release(struct yahoo_v7 *ctx);
 
 #endif

@@ -83,9 +83,12 @@ typedef long long granularity_t;
 #define VAL_MONTH(m) ((BITMASK(MONTH_NBIT) & (m - 1)) << MONTH_SHIFT)
 #define VAL_YEAR(y) ((BITMASK(YEAR_NBIT) & y) << YEAR_SHIFT)
 
+/* FIXME : Shouldn't it be TIME_INFO_INIT ? */
 #define TIME_INIT(y, m, d, h, mn, s, ms)				\
   (VAL_MSEC(ms) | VAL_SECOND(s) | VAL_MINUTE(mn) | VAL_HOUR(h) |	\
    VAL_DAY(d) | VAL_MONTH(m) | VAL_YEAR(y))
+#define TIME_ZERO()                             \
+  TIME_INIT(1900, 1, 1, 0, 0, 0, 0)
 
 /* Set accessors */
 #define TIME_SET_MSEC(t, m)   t = ((t & ~MSEC_MASK)   | VAL_MSEC(m))
@@ -111,6 +114,8 @@ typedef long long granularity_t;
 /* Current time */
 time_info_t time_info(void);
 time_info_t time_info_epoch(time_t time);
+/* Some algorithm */
+int time_info_dayofweek(time_info_t t);
 /* Display */
 const char *time_info2str(time_info_t t, granularity_t g);
 const char *time_info2str_r(time_info_t t, granularity_t g, char *buf);

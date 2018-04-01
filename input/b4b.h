@@ -15,8 +15,8 @@
 
 /* Object is allocatable */
 
-#define b4b_alloc(ctx, filename, from, to)			\
-  DEFINE_ALLOC(struct b4b, ctx, b4b_init, filename, from, to)
+#define b4b_alloc(ctx, filename)			\
+  DEFINE_ALLOC(struct b4b, ctx, b4b_init, filename)
 #define b4b_free(ctx)				\
   DEFINE_FREE(ctx, b4b_release)
 
@@ -30,8 +30,7 @@ struct b4b {
   char filename[256];
 };
 
-int b4b_init(struct b4b *ctx, const char *filename,
-	     time_info_t from, time_info_t to);
+int b4b_init(struct b4b *ctx, const char *filename);
 void b4b_release(struct b4b *ctx);
 
 #endif

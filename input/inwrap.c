@@ -17,44 +17,48 @@ static struct timeline_entry *inwrap_read(struct input *in)
 {
   struct inwrap *ctx = __input_self__(in);
   switch(ctx->type){
-  case INWRAP_YAHOO: return __input_read__(&ctx->yahoo);
   case INWRAP_YAHOO_V7: return __input_read__(&ctx->yahoo_v7);
   case INWRAP_B4B: return __input_read__(&ctx->b4b);
-  case INWRAP_JSON: return __input_read__(&ctx->json);
-  case INWRAP_GOOGLE: break;
+  case INWRAP_MDGMS: return __input_read__(&ctx->mdgms);
+  case INWRAP_XTRADE: return __input_read__(&ctx->xtrade);
+  case INWRAP_EURONEXT: return __input_read__(&ctx->euronext);
+  case INWRAP_KRAKEN: return __input_read__(&ctx->kraken);
   }
-
+  
   return NULL;
 }
 
-int inwrap_init(struct inwrap *ctx, const char *filename,
-	       inwrap_t type, time_info_t from, time_info_t to)
+int inwrap_init(struct inwrap *ctx, const char *filename, inwrap_t type)
 {
   int ret = -1;
 
   /* super() */
-  __input_super__(ctx, inwrap_read, from, to);
+  __input_super__(ctx, inwrap_read);
   ctx->type = type;
 
   switch(type){
-  case INWRAP_YAHOO:
-    ret = yahoo_init(&ctx->yahoo, filename, from, to);
-    break;
-
   case INWRAP_YAHOO_V7:
-    ret = yahoo_v7_init(&ctx->yahoo_v7, filename, from, to);
+    ret = yahoo_v7_init(&ctx->yahoo_v7, filename);
     break;
     
   case INWRAP_B4B:
-    ret = b4b_init(&ctx->b4b, filename, from, to);
+    ret = b4b_init(&ctx->b4b, filename);
     break;
 
-  case INWRAP_JSON:
-    ret = json_init(&ctx->json, filename, from, to);
+  case INWRAP_MDGMS:
+    ret = mdgms_init(&ctx->mdgms, filename);
+    break;
+
+  case INWRAP_XTRADE:
+    ret = xtrade_init(&ctx->xtrade, filename);
     break;
     
-  case INWRAP_GOOGLE:
-    PR_WARN("INWRAP_GOOGLE not implemented\n");
+  case INWRAP_EURONEXT:
+    ret = euronext_init(&ctx->euronext, filename);
+    break;
+
+  case INWRAP_KRAKEN:
+    ret = kraken_init(&ctx->kraken, filename);
     break;
   }
   

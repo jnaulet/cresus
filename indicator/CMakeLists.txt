@@ -9,12 +9,14 @@ add_library(indicator OBJECT
   hilo.c
   jtrend.c
   linear_reg.c
+  lowest.c
   macd.c
   mobile.c
   roc.c
   rs_dorsey.c
   rsi.c
   rs_mansfield.c
+  rs_roc.c
   smi.c
   srsi.c
   stochastic.c
@@ -23,4 +25,3 @@ add_library(indicator OBJECT
   updown.c
   zigzag.c
   )
-

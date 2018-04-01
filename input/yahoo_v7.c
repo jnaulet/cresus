@@ -53,13 +53,11 @@ static struct candle *yahoo_v7_parse_entry(struct yahoo_v7 *ctx, char *str)
   TIME_SET_MONTH(time, month);
   TIME_SET_YEAR(time, year);
 
-  if(open != 0.0 && close != 0.0 && high != 0.0 && low != 0.0 &&
-     input_in_boundaries(__input__(ctx), time, GRANULARITY_DAY))
-    /* Filtered by time */
+  if(open != 0.0 && close != 0.0 && high != 0.0 && low != 0.0)
     if(candle_alloc(c, time, GRANULARITY_DAY,
 		    open, close, high, low, volume))
       return c;
-
+  
  err:
   return NULL;
 }
@@ -84,13 +82,12 @@ static struct timeline_entry *yahoo_v7_read(struct input *in)
   return NULL;
 }
 
-int yahoo_v7_init(struct yahoo_v7 *ctx, const char *filename,
-		  time_info_t from, time_info_t to)
+int yahoo_v7_init(struct yahoo_v7 *ctx, const char *filename)
 {
   char dummy[256];
   
   /* super */
-  __input_super__(ctx, yahoo_v7_read, from, to);
+  __input_super__(ctx, yahoo_v7_read);
 
   strncpy(ctx->filename, filename, sizeof(ctx->filename));
   if(!(ctx->fp = fopen(ctx->filename, "r"))){

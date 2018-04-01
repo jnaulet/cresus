@@ -7,15 +7,20 @@
  */
 
 #include "order.h"
+#include <string.h>
 
-int order_init(struct order *ctx, order_t type, order_by_t by, double value)
+int order_init(struct order *ctx, order_t t, order_by_t by,
+	       double value, struct cert *cert)
 {
   /* super() */
   __list_super__(ctx);
-  
-  ctx->type = type;
+  /* Internals */
+  ctx->type = t;
   ctx->by = by;
   ctx->value = value;
+
+  if(!cert) cert_zero(&ctx->cert);
+  else memcpy(&ctx->cert, cert, sizeof(ctx->cert));
   
   return 0;
 }
@@ -56,8 +61,8 @@ static const char *order_str_by(struct order *ctx)
 
 const char *order_str_r(struct order *ctx, char *buf)
 {
-  sprintf(buf, "%s %.2lf %s", order_str_type(ctx), ctx->value,
-	  order_str_by(ctx));
+  sprintf(buf, "%s %.2lf %s", order_str_type(ctx),
+	  ctx->value, order_str_by(ctx));
   
   return buf;
 }

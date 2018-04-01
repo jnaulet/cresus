@@ -1,7 +1,7 @@
 /*
- * Cresus EVO - buy_red_filtered.c
+ * Cresus EVO - buy_red_sell_green.c
  *
- * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 07/04/2016
+ * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 18/04/2018
  * Copyright (c) 2016 Joachim Naulet. All rights reserved.
  *
  *
@@ -22,14 +22,12 @@
 
 typedef enum {
   STATE_NORMAL,
-  STATE_PRIME
+  STATE_PRIME_BUY,
+  STATE_PRIME_SELL
 } state_t;
 
-/* n consecutive red candles */
-static int level_min = 1;
-/* amount to buy */
-static double amount = 500.0;
-/* State machine */
+static int level_buy_min = 1;
+static int level_sell_min = 1;
 static state_t state = STATE_NORMAL;
 
 static int feed(struct engine *e,
@@ -37,27 +35,38 @@ static int feed(struct engine *e,
 		struct timeline_entry *entry)
 {
   /* Step by step loop */
-  static int level = 0;
+  static int level_buy = 0, level_sell = 0;
   struct candle *c = __timeline_entry_self__(entry);
   
   /* Execute */
-  if(candle_is_red(c)) level++;
-  else level = 0;
+  if(candle_is_red(c)){
+    level_buy++;
+    level_sell = 0;
+  }else{
+    level_sell++;
+    level_buy = 0;
+  }
+
+  /* State machine */
+  if(level_buy >= level_buy_min) state = STATE_PRIME_BUY;
+  if(level_sell >= level_sell_min) state = STATE_PRIME_SELL;
   
-  if(level >= level_min)
-    state = STATE_PRIME;
+  /* Trigger buy order */
+  if(state == STATE_PRIME_BUY && !level_buy){
+    engine_set_order(e, BUY, 500, CASH, NULL);
+    state = STATE_NORMAL;
+  }
   
-  if(state == STATE_PRIME && !level){
-    /* Trigger buy order */
-    engine_set_order(e, BUY, amount, CASH, NULL);
+  /* Trigger sell order */
+  if(state == STATE_PRIME_SELL && !level_sell){
+    engine_set_order(e, SELL, 500, CASH, NULL);
     state = STATE_NORMAL;
   }
   
   return 0;
 }
 
-static struct timeline *timeline_create(const char *filename,
-                                        const char *type)
+static struct timeline *timeline_create(const char *filename, const char *type)
 {
   /*
    * Data
@@ -67,18 +76,14 @@ static struct timeline *timeline_create(const char *filename,
   inwrap_t t = inwrap_t_from_str(type);
   
   if(inwrap_alloc(inwrap, filename, t)){
-    if(timeline_alloc(timeline, "buy_red_filtered", __input__(inwrap))){
+    if(timeline_alloc(timeline, "buy_red_sell_green_filtered",
+                      __input__(inwrap))){
       /* Ok */
       return timeline;
     }
   }
   
   return NULL;
-}
-
-static void print_usage(const char *argv0)
-{
-  fprintf(stderr, "Usage: %s -o type filename\n", argv0);
 }
 
 int main(int argc, char **argv)
@@ -95,38 +100,44 @@ int main(int argc, char **argv)
   struct timeline *t;
   struct engine engine;
 
-  /* Check arguments */
   if(argc < 2)
     goto usage;
 
   /* Options */
-  common_opt_init(&opt, "l:");
+  common_opt_init(&opt, "b:s:");
   while((c = common_opt_getopt(&opt, argc, argv)) != -1){
     switch(c){
-    case 'l': level_min = atoi(optarg); break;
-    default: break; /* Ignore */
+    case 'b': level_buy_min = atoi(optarg); break;
+    case 's': level_sell_min = atoi(optarg); break;
+    default: break;
     }
   }
-  
+
   /* Command line params */
   filename = argv[optind];
-  if(opt.fixed_amount.set) amount = opt.fixed_amount.i;
   if(!opt.input_type.set) goto usage;
-   
+  
   if((t = timeline_create(filename, opt.input_type.s))){
     /* Engine setup */
     engine_init(&engine, t);
     engine_set_common_opt(&engine, &opt);
     /* Run */
     engine_run(&engine, feed);
+
     /* Print some info */
     engine_display_stats(&engine);
 
     /* Are there pending orders ? (FIXME : dedicated function in engine ?) */
     struct position *p;
-    __list_for_each__(&engine.list_position, p)
-      if(p->status == POSITION_REQUESTED)
-	PR_ERR("Buy now ! Quick ! Schnell !\n");
+    __list_for_each__(&engine.list_position, p){
+      if(p->status == POSITION_REQUESTED){
+	switch(p->type){
+	case BUY: PR_ERR("Buy now ! Quick ! Schnell !\n");
+	case SELL: PR_ERR("Sell now ! Quick ! Schnell !\n");
+	default: PR_ERR("C'mon do something\n");
+	}
+      }
+    }
     
     /* TODO : Don't forget to release everything */
     engine_release(&engine);
@@ -135,6 +146,6 @@ int main(int argc, char **argv)
   return 0;
 
  usage:
-  print_usage(argv[0]);
+  fprintf(stdout, "Usage: %s -o type filename\n", argv[0]);
   return -1;
 }

@@ -18,9 +18,9 @@
 #include "input/inwrap.h"
 #include "engine/engine.h"
 #include "framework/verbose.h"
+#include "framework/common_opt.h"
 
 double last_close;
-int year_min = 1900;
 
 static int feed(struct engine *e,
 		struct timeline *t,
@@ -35,10 +35,8 @@ static int feed(struct engine *e,
     goto out;
   
   /* Execute */
-  if(candle_is_red(c)){
-    PR_INFO("%s - BUY 500.0 CASH (%d)\n", candle_str(c), ++n);
-    engine_place_order(e, ORDER_BUY, ORDER_BY_AMOUNT, 500);
-  }
+  if(candle_is_red(c))
+    engine_set_order(e, BUY, 500, CASH, NULL);
 
  out:
   last_close = c->close; /* ! */
@@ -72,31 +70,28 @@ int main(int argc, char **argv)
    * Data
    */
   int c;
-  char *filename, *type;
+  char *filename;
   
   struct timeline *t;
   struct engine engine;
 
-  if(argc < 2){
-    fprintf(stdout, "Usage: %s -o type filename\n", argv[0]);
-    return -1;
-  }
+  if(argc < 2)
+    goto usage;
 
-  while((c = getopt(argc, argv, "o:n:")) != -1){
-    switch(c){
-    case 'o': type = optarg; break;
-    case 'n': year_min = atoi(optarg); break;
-    default:
-      PR_ERR("Unknown option %c\n", c);
-      return -1;
-    }
-  }
-
-  /* Filename is only real param */
-  filename = argv[optind];
   
-  if((t = timeline_create(filename, type))){
+  common_opt_init(&opt, "");
+  while((c = common_opt_getopt(&opt, argc, argv)) != -1){} /* ! */
+
+  /* Command line params */
+  filename = argv[optind];
+  if(opt.fixed_amount.set) amount = opt.fixed_amount.i;
+  if(!opt.input_type.set) goto usage;
+  
+  if((t = timeline_create(filename, opt.input_type.s))){
+    /* Engine setup */
     engine_init(&engine, t);
+    engine_set_common_opt(&engine, &opt);
+    /* Run */
     engine_run(&engine, feed);
     /* print some info */
     double amount = fabs(engine.amount);
@@ -110,4 +105,8 @@ int main(int argc, char **argv)
   }
   
   return 0;
+
+ usage:
+  fprintf(stdout, "Usage: %s -o type filename\n", argv[0]);
+  return -1;
 }

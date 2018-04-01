@@ -9,9 +9,6 @@
 #include <string.h>
 #include "heikin_ashi.h"
 
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-
 static int heikin_ashi_feed(struct indicator *i, struct timeline_entry *e) {
   
   struct heikin_ashi *h = __indicator_self__(i);
