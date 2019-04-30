@@ -14,12 +14,12 @@
  */
 
 #include "math/average.h"
-#include "engine/candle.h"
+#include "framework/types.h"
 #include "framework/indicator.h"
 
 struct smi {
   /* Parent */
-  __inherits_from_indicator__;
+  __inherits_from__(struct indicator);
 
   /* Pool */
   int count;
@@ -34,7 +34,7 @@ struct smi {
   double value;
 };
 
-int smi_init(struct smi *s, indicator_id_t id, int period, int smooth);
+int smi_init(struct smi *s, unique_id_t id, int period, int smooth);
 void smi_release(struct smi *s);
 
 /* Indicator-specific */

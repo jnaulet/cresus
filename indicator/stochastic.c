@@ -12,61 +12,61 @@
 
 #include "stochastic.h"
 
-static int stochastic_feed(struct indicator *i, struct timeline_entry *e) {
+static int stochastic_feed(struct indicator *i, struct timeline_track_n3 *e)
+{  
+  struct stochastic *ctx = (void*)i;
+  struct candle *candle = (void*)e;
   
-  struct stochastic *s = __indicator_self__(i);
-  struct candle *candle = __timeline_entry_self__(e);
-  
-  memcpy(&s->array[s->index], candle, sizeof *candle);
-  s->index = (s->index + 1) % s->period;
+  memcpy(&ctx->array[ctx->index], candle, sizeof *candle);
+  ctx->index = (ctx->index + 1) % ctx->period;
   
   /* Find top & bottom */
   double hi = 0.0, lo = DBL_MAX;
-  for(int i = 0; i < s->period; i++){
-    hi = (s->array[i].high > hi ? s->array[i].high : hi);
-    lo = (s->array[i].low < lo ? s->array[i].low : lo);
+  for(int i = 0; i < ctx->period; i++){
+    hi = (ctx->array[i].high > hi ? ctx->array[i].high : hi);
+    lo = (ctx->array[i].low < lo ? ctx->array[i].low : lo);
   }
   
   double pk = (candle->close - lo) / (hi - candle->close) * 100.0;
-  double avg = average_update(&s->smooth_k, pk);
-  if(average_is_available(&s->smooth_k))
-    average_update(&s->d, avg);
+  double avg = average_update(&ctx->smooth_k, pk);
+  if(average_is_available(&ctx->smooth_k))
+    average_update(&ctx->d, avg);
   
   return 0;
 }
 
 static void stochastic_reset(struct indicator *i) {
 
-  struct stochastic *s = __indicator_self__(i);
+  struct stochastic *ctx = (void*)i;
   /* Reset */
-  s->index = 0;
-  average_reset(&s->d);
-  average_reset(&s->smooth_k);
+  ctx->index = 0;
+  average_reset(&ctx->d);
+  average_reset(&ctx->smooth_k);
 }
 
-int stochastic_init(struct stochastic *s, indicator_id_t id,
+int stochastic_init(struct stochastic *ctx, unique_id_t id,
 		    int period, int k, int d) {
   
-  /* super() */
-  __indicator_super__(s, id, stochastic_feed, stochastic_reset);
-  __indicator_set_string__(s, "sto[%d, %d, %d]", period, k, d);
+  /* init() */
+  __indicator_init__(ctx, id, stochastic_feed, stochastic_reset);
+  __indicator_set_string__(ctx, "sto[%d, %d, %d]", period, k, d);
   
-  s->k = k;
-  s->index = 0;
-  s->period = period;
-
-  average_init(&s->d, AVERAGE_MATH, period);
-  average_init(&s->smooth_k, AVERAGE_MATH, period);
+  ctx->k = k;
+  ctx->index = 0;
+  ctx->period = period;
   
-  if((s->array = malloc(sizeof(*s->array) * period)))
+  average_init(&ctx->d, AVERAGE_MATH, period);
+  average_init(&ctx->smooth_k, AVERAGE_MATH, period);
+  
+  if((ctx->array = malloc(sizeof(*ctx->array) * period)))
     return -1;
   
-  /* memcpy(&s->array[0], seed, sizeof *seed); */
+  /* memcpy(&ctx->array[0], seed, sizeof *ctxeed); */
   return 0;
 }
 
-void stochastic_release(struct stochastic *s) {
+void stochastic_release(struct stochastic *ctx) {
   
-  __indicator_release__(s);
-  free(s->array);
+  __indicator_release__(ctx);
+  free(ctx->array);
 }

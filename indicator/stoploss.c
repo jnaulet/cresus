@@ -9,20 +9,20 @@
 #include "stoploss.h"
 #include "engine/candle.h"
 
-static int stoploss_feed(struct indicator *i, struct timeline_entry *e) {
+static int stoploss_feed(struct indicator *i, struct timeline_track_n3 *e)
+{  
+  struct stoploss *ctx = (void*)i;
+  struct candle *candle = (void*)e;
   
-  struct stoploss *s = __indicator_self__(i);
-  struct candle *candle = __timeline_entry_self__(e);
-  
-  if(s->type == STOPLOSS_UP){
-    if(candle->close >= s->value){
-      if(s->trigger)
+  if(ctx->type == STOPLOSS_UP){
+    if(candle->close >= ctx->value){
+      if(ctx->trigger)
         goto out;
     }
     
   }else{
-    if(candle->close <= s->value){
-      if(s->trigger)
+    if(candle->close <= ctx->value){
+      if(ctx->trigger)
         goto out;
     }
   }
@@ -31,51 +31,51 @@ static int stoploss_feed(struct indicator *i, struct timeline_entry *e) {
   
 out:
   //indicator_set_event(i, candle, STOPLOSS_EVENT_HIT);
-  stoploss_clear(s);
+  stoploss_clear(ctx);
   return 1;
 }
 
-static void stoploss_reset(struct indicator *i) {
-
-  struct stoploss *s = __indicator_self__(i);
-  s->value = 0.0;
-  s->trigger = 0;
+static void stoploss_reset(struct indicator *i)
+{
+  struct stoploss *ctx = (void*)i;
+  ctx->value = 0.0;
+  ctx->trigger = 0;
 }
 
-int stoploss_init(struct stoploss *s, indicator_id_t id, double percent) {
-  
+int stoploss_init(struct stoploss *ctx, unique_id_t id, double percent)
+{  
   /* Init parent */
-  __indicator_super__(s, id, stoploss_feed, stoploss_reset);
-  __indicator_set_string__(s, "stoploss[%.2f]", percent);
+  __indicator_init__(ctx, id, stoploss_feed, stoploss_reset);
+  __indicator_set_string__(ctx, "stoploss[%.2f]", percent);
   
-  s->value = 0.0;
-  s->trigger = 0;
-  s->percent = percent;
+  ctx->value = 0.0;
+  ctx->trigger = 0;
+  ctx->percent = percent;
   
   return 0;
 }
 
-void stoploss_release(struct stoploss *s) {
+void stoploss_release(struct stoploss *ctx) {
   
-  __indicator_release__(s);
-  s->value = 0.0;
-  s->trigger = 0;
+  __indicator_release__(ctx);
+  ctx->value = 0.0;
+  ctx->trigger = 0;
 }
 
-void stoploss_set(struct stoploss *s, stoploss_t type, double value) {
-  
+void stoploss_set(struct stoploss *ctx, stoploss_t type, double value)
+{  
   if(type == STOPLOSS_UP)
-    s->value = value * (1.0 + (s->percent / 100.0));
+    ctx->value = value * (1.0 + (ctx->percent / 100.0));
   else
-    s->value = value * (1.0 - (s->percent / 100.0));
+    ctx->value = value * (1.0 - (ctx->percent / 100.0));
   
   /* Trigger signal */
-  s->trigger = 1;
-  s->type = type;
+  ctx->trigger = 1;
+  ctx->type = type;
 }
 
-void stoploss_clear(struct stoploss *s) {
-  
-  s->value = 0.0;
-  s->trigger = 0;
+void stoploss_clear(struct stoploss *ctx)
+{  
+  ctx->value = 0.0;
+  ctx->trigger = 0;
 }

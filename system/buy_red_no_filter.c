@@ -17,21 +17,21 @@
 
 #include "input/inwrap.h"
 #include "engine/engine.h"
+#include "engine/common_opt.h"
 #include "framework/verbose.h"
-#include "framework/common_opt.h"
 
 double last_close;
 
 static int feed(struct engine *e,
 		struct timeline *t,
-		struct timeline_entry *entry)
+		struct timeline_n3 *n3)
 {
   /* Step by step loop */
   static int n = 0;
-  time_info_t time = VAL_YEAR(year_min);
-  struct candle *c = __timeline_entry_self__(entry);
+  time64_t time = VAL_YEAR(year_min);
+  struct candle *c = __timeline_n3_self__(n3);
   
-  if(TIMECMP(entry->time, time, GRANULARITY_YEAR) < 0)
+  if(TIME64CMP(n3->time, time, GR_YEAR) < 0)
     goto out;
   
   /* Execute */
@@ -52,7 +52,7 @@ static struct timeline *timeline_create(const char *filename, const char *type)
   struct timeline *timeline;
   inwrap_t t = inwrap_t_from_str(type);
   
-  if(inwrap_alloc(inwrap, filename, t, TIME_MIN, TIME_MAX)){
+  if(inwrap_alloc(inwrap, filename, t, TIME64_MIN, TIME64_MAX)){
     if(timeline_alloc(timeline, "buy_red_no_filter", __input__(inwrap))){
       /* Ok */
       return timeline;

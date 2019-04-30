@@ -8,40 +8,38 @@
 
 #include "indicator.h"
 
-int indicator_init(struct indicator *i, indicator_id_t id,
-		   indicator_feed_ptr feed, indicator_reset_ptr reset) {
-  
+int indicator_init(struct indicator *ctx,
+                   unique_id_t uid,
+		   indicator_feed_ptr feed,
+                   indicator_reset_ptr reset)
+{  
   /* Super */
-  __slist_super__(i);
-  list_head_init(&i->list_entry);
+  __slist_by_uid_init__(ctx, uid);
   
-  i->id = id;
-  i->feed = feed;
-  i->reset = reset;
-  i->is_empty = 1;
+  /* Self */
+  ctx->feed = feed;
+  ctx->reset = reset;
+  ctx->is_empty = 1;
   
   return 0;
 }
 
-void indicator_release(struct indicator *i) {
-
-  __slist_release__(i);
-  list_head_release(&i->list_entry);
-  
-  /* TODO : don't forget to release() timeline_entries */
-  i->feed = NULL;
+void indicator_release(struct indicator *ctx)
+{
+  //__slist_release__(ctx);
+  ctx->feed = NULL;
 }
 
-int indicator_feed(struct indicator *i, struct timeline_entry *e) {
-
-  int ret = i->feed(i, e);
-  i->is_empty = 0;
-
+int indicator_feed(struct indicator *ctx, struct timeline_track_n3 *e)
+{
+  int ret = ctx->feed(ctx, e);
+  ctx->is_empty = 0;
+  
   return ret;
 }
 
-void indicator_reset(struct indicator *i) {
-
-  i->is_empty = 1;
-  i->reset(i);
+void indicator_reset(struct indicator *ctx)
+{
+  ctx->is_empty = 1;
+  ctx->reset(ctx);
 }

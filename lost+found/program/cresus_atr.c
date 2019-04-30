@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 
     switch(state){
     case BUY :
-      /* Potential entry point found */
+      /* Potential n3 point found */
       if(zigzag_compute(&zz) == ZIGZAG_DIR_DOWN && !zz.ref_count){
 	/* Set resistance point */
 	rpoint = cdl.high + atr_compute(&atr) / ATR_FACTOR;

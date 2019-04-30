@@ -10,8 +10,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-#include "verbose.h"
-#include "common_opt.h"
+#include "engine/common_opt.h"
+#include "framework/verbose.h"
 
 int common_opt_init(struct common_opt *ctx, const char *optstring)
 {
@@ -27,13 +27,13 @@ void common_opt_release(struct common_opt *ctx)
 {
 }
 
-static time_info_t common_opt_time_info(struct common_opt *ctx, char *str)
+static time64_t common_opt_time64(struct common_opt *ctx, char *str)
 {
   /* Time info format : YYYY-MM-DD (date +%Y-%M-%d) */
   char *Y = strsep(&str, "-");
   char *M = strsep(&str, "-");
   char *d = str; /* End */
-  return TIME_INIT(atoi(Y), atoi(M), atoi(d), 0, 0, 0, 0);
+  return TIME64_INIT(atoi(Y), atoi(M), atoi(d), 0, 0, 0, 0);
 }
 
 int common_opt_getopt(struct common_opt *ctx, int argc, char **argv)
@@ -68,12 +68,12 @@ int common_opt_getopt(struct common_opt *ctx, int argc, char **argv)
     
   case 'S':
     COMMON_OPT_SET(&ctx->start_time, t,
-                   common_opt_time_info(ctx, optarg));
+                   common_opt_time64(ctx, optarg));
     break;
     
   case 'E':
     COMMON_OPT_SET(&ctx->end_time, t,
-                   common_opt_time_info(ctx, optarg));
+                   common_opt_time64(ctx, optarg));
     break;
     
   default:

@@ -62,7 +62,7 @@ static void mod_mma_simple_handle(struct module *m, const struct indicator *i,
 
 int mod_mma_simple_init(struct mod_mma_simple *m, const struct candle *seed) {
 
-  /* super */
+  /* init */
   module_init(&m->parent, CAPITAL, mod_mma_simple_handle, NULL);
   
   /* Indicators */

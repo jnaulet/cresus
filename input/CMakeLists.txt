@@ -6,7 +6,6 @@ add_library(input OBJECT
   yahoo_v7.c
   b4b.c
   mdgms.c
-  inwrap.c
   xtrade.c
   euronext.c
   kraken.c

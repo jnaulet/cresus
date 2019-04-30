@@ -13,12 +13,14 @@
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
-/* Trend */
+typedef unsigned int unique_id_t; /* TODO : make generator ? */
 
-typedef enum {
-  TREND_NONE,
-  TREND_UP,
-  TREND_DOWN
-} trend_t;
+/* Inheritance management. Beware : no multiple heritage */
+#define __inherits_from__(type) type __parent__
+#define __implements__(interface) interface
+
+/* Accessors */
+#define __parent__(self) (&(self)->__parent__)
+#define __child__(self, type) ((type*)self)
 
 #endif

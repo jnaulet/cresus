@@ -10,6 +10,7 @@
 #define POSITION_H
 
 #include "engine/cert.h"
+#include "framework/types.h"
 #include "framework/list.h"
 #include "framework/alloc.h"
 
@@ -50,7 +51,7 @@ typedef enum {
 
 struct position {
   /* slistable */
-  __inherits_from_list__;
+  __inherits_from__(struct list);
   /* Internal data */
   position_t type;
   position_status_t status;

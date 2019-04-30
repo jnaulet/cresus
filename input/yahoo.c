@@ -10,30 +10,29 @@
 #include <stdlib.h>
 
 #include "yahoo.h"
-#include "engine/candle.h"
 #include "framework/verbose.h"
 
-static struct timeline_entry *yahoo_read(struct input *in) {
+static struct input_n3 *yahoo_read(struct input *in) {
   
-  struct yahoo *y = __input_self__(in);
+  struct yahoo *y = (void*)in;
   
-  y->current_entry = y->list_entry.next;
-  if(list_is_head(y->current_entry))
+  y->current_n3 = y->list_n3.next;
+  if(list_is_head(y->current_n3))
     return NULL; /* EOF */
   
   /* Don't forget we'll put it in another list */
-  list_del(y->current_entry);
-  return __list_self__(y->current_entry);
+  list_del(y->current_n3);
+  return __list_self__(y->current_n3);
 }
 
-static int yahoo_load_entry(struct yahoo *ctx,
-			    struct timeline_entry **ret) {
+static int yahoo_load_n3(struct yahoo *ctx,
+			    struct input_n3 **ret) {
   
   char buf[256];
   char *str = buf;
-  struct candle *candle = NULL;
-
-  time_info_t time = 0;
+  struct input_n3 *n3 = NULL;
+  
+  time64_t time = 0;
   int year, month, day;
   double open, close, high, low, volume;
   
@@ -63,21 +62,21 @@ static int yahoo_load_entry(struct yahoo *ctx,
   sscanf(svol, "%lf", &volume);
 
   /* Dummy values for control */
-  TIME_SET_SECOND(time, 1);
-  TIME_SET_MINUTE(time, 30);
-  TIME_SET_HOUR(time, 17);
+  TIME64_SET_SECOND(time, 1);
+  TIME64_SET_MINUTE(time, 30);
+  TIME64_SET_HOUR(time, 17);
   
-  TIME_SET_DAY(time, day);
-  TIME_SET_MONTH(time, month);
-  TIME_SET_YEAR(time, year);
+  TIME64_SET_DAY(time, day);
+  TIME64_SET_MONTH(time, month);
+  TIME64_SET_YEAR(time, year);
   
   /* Create candle (at last !) */
-  if(candle_alloc(candle, time, GRANULARITY_DAY,
-                  open, close, high, low, volume)){
+  if(input_n3_alloc(n3, time, GR_DAY,
+		       open, close, high, low, volume)){
     /* Candle is allocated & init */
-    *ret = __timeline_entry__(candle);
+    *ret = n3;
     PR_DBG("%s %.2d/%.2d/%.4d loaded\n", ctx->filename,
-           TIME_GET_MONTH(time), TIME_GET_DAY(time), TIME_GET_YEAR(time));
+           TIME64_GET_MONTH(time), TIME64_GET_DAY(time), TIME64_GET_YEAR(time));
     
     return 1;
   }
@@ -89,17 +88,17 @@ static int yahoo_load(struct yahoo *y) {
   
   int n;
   char info[256];
-  struct timeline_entry *entry;
+  struct timeline_n3 *n3;
   
   /* Yahoo is LIFO with first line showing format */
   fgets(info, sizeof info, y->fp);
   
   for(n = 0;;){
-    switch(yahoo_load_entry(y, &entry)){
+    switch(yahoo_load_n3(y, &n3)){
     case 0 : break;
     case -1 : goto out;
     default :
-      __list_add__(&y->list_entry, entry);
+      __list_add__(&y->list_n3, n3);
       n++;
       break;
     }
@@ -111,9 +110,9 @@ static int yahoo_load(struct yahoo *y) {
 
 int yahoo_init(struct yahoo *y, const char *filename) {
   
-  /* super */
-  __input_super__(y, yahoo_read);
-  list_head_init(&y->list_entry);
+  /* init */
+  __input_init__(y, yahoo_read);
+  list_head_init(&y->list_n3);
   
   strncpy(y->filename, filename, sizeof(y->filename));
   if(!(y->fp = fopen(y->filename, "r"))){

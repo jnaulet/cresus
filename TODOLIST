@@ -1,11 +1,7 @@
-TODO
-----
-Some files need to be ported to the new architecture some day :
- - indicator/esi.c
- - indicator/sup_res.c
- - indicator/xtr.c
- - input/google.c
+TODOs
 
-New object is required, extract positions managements from sim.c & make it usable on any timeline_entry.
-Make it possible to get n shares or 1/nth of a share depending on an initial capital or increasing one to simulate a "real" investor with other revenues.
-For easier computation, maybe only compute the weighted value of these shares.
+ * Port all commented-out indicators in indicator/CMakeLists.txt to CommonTL architecture
+ * New engine to accomodate CommonTL data structure
+ * Find an ergonomic way to play lots & lots of timeline_tracks simultaneously
+ * Remove warnings caused by input_wrapper_create
+ *

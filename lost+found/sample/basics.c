@@ -32,34 +32,34 @@
 
 static int feed(struct engine *e,
 		struct timeline *t,
-		struct timeline_entry *entry)
+		struct timeline_n3 *n3)
 {
   /* Step by step loop */
   static int n = 0;
-  struct indicator_entry *ientry;
-  struct candle *c = __timeline_entry_self__(entry);
+  struct indicator_n3 *in3;
+  struct candle *c = __timeline_n3_self__(n3);
   
   /* Execute */
   PR_INFO("%s - ", candle_str(c));
   /* Then check results */
-  __slist_for_each__(&c->slist_indicator, ientry){
+  __slist_for_each__(&c->slist_indicator, in3){
     /* Beware, some parsing will be required here to determine who's who */
-    printf("%s(%u) ", ientry->indicator->str, ientry->indicator->id);
-    switch(ientry->indicator->id){
+    printf("%s(%u) ", in3->indicator->str, in3->indicator->id);
+    switch(in3->indicator->id){
     case EMA40 :
     case EMA14:
     case EMA5 : {
-      struct mobile_entry *mob = __indicator_entry_self__(ientry);
+      struct mobile_n3 *mob = __indicator_n3_self__(in3);
       printf("%.1f ", mob->value);
       goto next;
     }
     case RSM : {
-      struct rs_mansfield_entry *rs = __indicator_entry_self__(ientry);
+      struct rs_mansfield_n3 *rs = __indicator_n3_self__(in3);
       printf("%.1f ", rs->value);
       goto next;
     }
     case RSD : {
-      struct rs_dorsey_entry *rs = __indicator_entry_self__(ientry);
+      struct rs_dorsey_n3 *rs = __indicator_n3_self__(in3);
       printf("%.1f ", rs->value);
     } goto next;
     }
@@ -80,7 +80,7 @@ static struct timeline *timeline_create(const char *filename, const char *type)
   struct timeline *timeline;
   inwrap_t t = inwrap_t_from_str(type);
   
-  if(inwrap_alloc(inwrap, filename, t, TIME_MIN, TIME_MAX)){
+  if(inwrap_alloc(inwrap, filename, t, TIME64_MIN, TIME64_MAX)){
     if(timeline_alloc(timeline, "basics", __input__(inwrap))){
       struct mobile *m;
       /* Add a series of EMAs */
@@ -96,11 +96,11 @@ static struct timeline *timeline_create(const char *filename, const char *type)
       timeline_add_indicator(timeline, __indicator__(macd));
       /* RS mansfield */
       struct rs_mansfield *rsm;
-      rs_mansfield_alloc(rsm, RSM, 14, &timeline->list_entry);
+      rs_mansfield_alloc(rsm, RSM, 14, &timeline->list_n3);
       timeline_add_indicator(timeline, __indicator__(rsm));
       /* RS Dorsey */
       struct rs_dorsey *rsd;
-      rs_dorsey_alloc(rsd, RSD, &timeline->list_entry);
+      rs_dorsey_alloc(rsd, RSD, &timeline->list_n3);
       timeline_add_indicator(timeline, __indicator__(rsd));
       /* Ok */
       return timeline;

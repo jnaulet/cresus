@@ -14,13 +14,12 @@
 #include <fcntl.h>
 
 #include "mdgms.h"
-#include "engine/candle.h"
 #include "framework/verbose.h"
 
-static struct timeline_entry *mdgms_read(struct input *in)
+static struct input_n3 *mdgms_read(struct input *in)
 {
-  struct candle *c;
-  struct mdgms *ctx = __input_self__(in);
+  struct input_n3 *n3;
+  struct mdgms *ctx = (void*)(in);
   
   /* TODO: check !!! */
   json_value *ts = ctx->value->u.object.values[0].value;
@@ -45,10 +44,10 @@ static struct timeline_entry *mdgms_read(struct input *in)
   /* Increment */
   ctx->i++;
   
-  time_info_t time = time_info_epoch(t);
-  if(candle_alloc(c, time, GRANULARITY_DAY,
-                  open, close, high, low, vol))
-    return __timeline_entry__(c);
+  time64_t time = time64_epoch(t);
+  if(input_n3_alloc(n3, time, GR_DAY,
+		       open, close, high, low, vol))
+    return n3;
   
  err:
   return NULL;
@@ -60,8 +59,8 @@ int mdgms_init(struct mdgms *ctx, const char *filename)
   size_t size;
   struct stat stat;
 
-  /* super */
-  __input_super__(ctx, mdgms_read);
+  /* init */
+  __input_init__(ctx, mdgms_read);
   
   /* internals */
   ctx->i = 0;

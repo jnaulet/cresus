@@ -10,6 +10,8 @@
 #define B4B_H
 
 #include <stdio.h>
+
+#include "framework/types.h"
 #include "framework/alloc.h"
 #include "framework/input.h"
 
@@ -22,10 +24,10 @@
 
 struct b4b {
   /* Inherits from input */
-  __inherits_from_input__;
+  __inherits_from__(struct input);
   /* file loader */
   FILE *fp;
-  struct list *current_entry;
+  struct list *current_n3;
   /* Debug */
   char filename[256];
 };

@@ -10,6 +10,8 @@
 #define YAHOO_H
 
 #include <stdio.h>
+
+#include "framework/types.h"
 #include "framework/alloc.h"
 #include "framework/input.h"
 
@@ -22,12 +24,12 @@
 
 struct yahoo {
   /* Inherits from input */
-  __inherits_from_input__;
+  __inherits_from__(struct input);
   /* file loader */
   FILE *fp;
   /* Yahoo file format is LIFO */
-  list_head_t(struct candle) list_entry;
-  struct list *current_entry;
+  list_head_t(struct input_n3) list_n3;
+  struct list *current_n3;
   /* Debug */
   char filename[256];
 };

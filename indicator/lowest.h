@@ -14,46 +14,48 @@
  * Some support indicator
  */
 
-#include "engine/candle.h"
+#include "framework/types.h"
 #include "framework/alloc.h"
 #include "framework/indicator.h"
 
-struct lowest_entry {
+struct lowest_n3 {
   /* As always... */
-  __inherits_from_indicator_entry__;
+  __inherits_from__(struct indicator_n3);
   /* Data */
   double value;
 };
 
-#define lowest_entry_alloc(entry, parent)				\
-  DEFINE_ALLOC(struct lowest_entry, entry, lowest_entry_init, parent)
-#define lowest_entry_free(entry)		\
-  DEFINE_FREE(entry, lowest_entry_free)
+#define lowest_n3_alloc(ctx, parent)                                 \
+  DEFINE_ALLOC(struct lowest_n3, ctx, lowest_n3_init, parent)
+#define lowest_n3_free(ctx)                  \
+  DEFINE_FREE(ctx, lowest_n3_free)
 
-static inline int lowest_entry_init(struct lowest_entry *entry,
-					  struct indicator *parent) {
-  __indicator_entry_super__(entry, parent);
+static inline int lowest_n3_init(struct lowest_n3 *ctx,
+                                    struct indicator *parent)
+{
+  __indicator_n3_init__(ctx, parent);
   return 0;
 }
 
-static inline void lowest_entry_release(struct lowest_entry *entry) {
-  __indicator_entry_release__(entry);
+static inline void lowest_n3_release(struct lowest_n3 *ctx)
+{
+  __indicator_n3_release__(ctx);
 }
 
 /* Main object */
 
-#define lowest_alloc(ls, id, period)				\
-  DEFINE_ALLOC(struct lowest, ls, lowest_init, id, period)
-#define lowest_free(ls)			\
-  DEFINE_FREE(ls, lowest_release)
+#define lowest_alloc(ctx, uid, period)				\
+  DEFINE_ALLOC(struct lowest, ctx, lowest_init, uid, period)
+#define lowest_free(ctx)			\
+  DEFINE_FREE(ctx, lowest_release)
 
 struct lowest {
   /* Inherits from indicator */
-  __inherits_from_indicator__;
+  __inherits_from__(struct indicator);
   int period;
 };
 
-int lowest_init(struct lowest *ctx, indicator_id_t id, int period);
+int lowest_init(struct lowest *ctx, unique_id_t uid, int period);
 void lowest_release(struct lowest *ctx);
 
 void lowest_reset(struct lowest *ctx);

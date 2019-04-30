@@ -11,93 +11,92 @@
 
 #include "zigzag.h"
 
-static void zigzag_chdir(struct zigzag *z, zigzag_dir_t dir,
-			 struct candle *c) {
-  
-  z->base_ref = z->ref;
-  z->dir = dir;  
-  z->ref = c;
-  z->ref_count = 0;
+static void zigzag_chdir(struct zigzag *ctx, zigzag_dir_t dir,
+                         struct timeline_track_n3 *e)
+{  
+  ctx->base_ref = ctx->ref;
+  ctx->dir = dir;
+  ctx->ref = e;
+  ctx->ref_count = 0;
 }
 
-static int zigzag_feed(struct indicator *i, struct timeline_entry *e) {
-  
+static int zigzag_feed(struct indicator *i, struct timeline_track_n3 *e)
+{  
   double threshold;
-  struct zigzag_entry *zz;
-  struct zigzag *z = __indicator_self__(i);
-  struct candle *candle = __timeline_entry_self__(e);
-  double value = candle_get_value(candle, z->cvalue);
+  struct zigzag_n3 *n3;
+  struct zigzag *ctx = (void*)i;
+  double value = input_n3_value(e, ctx->value);
   
-  if(!z->ref){
-    z->ref = candle;
-    zigzag_chdir(z, ZIGZAG_NONE, candle);
+  if(!ctx->ref){
+    ctx->ref = e;
+    zigzag_chdir(ctx, ZIGZAG_NONE, e);
     /* Nothing left to do */
     return 0;
   }
   
   /* Compute limits (every time ? */
-  double base_ref_value = candle_get_value(z->base_ref, z->cvalue);
-  double ref_value = candle_get_value(z->ref, z->cvalue);
-  double hi_limit = (1.0 + z->threshold) * ref_value;
-  double lo_limit = (1.0 - z->threshold) * ref_value;
-
-  switch(z->dir){
+  double base_ref_value = input_n3_value(ctx->base_ref, ctx->value);
+  double ref_value = input_n3_value(ctx->ref, ctx->value);
+  double hi_limit = (1.0 + ctx->threshold) * ref_value;
+  double lo_limit = (1.0 - ctx->threshold) * ref_value;
+  
+  switch(ctx->dir){
   case ZIGZAG_NONE :
-    if(value > hi_limit) zigzag_chdir(z, ZIGZAG_UP, candle);
-    if(value < lo_limit) zigzag_chdir(z, ZIGZAG_DOWN, candle);
+    if(value > hi_limit) zigzag_chdir(ctx, ZIGZAG_UP, e);
+    if(value < lo_limit) zigzag_chdir(ctx, ZIGZAG_DOWN, e);
     break;
-
+    
   case ZIGZAG_UP :
-    if(value > ref_value) z->ref = candle;
-    if(value < lo_limit) zigzag_chdir(z, ZIGZAG_DOWN, candle);
+    if(value > ref_value) ctx->ref = e;
+    if(value < lo_limit) zigzag_chdir(ctx, ZIGZAG_DOWN, e);
     break;
     
   case ZIGZAG_DOWN :
-    if(value < ref_value) z->ref = candle;
-    if(value > hi_limit) zigzag_chdir(z, ZIGZAG_UP, candle);
+    if(value < ref_value) ctx->ref = e;
+    if(value > hi_limit) zigzag_chdir(ctx, ZIGZAG_UP, e);
     break;
   }
-
-  if(zigzag_entry_alloc(zz, i, z->dir, (value / base_ref_value), z->ref_count))
-    candle_add_indicator_entry(candle, __indicator_entry__(zz));
   
-  z->ref_count++;
+  if(zigzag_n3_alloc(n3, i, ctx->dir, (value / base_ref_value), ctx->ref_count))
+    timeline_track_n3_add_indicator_n3(e, __indicator_n3__(n3));
+  
+  ctx->ref_count++;
   return 0;
 }
 
-static void zigzag_reset(struct indicator *i) {
-
-  struct zigzag *z = __indicator_self__(i);
-  /* RAZ */
-  z->dir = ZIGZAG_NONE;
-  /* Refs */
-  z->ref = NULL;
-  z->base_ref = NULL;
-  z->ref_count = 0;
-}
-
-int zigzag_init(struct zigzag *z, indicator_id_t id,
-		double threshold, candle_value_t cvalue) {
-  
-  /* Super */
-  __indicator_super__(z, id, zigzag_feed, zigzag_reset);
-  __indicator_set_string__(z, "zigzag[%.1f%%]", threshold * 100.0);
-
-  z->dir = ZIGZAG_NONE;
-  z->cvalue = cvalue;
-  z->threshold = threshold;
-
-  /* Refs */
-  z->ref = NULL;
-  z->base_ref = NULL;
-  z->ref_count = 0;
-  
-  return 0;
-}
-
-void zigzag_release(struct zigzag *z)
+static void zigzag_reset(struct indicator *i)
 {
-  __indicator_release__(z);
-  z->ref_count = 0;
-  z->dir = ZIGZAG_NONE;
+  struct zigzag *ctx = (void*)i;
+  /* RAZ */
+  ctx->dir = ZIGZAG_NONE;
+  /* Refs */
+  ctx->ref = NULL;
+  ctx->base_ref = NULL;
+  ctx->ref_count = 0;
+}
+
+int zigzag_init(struct zigzag *ctx, unique_id_t uid,
+		double threshold, input_n3_value_t value)
+{  
+  /* Super */
+  __indicator_init__(ctx, uid, zigzag_feed, zigzag_reset);
+  __indicator_set_string__(ctx, "zigzag[%.1f%%]", threshold * 100.0);
+  
+  ctx->dir = ZIGZAG_NONE;
+  ctx->value = value;
+  ctx->threshold = threshold;
+  
+  /* Refs */
+  ctx->ref = NULL;
+  ctx->base_ref = NULL;
+  ctx->ref_count = 0;
+  
+  return 0;
+}
+
+void zigzag_release(struct zigzag *ctx)
+{
+  __indicator_release__(ctx);
+  ctx->ref_count = 0;
+  ctx->dir = ZIGZAG_NONE;
 }

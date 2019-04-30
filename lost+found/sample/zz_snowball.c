@@ -42,15 +42,15 @@ static int trend_set(zigzag_dir_t trend)
 
 static int feed(struct engine *e,
 		struct timeline *t,
-		struct timeline_entry *entry) {
+		struct timeline_n3 *n3) {
   
   struct position *p;
-  struct indicator_entry *i;
+  struct indicator_n3 *i;
   
   /* TODO : better management of this ? */
-  struct candle *c = __timeline_entry_self__(entry);
-  if((i = candle_find_indicator_entry(c, ZIGZAG))){
-    struct zigzag_entry *z = __indicator_entry_self__(i);
+  struct candle *c = __timeline_n3_self__(n3);
+  if((i = candle_find_indicator_n3(c, ZIGZAG))){
+    struct zigzag_n3 *z = __indicator_n3_self__(i);
     /* PR_WARN("ZIGZAG is %.2f\n", z->value); */
     /* Reset counter when trend reverses */
     if(trend_set(z->dir))
@@ -84,14 +84,14 @@ static int feed(struct engine *e,
 }
 
 static struct timeline *
-timeline_create(const char *filename, time_info_t min)
+timeline_create(const char *filename, time64_t min)
 {
   struct yahoo *yahoo;
   struct zigzag *zigzag;
   struct timeline *timeline;
   
   /* TODO : Check return values */
-  yahoo_alloc(yahoo, filename, min, TIME_MAX); /* load everything */
+  yahoo_alloc(yahoo, filename, min, TIME64_MAX); /* load everything */
   timeline_alloc(timeline, "zz", __input__(yahoo));
   /* Indicators alloc */
   zigzag_alloc(zigzag, ZIGZAG, thres, CANDLE_CLOSE);

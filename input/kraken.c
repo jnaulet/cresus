@@ -14,9 +14,8 @@
 #include <fcntl.h>
 
 #include "kraken.h"
-#include "engine/candle.h"
 #include "framework/verbose.h"
-#include "framework/time_info.h"
+#include "framework/time64.h"
 
 static double kraken_dbl(struct kraken *ctx, char *str)
 {
@@ -29,10 +28,10 @@ static double kraken_dbl(struct kraken *ctx, char *str)
 /*
  * Format : <time>, <open>, <high>, <low>, <close>, <vwap>, <volume>, <count>
  */
-static struct timeline_entry *kraken_read(struct input *in)
+static struct input_n3 *kraken_read(struct input *in)
 {
-  struct candle *c;
-  struct kraken *ctx = __input_self__(in);
+  struct input_n3 *n3;
+  struct kraken *ctx = (void*)in;
  
   /* Check for EOF at least */
   if(ctx->i >= ctx->len)
@@ -46,17 +45,17 @@ static struct timeline_entry *kraken_read(struct input *in)
   char *sclose = o->u.array.values[4]->u.string.ptr;
   char *svol = o->u.array.values[6]->u.string.ptr;
   
-  time_info_t time = time_info_epoch(date);
+  time64_t time = time64_epoch(date);
   double open = kraken_dbl(ctx, sopen);
   double high = kraken_dbl(ctx, shigh);
   double low = kraken_dbl(ctx, slow);
   double close = kraken_dbl(ctx, sclose);
   double vol = kraken_dbl(ctx, svol);
   
-  if(candle_alloc(c, time, GRANULARITY_DAY,
-                  open, close, high, low, vol))
-    return __timeline_entry__(c);
-
+  if(input_n3_alloc(n3, time, GR_DAY,
+		       open, close, high, low, vol))
+    return n3;
+  
  err:
   return NULL;
 }
@@ -67,8 +66,8 @@ int kraken_init(struct kraken *ctx, const char *filename)
   size_t size;
   struct stat stat;
 
-  /* super */
-  __input_super__(ctx, kraken_read);
+  /* init */
+  __input_init__(ctx, kraken_read);
   
   /* internals */
   ctx->i = 0;

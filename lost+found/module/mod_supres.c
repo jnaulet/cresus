@@ -47,7 +47,7 @@ static void mod_supres_feed(struct module *m, const struct candle *candle) {
 
 int mod_supres_init(struct mod_supres *m, const struct candle *seed){
   
-  /* super() */
+  /* init() */
   module_init(&m->parent, 0.0, mod_supres_handle, /*mod_supres_feed*/ NULL);
   
   /* Indicators */

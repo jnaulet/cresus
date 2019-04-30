@@ -30,8 +30,8 @@ int engine_init(struct engine *ctx, struct timeline *t)
   ctx->max_drawdown = 0;
   ctx->transaction_fee = 0;
   /* Time boundaries */
-  ctx->start_time = TIME_MIN;
-  ctx->end_time = TIME_MAX;
+  ctx->start_time = TIME64_MIN;
+  ctx->end_time = TIME64_MAX;
   /* Misc */
   ctx->quiet = 0;
   /* Csv output */
@@ -101,29 +101,34 @@ double engine_assets_original_value(struct engine *ctx)
 }
 
 static void engine_run_csv_output(struct engine *ctx,
-                                  struct timeline_entry *e)
+                                  struct timeline_slice *slice)
 {
-  if(TIMECMP(e->time, ctx->start_time, GRANULARITY_DAY) >= 0){
-    struct candle *c = __timeline_entry_self__(e);
-    double orig = engine_assets_original_value(ctx);
-    double value = engine_assets_value(ctx, c->close);
-    
-    if(ctx->csv_ref == 0.0)
-      ctx->csv_ref = c->close; /* One-time init */
-    
-    else{
-      double ref = (c->close / ctx->csv_ref)  - 1.0;
-      double target = (orig != 0.0 ? (value / orig) - 1.0 : 0.0);
-      /* Output csv */
-      printf("%s, %lf, %lf, %lf\n", timeline_entry_str(e),
-	     ref , target, target - ref);
+#if 0
+  if(TIME64CMP(slice->time, ctx->start_time, GR_DAY) >= 0){
+    struct timeline_slice_n3 *n3;
+    __slist_for_each__(slice->slist_n3s, n3){
+      struct timeline_track_n3 *c = n3->track_n3;
+      double orig = engine_assets_original_value(ctx);
+      double value = engine_assets_value(ctx, c->close);
+      
+      if(ctx->csv_ref == 0.0)
+        ctx->csv_ref = c->close; /* One-time init */
+      
+      else{
+        double ref = (c->close / ctx->csv_ref)  - 1.0;
+        double target = (orig != 0.0 ? (value / orig) - 1.0 : 0.0);
+        /* Output csv */
+        printf("%s, %lf, %lf, %lf\n", timeline_n3_str(e),
+               ref , target, target - ref);
+      }
     }
   }
+#endif
 }
 
 static void engine_run_position_buy(struct engine *ctx,
 				    struct position *p,
-				    struct candle *c)
+				    struct timeline_track_n3 *c)
 {
   /* Record open value */
   position_set_value(p, c->open);
@@ -132,7 +137,8 @@ static void engine_run_position_buy(struct engine *ctx,
     double unit = position_unit_value(p);
     position_set_n(p, p->request.shares);
     PR_INFO("%s - Buy %.0lf securities at %.2lf (%.2lf) VALUE\n",
-	    candle_str(c), p->n * 1.0, unit, p->n * unit);
+	    timeline_track_n3_str(c),
+            p->n * 1.0, unit, p->n * unit);
     
     /* Some stats */
     ctx->amount += p->n * unit;
@@ -141,7 +147,8 @@ static void engine_run_position_buy(struct engine *ctx,
   }else{
     position_set_n(p, p->request.cash / c->open);
     PR_INFO("%s - Buy %.4lf securities for %.2lf CASH\n",
-	    candle_str(c), p->n * 1.0, p->request.cash);
+            timeline_track_n3_str(c),
+            p->n * 1.0, p->request.cash);
 
     /* Some stats */
     ctx->amount += p->request.cash;
@@ -154,7 +161,7 @@ static void engine_run_position_buy(struct engine *ctx,
 
 static void engine_run_position_sell(struct engine *ctx,
 				     struct position *p,
-				     struct candle *c)
+				     struct timeline_track_n3 *c)
 {
   /* Stats */
   double req = 0.0;
@@ -193,10 +200,12 @@ static void engine_run_position_sell(struct engine *ctx,
   if(nsold > 0.0){
     if(p->req == SHARES){
       PR_WARN("%s - Sell %.0lf securities at %.2lf (%.2lf) VALUE\n",
-	      candle_str(c), nsold, cash / nsold, cash);
+	      timeline_track_n3_str(c),
+              nsold, cash / nsold, cash);
     }else{
       PR_WARN("%s - Sell %.4lf securities for %.2lf CASH\n",
-	      candle_str(c), nsold, cash);
+              timeline_track_n3_str(c),
+              nsold, cash);
     }
   }
   
@@ -209,10 +218,8 @@ static void engine_run_position_sell(struct engine *ctx,
 
 static void engine_run_position(struct engine *ctx,
 				struct position *p,
-				struct timeline_entry *e)
+				struct timeline_track_n3 *c)
 {
-  struct candle *c = __timeline_entry_self__(e);
-
   switch(p->type){
   case BUY: engine_run_position_buy(ctx, p, c); break;
   case SELL: engine_run_position_sell(ctx, p, c); break;
@@ -227,25 +234,25 @@ void engine_run(struct engine *ctx, engine_feed_ptr feed)
 {
   struct list *safe;
   struct position *p;
-  struct timeline_entry *entry;
-
-  while((entry = timeline_step(ctx->timeline)) != NULL){
-    struct candle *c = __timeline_entry_self__(entry); /* FIXME ? */
-
+  struct timeline_slice *slice;
+  
+  /* Parse by slice */
+  __list_for_each__(&ctx->timeline->by_slice, slice){
+    
     /* We MUST stop at end_time */
-    if(TIMECMP(entry->time, ctx->end_time, GRANULARITY_DAY) > 0)
+    if(TIME64CMP(slice->time, ctx->end_time, GR_DAY) > 0)
       break;
 
     /* Positions management */
     __list_for_each_safe__(&ctx->list_position, p, safe){
       /* 1st : check if there are opening positions */
       if(p->status == POSITION_REQUESTED)
-	engine_run_position(ctx, p, entry); /* Run */
+	engine_run_position(ctx, p, NULL); /* Run */
       
       /* 2nd: check stoplosses */
       if(c->low <= p->cert.stoploss){
 	p->status = POSITION_DESTROY;
-	PR_WARN("%s - Stoploss hit\n", candle_str(c));
+	PR_WARN("%s - Stoploss hit\n", timeline_track_n3_str(c));
       }
       
       /* 3rd: Remove useless positions (sales & lost buys) */
@@ -256,12 +263,12 @@ void engine_run(struct engine *ctx, engine_feed_ptr feed)
     }
     
     /* Then : feed the engine */
-    feed(ctx, ctx->timeline, entry);
+    feed(ctx, ctx->timeline, slice);
     ctx->close = c->close;
 
     /* In the end : output csv if asked for */
     if(ctx->csv_output)
-      engine_run_csv_output(ctx, entry);
+      engine_run_csv_output(ctx, slice);
   }
 }
 
@@ -270,11 +277,11 @@ int engine_set_order(struct engine *ctx, position_t type,
 		     struct cert *cert)
 {
   struct position *p;
-  struct timeline_entry *entry;
+  struct timeline_n3 *n3;
   
-  if(timeline_entry_current(ctx->timeline, &entry) != -1){
+  if(timeline_n3_current(ctx->timeline, &n3) != -1){
     /* Filter orders if needed */
-    if(TIMECMP(entry->time, ctx->start_time, GRANULARITY_DAY) < 0)
+    if(TIME64CMP(n3->time, ctx->start_time, GR_DAY) < 0)
       goto err;
     
     if(position_alloc(p, type, req, value, cert)){
@@ -290,7 +297,7 @@ int engine_set_order(struct engine *ctx, position_t type,
 int engine_place_order(struct engine *ctx, position_t type,
 		       position_req_t by, double value)
 {
-  struct timeline_entry *entry;
+  struct timeline_n3 *n3;
   return engine_set_order(ctx, type, by, value, NULL);
 }
 

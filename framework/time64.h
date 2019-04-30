@@ -1,13 +1,13 @@
 /*
- * Cresus EVO - time_info.h
+ * Cresus EVO - time64.h
  *
  * Created by Joachim Naulet <jnaulet@rdinnovation.fr> on 06.01.2018
  * Copyright (c) 2018 Joachim Naulet. All rights reserved.
  *
  */
 
-#ifndef TIME_INFO_H
-#define TIME_INFO_H
+#ifndef TIME64_H
+#define TIME64_H
 
 #include <time.h>
 #include "types.h"
@@ -57,22 +57,25 @@
 
 /* Our basic types */
 
-typedef long long time_info_t;
-typedef long long granularity_t;
+typedef long long time64_t;
+typedef long long time64_gr_t;
 
-#define TIME_MIN  0
-#define TIME_MAX -1
+#define time64_interface                        \
+  long long time, g
 
-#define GRANULARITY_MSEC   (MSEC_MASK|SECOND_MASK|MINUTE_MASK|HOUR_MASK| \
-			    DAY_MASK|MONTH_MASK|YEAR_MASK)
-#define GRANULARITY_SECOND (SECOND_MASK|MINUTE_MASK|HOUR_MASK|	\
-			    DAY_MASK|MONTH_MASK|YEAR_MASK)
-#define GRANULARITY_MINUTE (MINUTE_MASK|HOUR_MASK|		\
-			    DAY_MASK|MONTH_MASK|YEAR_MASK)
-#define GRANULARITY_HOUR   (HOUR_MASK|DAY_MASK|MONTH_MASK|YEAR_MASK)
-#define GRANULARITY_DAY    (DAY_MASK|MONTH_MASK|YEAR_MASK)
-#define GRANULARITY_MONTH  (MONTH_MASK|YEAR_MASK)
-#define GRANULARITY_YEAR   (YEAR_MASK)
+#define TIME64_MIN  0
+#define TIME64_MAX -1
+
+#define GR_MSEC   (MSEC_MASK|SECOND_MASK|MINUTE_MASK|HOUR_MASK| \
+                   DAY_MASK|MONTH_MASK|YEAR_MASK)
+#define GR_SECOND (SECOND_MASK|MINUTE_MASK|HOUR_MASK|           \
+                   DAY_MASK|MONTH_MASK|YEAR_MASK)
+#define GR_MINUTE (MINUTE_MASK|HOUR_MASK|                       \
+                   DAY_MASK|MONTH_MASK|YEAR_MASK)
+#define GR_HOUR   (HOUR_MASK|DAY_MASK|MONTH_MASK|YEAR_MASK)
+#define GR_DAY    (DAY_MASK|MONTH_MASK|YEAR_MASK)
+#define GR_MONTH  (MONTH_MASK|YEAR_MASK)
+#define GR_YEAR   (YEAR_MASK)
 
 /* Value generators */
 #define VAL_MSEC(m) ((BITMASK(MSEC_NBIT) & m) << MSEC_SHIFT)
@@ -83,45 +86,44 @@ typedef long long granularity_t;
 #define VAL_MONTH(m) ((BITMASK(MONTH_NBIT) & (m - 1)) << MONTH_SHIFT)
 #define VAL_YEAR(y) ((BITMASK(YEAR_NBIT) & y) << YEAR_SHIFT)
 
-/* FIXME : Shouldn't it be TIME_INFO_INIT ? */
-#define TIME_INIT(y, m, d, h, mn, s, ms)				\
+#define TIME64_INIT(y, m, d, h, mn, s, ms)				\
   (VAL_MSEC(ms) | VAL_SECOND(s) | VAL_MINUTE(mn) | VAL_HOUR(h) |	\
    VAL_DAY(d) | VAL_MONTH(m) | VAL_YEAR(y))
-#define TIME_ZERO()                             \
-  TIME_INIT(1900, 1, 1, 0, 0, 0, 0)
-
+#define TIME64_ZERO()                           \
+  TIME64_INIT(1900, 1, 1, 0, 0, 0, 0)
+  
 /* Set accessors */
-#define TIME_SET_MSEC(t, m)   t = ((t & ~MSEC_MASK)   | VAL_MSEC(m))
-#define TIME_SET_SECOND(t, s) t = ((t & ~SECOND_MASK) | VAL_SECOND(s))
-#define TIME_SET_MINUTE(t, m) t = ((t & ~MINUTE_MASK) | VAL_MINUTE(m))
-#define TIME_SET_HOUR(t, h)   t = ((t & ~HOUR_MASK)   | VAL_HOUR(h))
-#define TIME_SET_DAY(t, d)    t = ((t & ~DAY_MASK)    |	VAL_DAY(d))
-#define TIME_SET_MONTH(t, m)  t = ((t & ~MONTH_MASK)  |	VAL_MONTH(m))
-#define TIME_SET_YEAR(t, y)   t = ((t & ~YEAR_MASK)   | VAL_YEAR(y))
+#define TIME64_SET_MSEC(t, m)   t = ((t & ~MSEC_MASK)   | VAL_MSEC(m))
+#define TIME64_SET_SECOND(t, s) t = ((t & ~SECOND_MASK) | VAL_SECOND(s))
+#define TIME64_SET_MINUTE(t, m) t = ((t & ~MINUTE_MASK) | VAL_MINUTE(m))
+#define TIME64_SET_HOUR(t, h)   t = ((t & ~HOUR_MASK)   | VAL_HOUR(h))
+#define TIME64_SET_DAY(t, d)    t = ((t & ~DAY_MASK)    |	VAL_DAY(d))
+#define TIME64_SET_MONTH(t, m)  t = ((t & ~MONTH_MASK)  |	VAL_MONTH(m))
+#define TIME64_SET_YEAR(t, y)   t = ((t & ~YEAR_MASK)   | VAL_YEAR(y))
 
 /* Get accessors */
-#define TIME_GET_MSEC(t)   (int)((t & MSEC_MASK)    >> MSEC_SHIFT)
-#define TIME_GET_SECOND(t) (int)((t & SECOND_MASK)  >> SECOND_SHIFT)
-#define TIME_GET_MINUTE(t) (int)((t & MINUTE_MASK)  >> MINUTE_SHIFT)
-#define TIME_GET_HOUR(t)   (int)((t & HOUR_MASK)    >> HOUR_SHIFT)
-#define TIME_GET_DAY(t)    (int)(((t & DAY_MASK)    >> DAY_SHIFT) + 1)
-#define TIME_GET_MONTH(t)  (int)(((t & MONTH_MASK)  >> MONTH_SHIFT) + 1)
-#define TIME_GET_YEAR(t)   (int)((t & YEAR_MASK)    >> YEAR_SHIFT)
+#define TIME64_GET_MSEC(t)   (int)((t & MSEC_MASK)    >> MSEC_SHIFT)
+#define TIME64_GET_SECOND(t) (int)((t & SECOND_MASK)  >> SECOND_SHIFT)
+#define TIME64_GET_MINUTE(t) (int)((t & MINUTE_MASK)  >> MINUTE_SHIFT)
+#define TIME64_GET_HOUR(t)   (int)((t & HOUR_MASK)    >> HOUR_SHIFT)
+#define TIME64_GET_DAY(t)    (int)(((t & DAY_MASK)    >> DAY_SHIFT) + 1)
+#define TIME64_GET_MONTH(t)  (int)(((t & MONTH_MASK)  >> MONTH_SHIFT) + 1)
+#define TIME64_GET_YEAR(t)   (int)((t & YEAR_MASK)    >> YEAR_SHIFT)
 
-#define TIMECMP(t1, t2, g) ((t1 & g) - (t2 & g))
-#define TIMEADD(t, g, unit) (t = (t + (GRANULARITY_MSEC & (~g + unit))))
+#define TIME64CMP(t1, t2, g) ((t1 & g) - (t2 & g))
+#define TIME64ADD(t, g, unit) (t = (t + (GR_MSEC & (~g + unit))))
 
 /* Current time */
-time_info_t time_info(void);
-time_info_t time_info_epoch(time_t time);
+time64_t time64(void);
+time64_t time64_epoch(time_t time);
 /* Some algorithm */
-int time_info_dayofweek(time_info_t t);
+int time64_dayofweek(time64_t t);
 /* Display */
-const char *time_info2str(time_info_t t, granularity_t g);
-const char *time_info2str_r(time_info_t t, granularity_t g, char *buf);
+const char *time64_str(time64_t t, time64_gr_t g);
+const char *time64_str_r(time64_t t, time64_gr_t g, char *buf);
 
 /* Some kinda sync */
-#define TIME_FOR_EACH(start, stop, g, time)		\
+#define TIME64_FOR_EACH(start, stop, g, time)		\
   for(time = start; time < stop; TIMEADD(time, g, 1))
 
 #endif

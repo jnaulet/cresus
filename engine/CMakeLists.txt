@@ -3,10 +3,8 @@ project(cresus)
 
 # src for cresus engine
 add_library(engine OBJECT
-  calendar.c
-  candle.c
-  engine.c
-  order.c
-  position.c
-  timeline.c
+  common_opt.c
+  engine_v2.c
+#  order.c
+#  position.c
   )

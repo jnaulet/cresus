@@ -31,11 +31,12 @@ extern int __verbose_color__;
 #define NO_FONT   "\x1b[1;0m"
 
 #define PR(level, format, font, ...)					\
-  if(level >= __verbose__)						\
-    if(__verbose_color__)						\
+  if(level >= __verbose__){						\
+    if(__verbose_color__){						\
       fprintf(stderr, font format NO_FONT, ##__VA_ARGS__);		\
-    else								\
-      fprintf(stderr, format, ##__VA_ARGS__)
+    }else{								\
+      fprintf(stderr, format, ##__VA_ARGS__);				\
+    }}
 
 #define VERBOSE_LEVEL(level) __verbose__ = level
 #define VERBOSE_COLOR(bool) __verbose_color__ = bool

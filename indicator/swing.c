@@ -9,39 +9,36 @@
 #include "swing.h"
 #include <string.h>
 
-#define candle_prev(c) ((struct candle*)__timeline_entry_self__		\
-			((struct timeline_entry*)__list_self__		\
-			 (__list__(__timeline_entry__(c))->prev)))
+#define is_inside_candle(c, p)					\
+  ((c)->high < (p)->high &&                                     \
+   (c)->low > (p)->low)
 
-#define is_inside_candle(c)					\
-  ((c)->high < candle_prev(c)->high &&				\
-   (c)->low > candle_prev(c)->low)
-
-static int swing_feed(struct indicator *i, struct timeline_entry *e) {
-  
-  struct list *l = __list__(e);
-  struct swing *s = __indicator_self__(i);
-  struct candle *c = __timeline_entry_self__(e);
-  
+static int swing_feed(struct indicator *i, struct timeline_track_n3 *e)
+{  
+  struct swing *ctx = (void*)i;
+  struct candle *p, *c = (void*)e;
   struct candle *table[SWING_MAX];
   
   /* TODO : back to original version
    * Problem with inside candles
    */
-  if(!s->ref)
+  if(!ctx->ref)
     goto out;
   
   /* Populate ref table */
   for(int n = 0; n < SWING_MAX;){
     /* Beware of head if not enough data */
-    if(__list__(__timeline_entry__(c)) == l->head)
+    if(__list_is_head__(c))
       goto out;
+
+    /* Get last candle */
+    p = __list_prev_n__(c, 1);
     
-    if(!is_inside_candle(c))
+    if(!is_inside_candle(c, p))
       table[n++] = c;
     
     /* Navigate backwards */
-    c = candle_prev(c);
+    c = p;
   }
   
   /* Find 3 last candles */
@@ -51,44 +48,44 @@ static int swing_feed(struct indicator *i, struct timeline_entry *e) {
   
   if(s0->low < s1->low && s2->low < s1->low &&
      s0->high < s1->high && s2->high < s1->high)
-    s->type = SWING_TOP;
+    ctx->type = SWING_TOP;
   
   if(s0->low > s1->low && s2->low > s1->low &&
      s0->high > s1->high && s2->high > s1->high)
-    s->type = SWING_BOTTOM;
+    ctx->type = SWING_BOTTOM;
   
  out:
-  s->ref = c;
+  ctx->ref = c;
   return 0;
 }
 
-static void swing_reset(struct indicator *i) {
-
-  struct swing *s = __indicator_self__(i);
+static void swing_reset(struct indicator *i)
+{
+  struct swing *ctx = (void*)i;
   /* RAZ */
-  s->ref = NULL;
-  s->type = SWING_NONE;
+  ctx->ref = NULL;
+  ctx->type = SWING_NONE;
 }
 
-int swing_init(struct swing *s, indicator_id_t id) {
-  
+int swing_init(struct swing *ctx, unique_id_t id)
+{  
   /* Super() */
-  __indicator_super__(s, id, swing_feed, swing_reset);
-  __indicator_set_string__(s, "swing");
+  __indicator_init__(ctx, id, swing_feed, swing_reset);
+  __indicator_set_string__(ctx, "swing");
   
-  s->ref = NULL;
-  s->type = SWING_NONE;
+  ctx->ref = NULL;
+  ctx->type = SWING_NONE;
 
   /* swing_feed(__indicator__(s), seed); */
   return 0;
 }
 
-void swing_release(struct swing *s)
+void swing_release(struct swing *ctx)
 {
-  __indicator_release__(s);
+  __indicator_release__(ctx);
 }
 
-swing_t swing_type_get(struct swing *s)
+swing_t swing_type_get(struct swing *ctx)
 {
-  return s->type;
+  return ctx->type;
 }

@@ -12,61 +12,19 @@
 
 #include "mobile.h"
 
-#if 0
-static void mobile_manage_direction(struct mobile *m, double avg,
-                                    struct candle *candle) {
+static int mobile_feed(struct indicator *i, struct timeline_track_n3 *e)
+{  
+  struct mobile_n3 *n3;
+  struct mobile *ctx = (void*)i;
   
-  /* Check direction change */
-  if(avg > m->avg.value){
-    if(m->dir == MOBILE_DIR_DOWN)
-      __indicator_set_event__(m, candle, MOBILE_EVENT_CHDIR_UP);
-    
-    m->dir = MOBILE_DIR_UP;
-    
-  }else if(avg < m->avg.value){
-    if(m->dir == MOBILE_DIR_UP)
-      __indicator_set_event__(m, candle, MOBILE_EVENT_CHDIR_DOWN);
-    
-    m->dir = MOBILE_DIR_DOWN;
-  }
-  
-  /* If equals, keep last info */
-}
-
-static void mobile_manage_position(struct mobile *m, double avg,
-                                   struct candle *candle) {
-  
-  double value = candle_get_value(candle, m->cvalue);
-  if(avg > value){
-    if(m->pos == MOBILE_POS_BELOW)
-      __indicator_set_event__(m, candle, MOBILE_EVENT_CROSSED_DOWN);
-    
-    m->pos = MOBILE_POS_ABOVE;
-    
-  }else if(avg < value) {
-    if(m->pos == MOBILE_POS_ABOVE)
-      __indicator_set_event__(m, candle, MOBILE_EVENT_CROSSED_UP);
-    
-    m->pos = MOBILE_POS_BELOW;
-  }
-  
-  /* If equals, do nothing */
-}
-#endif
-
-static int mobile_feed(struct indicator *i, struct timeline_entry *e) {
-  
-  struct mobile_entry *entry;
-  struct mobile *m = __indicator_self__(i);
-  struct candle *c = __timeline_entry_self__(e);
   /* Trying to get average values */
-  double last_avg = average_value(&m->avg);
-  double avg = average_update(&m->avg, candle_get_value(c, m->cvalue));
+  double last_avg = average_value(&ctx->avg);
+  double avg = average_update(&ctx->avg, input_n3_value(e, ctx->value));
   
-  if(average_is_available(&m->avg)){
-    /* Create new entry */
-    if(mobile_entry_alloc(entry, i, avg, (avg - last_avg))){
-      candle_add_indicator_entry(c, __indicator_entry__(entry));
+  if(average_is_available(&ctx->avg)){
+    /* Create new n3 */
+    if(mobile_n3_alloc(n3, i, avg, (avg - last_avg))){
+      timeline_track_n3_add_indicator_n3(e, __indicator_n3__(n3));
       return 1;
     }
   }
@@ -74,44 +32,44 @@ static int mobile_feed(struct indicator *i, struct timeline_entry *e) {
   return 0;
 }
 
-static void mobile_reset(struct indicator *i) {
-
-  struct mobile *m = __indicator_self__(i);
-  average_reset(&m->avg);
+static void mobile_reset(struct indicator *i)
+{
+  struct mobile *ctx = (void*)i;
+  average_reset(&ctx->avg);
 }
 
-int mobile_init(struct mobile *m, indicator_id_t id, mobile_t type,
-		int period, candle_value_t cvalue) {
-  
+int mobile_init(struct mobile *ctx, unique_id_t uid, mobile_t type,
+		int period, input_n3_value_t value)
+{  
   /* Super */
-  __indicator_super__(m, id, mobile_feed, mobile_reset);
-  __indicator_set_string__(m, "%cma[%d]",
+  __indicator_init__(ctx, uid, mobile_feed, mobile_reset);
+  __indicator_set_string__(ctx, "%cma[%d]",
 			   ((type == MOBILE_EMA) ? 'e' : 'm'),
 			   period);
-
-  m->type = type;
-  m->cvalue = cvalue;
-
-  switch(m->type) {
-  case MOBILE_MMA : average_init(&m->avg, AVERAGE_MATH, period); break;
-  case MOBILE_EMA : average_init(&m->avg, AVERAGE_EXP, period); break;
+  
+  ctx->type = type;
+  ctx->value = value;
+  
+  switch(ctx->type) {
+  case MOBILE_MMA : average_init(&ctx->avg, AVERAGE_MATH, period); break;
+  case MOBILE_EMA : average_init(&ctx->avg, AVERAGE_EXP, period); break;
   }
   
   return 0;
 }
 
-void mobile_release(struct mobile *m)
+void mobile_release(struct mobile *ctx)
 {
-  __indicator_release__(m);
-  average_release(&m->avg);
+  __indicator_release__(ctx);
+  average_release(&ctx->avg);
 }
 
-double mobile_average(struct mobile *m)
+double mobile_average(struct mobile *ctx)
 {
-  return average_value(&m->avg);
+  return average_value(&ctx->avg);
 }
 
-double mobile_stddev(struct mobile *m)
+double mobile_stddev(struct mobile *ctx)
 {
-  return average_stddev(&m->avg);
+  return average_stddev(&ctx->avg);
 }

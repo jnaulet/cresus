@@ -10,13 +10,14 @@
 #include <stdlib.h>
 
 #include "yahoo_v7.h"
-#include "engine/candle.h"
 #include "framework/verbose.h"
 
-static struct candle *yahoo_v7_parse_entry(struct yahoo_v7 *ctx, char *str)
+static struct input_n3 *
+yahoo_v7_parse_n3(struct yahoo_v7 *ctx, char *str)
 {
-  struct candle *c; 
-  time_info_t time = 0;
+  struct input_n3 *n3;
+
+  time64_t time = 0;
   int year, month, day;
   double open = 0.0, close = 0.0;
   double high = 0.0, low = 0.0;
@@ -45,36 +46,37 @@ static struct candle *yahoo_v7_parse_entry(struct yahoo_v7 *ctx, char *str)
   sscanf(svol, "%lf", &volume);
 
   /* Dummy values for control */
-  TIME_SET_SECOND(time, 1);
-  TIME_SET_MINUTE(time, 30);
-  TIME_SET_HOUR(time, 17);
+  TIME64_SET_SECOND(time, 1);
+  TIME64_SET_MINUTE(time, 30);
+  TIME64_SET_HOUR(time, 17);
   
-  TIME_SET_DAY(time, day);
-  TIME_SET_MONTH(time, month);
-  TIME_SET_YEAR(time, year);
+  TIME64_SET_DAY(time, day);
+  TIME64_SET_MONTH(time, month);
+  TIME64_SET_YEAR(time, year);
 
   if(open != 0.0 && close != 0.0 && high != 0.0 && low != 0.0)
-    if(candle_alloc(c, time, GRANULARITY_DAY,
-		    open, close, high, low, volume))
-      return c;
+    if(input_n3_alloc(n3, time, GR_DAY,
+			 open, close, high, low, volume))
+      return n3;
   
  err:
   return NULL;
 }
 
-static struct timeline_entry *yahoo_v7_read(struct input *in)
+static struct input_n3 *yahoo_v7_read(struct input *in)
 {
-  struct yahoo_v7 *ctx = __input_self__(in);
+  struct yahoo_v7 *ctx = (void*)in;
   
   char buf[256];
-  struct candle *c;
-
+  struct input_n3 *n3;
+  
   while(fgets(buf, sizeof buf, ctx->fp)){
-    /* Parse entry */
-    if((c = yahoo_v7_parse_entry(ctx, buf))){
-      /* We got a new candle */
-      PR_DBG("%s %s loaded\n", ctx->filename, __timeline_entry_str__(c));
-      return __timeline_entry__(c);
+    /* Parse n3 */
+    if((n3 = yahoo_v7_parse_n3(ctx, buf))){
+      PR_DBG("%s %s loaded\n", ctx->filename,
+	     time64_str_r(n3->time, n3->g, buf));
+      /* We got a new candle */      
+      return n3;
     }
   }
   
@@ -86,8 +88,8 @@ int yahoo_v7_init(struct yahoo_v7 *ctx, const char *filename)
 {
   char dummy[256];
   
-  /* super */
-  __input_super__(ctx, yahoo_v7_read);
+  /* init */
+  __input_init__(ctx, yahoo_v7_read);
 
   strncpy(ctx->filename, filename, sizeof(ctx->filename));
   if(!(ctx->fp = fopen(ctx->filename, "r"))){

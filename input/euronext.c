@@ -14,16 +14,15 @@
 #include <fcntl.h>
 
 #include "euronext.h"
-#include "engine/candle.h"
 #include "framework/verbose.h"
-#include "framework/time_info.h"
+#include "framework/time64.h"
 
-static time_info_t euronext_time(struct euronext *ctx,
+static time64_t euronext_time(struct euronext *ctx,
 				 const char *str)
 {
   int y, m, d;
   sscanf(str, "%d/%d/%d", &d, &m, &y);
-  return TIME_INIT(y, m, d, 0, 0, 0, 0);
+  return TIME64_INIT(y, m, d, 0, 0, 0, 0);
 }
 
 static double euronext_dbl(struct euronext *ctx, char *str)
@@ -44,11 +43,11 @@ static double euronext_dbl(struct euronext *ctx, char *str)
   return ((double)t * 1000.0) + (double)h + ((double)c / 100.0);
 }
 
-static struct timeline_entry *euronext_read(struct input *in)
+static struct input_n3 *euronext_read(struct input *in)
 {
-  struct candle *c;
-  struct euronext *ctx = __input_self__(in);
- 
+  struct input_n3 *n3;
+  struct euronext *ctx = (void*)in;
+  
   /* Check for EOF at least */
   if(ctx->i >= ctx->len)
     goto err;
@@ -60,16 +59,16 @@ static struct timeline_entry *euronext_read(struct input *in)
   char *slow = o->u.object.values[5].value->u.string.ptr;
   char *sclose = o->u.object.values[6].value->u.string.ptr;
   
-  time_info_t time = euronext_time(ctx, date);
+  time64_t time = euronext_time(ctx, date);
   double open = euronext_dbl(ctx, sopen);
   double high = euronext_dbl(ctx, shigh);
   double low = euronext_dbl(ctx, slow);
   double close = euronext_dbl(ctx, sclose);
   
-  if(candle_alloc(c, time, GRANULARITY_DAY,
-                  open, close, high, low, 0.0))
-    return __timeline_entry__(c);
-
+  if(input_n3_alloc(n3, time, GR_DAY,
+		       open, close, high, low, 0.0))
+    return n3;
+  
  err:
   return NULL;
 }
@@ -80,8 +79,8 @@ int euronext_init(struct euronext *ctx, const char *filename)
   size_t size;
   struct stat stat;
 
-  /* super */
-  __input_super__(ctx, euronext_read);
+  /* init */
+  __input_init__(ctx, euronext_read);
   
   /* internals */
   ctx->i = 0;
@@ -104,7 +103,7 @@ int euronext_init(struct euronext *ctx, const char *filename)
     goto err;
   
   /* Ok */
-  ctx->data = ctx->value->u.object.values->value; //->u.array.values;
+  ctx->data = ctx->value->u.object.values->value;
   ctx->len = ctx->data->u.array.length;
   
   close(fd);

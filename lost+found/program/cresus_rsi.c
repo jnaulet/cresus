@@ -71,7 +71,7 @@ int main(int argc, char **argv)
     /* printf("Candle %.2lf rsi %.2lf\n", cdl.close, val); */
     
     switch(state){
-    case 0 : /* Look for entry point */
+    case 0 : /* Look for n3 point */
       /* Memorize open value */
       buy = cdl.open;
 

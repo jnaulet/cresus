@@ -12,13 +12,13 @@
 #include "rsi.h"
 #include "mobile.h"
 
-static int rsi_feed(struct indicator *i, struct timeline_entry *e) {
-  
+static int rsi_feed(struct indicator *i, struct timeline_track_n3 *e)
+{  
   double h, b, sub;
-  struct rsi *r = __indicator_self__(i);
-  struct candle *c = __timeline_entry_self__(e);
+  struct rsi *ctx = (void*)i;
+  struct candle *c = (void*)e;
   
-  if(!r->last)
+  if(!ctx->last)
     goto out;
   
   /* RSI formula :
@@ -28,52 +28,52 @@ static int rsi_feed(struct indicator *i, struct timeline_entry *e) {
    * where h is the ema of ups of last n days
    * and b is the fabs ema of downs of last n days
    */
-  sub = c->close - r->last->close;
-  if(sub > 0) h = average_update(&r->h, sub);
-  if(sub < 0) b = average_update(&r->b, fabs(sub));
+  sub = c->close - ctx->last->close;
+  if(sub > 0) h = average_update(&ctx->h, sub);
+  if(sub < 0) b = average_update(&ctx->b, fabs(sub));
   /* Compute RSI the easy way */
-  r->value = (h / (h + b)) * 100.0;
+  ctx->value = (h / (h + b)) * 100.0;
   
   /* TODO : add event management */
  out:
-  r->last = c;
+  ctx->last = c;
   return 0;
 }
 
-static void rsi_reset(struct indicator *i) {
-
-  struct rsi *r = __indicator_self__(i);
+static void rsi_reset(struct indicator *i)
+{
+  struct rsi *ctx = (void*)i;
   /* RAZ */
-  r->value = 0.0;
-  r->last = NULL;
+  ctx->value = 0.0;
+  ctx->last = NULL;
   /* Avg */
-  average_reset(&r->h);
-  average_reset(&r->b);
+  average_reset(&ctx->h);
+  average_reset(&ctx->b);
 }
 
-int rsi_init(struct rsi *r, indicator_id_t id, int period)
+int rsi_init(struct rsi *ctx, unique_id_t id, int period)
 {
   /* Super() */
-  __indicator_super__(r, id, rsi_feed, rsi_reset);
-  __indicator_set_string__(r, "rsi[%d]", period);
+  __indicator_init__(ctx, id, rsi_feed, rsi_reset);
+  __indicator_set_string__(ctx, "rsi[%d]", period);
   
-  r->value = 0.0;
-  r->last = NULL;
+  ctx->value = 0.0;
+  ctx->last = NULL;
   
-  average_init(&r->h, AVERAGE_EXP, period);
-  average_init(&r->b, AVERAGE_EXP, period);
+  average_init(&ctx->h, AVERAGE_EXP, period);
+  average_init(&ctx->b, AVERAGE_EXP, period);
   
   return 0;
 }
 
-void rsi_release(struct rsi *r)
+void rsi_release(struct rsi *ctx)
 {
-  __indicator_release__(r);
-  average_release(&r->h);
-  average_release(&r->b);
+  __indicator_release__(ctx);
+  average_release(&ctx->h);
+  average_release(&ctx->b);
 }
 
-double rsi_value(struct rsi *r) {
-
-  return r->value;
+double rsi_value(struct rsi *ctx)
+{  
+  return ctx->value;
 }

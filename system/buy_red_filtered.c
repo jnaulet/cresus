@@ -17,8 +17,8 @@
 
 #include "input/inwrap.h"
 #include "engine/engine.h"
+#include "engine/common_opt.h"
 #include "framework/verbose.h"
-#include "framework/common_opt.h"
 
 typedef enum {
   STATE_NORMAL,
@@ -34,11 +34,11 @@ static state_t state = STATE_NORMAL;
 
 static int feed(struct engine *e,
 		struct timeline *t,
-		struct timeline_entry *entry)
+		struct timeline_n3 *n3)
 {
   /* Step by step loop */
   static int level = 0;
-  struct candle *c = __timeline_entry_self__(entry);
+  struct candle *c = (void*)n3;
   
   /* Execute */
   if(candle_is_red(c)) level++;
@@ -67,8 +67,9 @@ static struct timeline *timeline_create(const char *filename,
   inwrap_t t = inwrap_t_from_str(type);
   
   if(inwrap_alloc(inwrap, filename, t)){
-    if(timeline_alloc(timeline, "buy_red_filtered", __input__(inwrap))){
+    if(timeline_alloc(timeline, "buy_red_filtered")){
       /* Ok */
+      timeline_load(timeline, __input__(inwrap));
       return timeline;
     }
   }

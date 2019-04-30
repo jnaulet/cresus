@@ -10,30 +10,23 @@
 #define SLIST_H
 
 #include <stdio.h>
+#include "framework/types.h"
 
-/* Inheritance system */
+#define __slist__(x) ((struct slist*)(x))
 
-#define __inherits_from_slist__ struct slist __parent_slist__
-#define __slist_is_superclass__ void *__self_slist__
-#define __slist__(x) (&(x)->__parent_slist__)
-#define __slist_self__(x) (x)->__self_slist__
-#define __slist_self_init__(x, self) (x)->__self_slist__ = self
-
-#define __slist_super__(self)			\
-  __slist_self_init__(__slist__(self), self);	\
-  slist_init(__slist__(self))
-#define __slist_release__(self) slist_release(__slist__(self))
-
-#define __slist_insert__(slist, entry)		\
-  slist_insert((slist), __slist__(entry))
-#define __slist_del__(slist)			\
-  slist_del(__slist__(slist))
+/* Exports */
+#define __slist_init__(ctx) slist_init(__slist__(ctx))
+#define __slist_release__(ctx) slist_release(__slist__(ctx))
+#define __slist_push__(ctx, n3)                    \
+  slist_push(__slist__(ctx), __slist__(n3))
+#define __slist_pop__(ctx, n3)			\
+  slist_pop(__slist__(ctx), (struct slist**)(n3))
 /* Iteration */
-#define __slist_for_each__(head, self)			\
-  for(struct slist *ptr = (head)->next;			\
-      ptr != NULL && (self = __slist_self__(ptr));	\
-      ptr = ptr->next)
-
+#define __slist_for_each__(head, ctx)                           \
+  for(struct slist *__ptr__ = __slist__(head)->next;            \
+      __ptr__ != NULL && (ctx = (typeof(ctx))(__ptr__));        \
+      __ptr__ = __ptr__->next)
+  
 /* Basic slist object */
 
 #define slist_head_t(type) struct slist /* Type is indicative */
@@ -41,30 +34,84 @@
 #define slist_head_release(x) slist_release(x)
 
 struct slist {
-  __slist_is_superclass__;
   struct slist *next;
 };
 
-static inline int slist_init(struct slist *s) {
-  s->next = NULL;
+static inline int slist_init(struct slist *ctx)
+{
+  ctx->next = NULL;
   return 0;
 }
 
-static inline void slist_release(struct slist *s) {
-  s->next = NULL;
+static inline void slist_release(struct slist *ctx)
+{
+  ctx->next = NULL;
 }
 
-static inline void slist_insert(struct slist *s, struct slist *entry) {
-  entry->next = s->next;
-  s->next = entry;
+/* Warning : only use head as ctx */
+
+static inline void slist_push(struct slist *ctx, struct slist *n3)
+{
+  n3->next = ctx->next;
+  ctx->next = n3;
 }
 
-static inline void slist_del(struct slist *s) {
-  s->next = s->next->next;
+static inline struct slist *slist_pop(struct slist *ctx,
+				      struct slist **n3)
+{
+  *n3 = ctx->next;
+  if(*n3) ctx->next = ctx->next->next;
+  return *n3;
 }
 
-#define slist_is_empty(head) ((head)->next == NULL)
+#define slist_is_last(ctx) ((ctx)->next == NULL)
+#define slist_is_empty(head) slist_is_last(head)
 #define slist_for_each(head, ptr)				\
   for(ptr = (head)->next; (ptr) != NULL; ptr = (ptr)->next)
+
+/*
+ * More advanced object : slist_by_uid
+ */
+
+#define __slist_by_uid__(x) ((struct slist_by_uid*)(x))
+
+struct slist_by_uid {
+  __inherits_from__(struct slist);
+  unique_id_t uid;
+};
+
+static inline int
+slist_by_uid_init(struct slist_by_uid *ctx, unique_id_t uid)
+{
+  __slist_init__(ctx); /* super() */
+  ctx->uid = uid;
+  return 0;
+}
+
+static inline void
+slist_by_uid_release(struct slist_by_uid *ctx)
+{
+  __slist_release__(ctx);
+}
+
+#define __slist_by_uid_init__(ctx, uid)         \
+  slist_by_uid_init(__slist_by_uid__(ctx), uid)
+#define __slist_by_uid_release__(ctx)		\
+  slist_by_uid_release(__slist_by_uid__(ctx))
+
+static inline struct slist_by_uid *
+slist_by_uid_find(struct slist_by_uid *ctx, unique_id_t uid)
+{
+  struct slist_by_uid *ptr;
+  __slist_for_each__(ctx, ptr){
+    if(ptr->uid == uid)
+      return ptr;
+  }
+
+  return NULL;
+}
+
+#define __slist_by_uid_find__(ctx, uid)         \
+  slist_by_uid_find(__slist_by_uid__(ctx), uid)
 
 #endif

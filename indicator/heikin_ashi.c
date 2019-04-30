@@ -9,10 +9,10 @@
 #include <string.h>
 #include "heikin_ashi.h"
 
-static int heikin_ashi_feed(struct indicator *i, struct timeline_entry *e) {
-  
-  struct heikin_ashi *h = __indicator_self__(i);
-  struct candle *c = __timeline_entry_self__(e);
+static int heikin_ashi_feed(struct indicator *i, struct timeline_track_n3 *e)
+{  
+  struct heikin_ashi *h = (void*)i;
+  struct candle *c = (void*)e;
 
   if(i->is_empty){
     /* First data */
@@ -45,16 +45,16 @@ static int heikin_ashi_feed(struct indicator *i, struct timeline_entry *e) {
   return 1;
 }
 
-static void heikin_ashi_reset(struct indicator *i) {
-
-  struct heikin_ashi *h = __indicator_self__(i);
+static void heikin_ashi_reset(struct indicator *i)
+{
+  struct heikin_ashi *h = (void*)i;
   /* Nothing to do */
 }
 
-int heikin_ashi_init(struct heikin_ashi *h, indicator_id_t id) {
-  
+int heikin_ashi_init(struct heikin_ashi *h, unique_id_t id)
+{  
   /* Init parent */
-  __indicator_super__(h, id, heikin_ashi_feed, heikin_ashi_reset);
+  __indicator_init__(h, id, heikin_ashi_feed, heikin_ashi_reset);
   __indicator_set_string__(h, "heikin-ashi");
 
   /*
@@ -68,13 +68,13 @@ int heikin_ashi_init(struct heikin_ashi *h, indicator_id_t id) {
   return 0;
 }
 
-void heikin_ashi_release(struct heikin_ashi *h) {
-  
+void heikin_ashi_release(struct heikin_ashi *h)
+{  
   __indicator_release__(h);
 }
 
-int heikin_ashi_get(struct heikin_ashi *h, struct candle *candle) {
-  
+int heikin_ashi_get(struct heikin_ashi *h, struct candle *candle)
+{  
   memcpy(candle, &h->value, sizeof *candle);
   return 0;
 }

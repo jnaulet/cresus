@@ -11,6 +11,7 @@
 
 #include "math/average.h"
 #include "engine/candle.h"
+#include "framework/types.h"
 #include "framework/indicator.h"
 
 struct bollinger_value {
@@ -20,7 +21,7 @@ struct bollinger_value {
 
 struct bollinger {
   /* Inherits from indicator */
-  __inherits_from_indicator__;
+  __inherits_from__(struct indicator);
   
   struct average avg;
   double stddev_factor;
@@ -32,7 +33,7 @@ struct bollinger {
   char str[32]; /* FIXME */
 };
 
-int bollinger_init(struct bollinger *b, indicator_id_t id, int period,
+int bollinger_init(struct bollinger *b, unique_id_t id, int period,
 		   double stddev_factor, candle_value_t cvalue);
 void bollinger_release(struct bollinger *b);
 

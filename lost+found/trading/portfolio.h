@@ -22,7 +22,7 @@ struct portfolio {
   struct {
     double value;
     portfolio_t type;
-  } entry[PORTFOLIO_MAX];
+  } n3[PORTFOLIO_MAX];
 };
 
 int portfolio_init(struct portfolio *p); /* TODO : define size here */

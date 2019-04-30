@@ -11,10 +11,12 @@
 
 #include "math/average.h"
 #include "engine/candle.h"
+
+#include "framework/types.h"
 #include "framework/indicator.h"
 
 struct stochastic {
-  __inherits_from_indicator__;
+  __inherits_from__(struct indicator);
   
   int period, k;
   struct average smooth_k;
@@ -24,8 +26,8 @@ struct stochastic {
   struct candle *array;
 };
 
-int stochastic_init(struct stochastic *s, indicator_id_t id,
+int stochastic_init(struct stochastic *ctx, unique_id_t id,
 		    int period, int k, int d);
-void stochastic_release(struct stochastic *s);
+void stochastic_release(struct stochastic *ctx);
 
 #endif /* defined(__Cresus_EVO__stochastic__) */

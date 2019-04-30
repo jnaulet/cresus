@@ -9,6 +9,7 @@
 #ifndef STOPLOSS_H
 #define STOPLOSS_H
 
+#include "framework/types.h"
 #include "framework/indicator.h"
 
 typedef enum {
@@ -21,7 +22,7 @@ typedef enum {
 
 struct stoploss {
   /* Inherits from indicator */
-  __inherits_from_indicator__;
+  __inherits_from__(struct indicator);
   
   /* Own data */
   stoploss_t type;
@@ -30,7 +31,7 @@ struct stoploss {
   int trigger;
 };
 
-int stoploss_init(struct stoploss *s, indicator_id_t id, double percent);
+int stoploss_init(struct stoploss *s, unique_id_t id, double percent);
 void stoploss_release(struct stoploss *s);
 
 void stoploss_set(struct stoploss *s, stoploss_t type, double value);

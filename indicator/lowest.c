@@ -9,7 +9,7 @@
 
 static void _lowest_reset_(struct indicator *i)
 {
-  struct lowest *ctx =  __indicator_self__(i);
+  struct lowest *ctx = (void*)i;
   /* Nothing to do */
 }
 
@@ -19,28 +19,26 @@ void lowest_reset(struct lowest *ctx)
 }
 
 static int lowest_feed(struct indicator *i,
-		       struct timeline_entry *e)
+		       struct timeline_track_n3 *e)
 {
   int n = 0;
-  struct lowest_entry *entry;
-  struct timeline_entry *prev = NULL;
-  struct lowest *ctx = __indicator_self__(i);
-  struct candle *c = __timeline_entry_self__(e);
+  struct lowest_n3 *n3;
+  struct lowest *ctx = (void*)i;
+  struct timeline_track_n3 *prev = NULL;
   
-  if(lowest_entry_alloc(entry, i)){
-    /* Init entry value */
-    entry->value = c->low;
+  if(lowest_n3_alloc(n3, i)){
+    /* Init n3 value */
+    n3->value = e->low;
     /* Find a lower value to exit */
-    __list_for_each_prev__(__list__(e), prev){
-      struct candle *p = __timeline_entry_self__(prev);
-      entry->value = MIN(p->low, entry->value);
+    __list_for_each_prev__(e, prev){
+      n3->value = MIN(prev->low, n3->value);
       /* End of loop */
       if(++n >= ctx->period)
 	break;
     }
     
-    /* Attach new entry */
-    candle_add_indicator_entry(c, __indicator_entry__(entry));
+    /* Attach new n3 */
+    timeline_track_n3_add_indicator_n3(e, __indicator_n3__(n3));
     return 1;
   }
   
@@ -48,10 +46,10 @@ static int lowest_feed(struct indicator *i,
   return 0;
 }
 
-int lowest_init(struct lowest *ctx, indicator_id_t id, int period)
+int lowest_init(struct lowest *ctx, unique_id_t uid, int period)
 {
   /* Super() */
-  __indicator_super__(ctx, id, lowest_feed, _lowest_reset_);
+  __indicator_init__(ctx, uid, lowest_feed, _lowest_reset_);
   __indicator_set_string__(ctx, "lowest");
   /* Init internals */
   ctx->period = period;

@@ -9,60 +9,58 @@
 #include "updown.h"
 #include <string.h>
 
-static int updown_feed(struct indicator *i, struct timeline_entry *e) {
-  
-  struct updown *u = __indicator_self__(i);
+static int updown_feed(struct indicator *i, struct timeline_track_n3 *e)
+{  
+  struct updown *ctx = (void*)i;
+  struct candle *c0 = (void*)e;
   
   /* FIXME : what if s1 == s2 or s0 == s1 ? */
-  struct list *l2 = list_prev_n(__list__(e), 2);
-  struct list *l1 = list_prev_n(__list__(e), 1);
-  struct list *l0 = __list__(e);
-
+  struct candle *c1 = __list_prev_n__(c0, 1);
+  struct candle *c2 = __list_prev_n__(c1, 1);
+  
   /* No list head */
-  if(!list_is_head(l2) && !list_is_head(l1)){
-    struct candle *c2 = __timeline_entry_self__((struct timeline_entry*)__list_self__(l2));
-    struct candle *c1 = __timeline_entry_self__((struct timeline_entry*)__list_self__(l1));
-    struct candle *c0 = __timeline_entry_self__((struct timeline_entry*)__list_self__(l0));
-
+  if(!__list_is_head__(c2) &&
+     !__list_is_head__(c1)){
+    
     /* Real values */
-    double v2 = candle_get_value(c2, u->cvalue);
-    double v1 = candle_get_value(c1, u->cvalue);
-    double v0 = candle_get_value(c0, u->cvalue);
+    double v2 = candle_get_value(c2, ctx->cvalue);
+    double v1 = candle_get_value(c1, ctx->cvalue);
+    double v0 = candle_get_value(c0, ctx->cvalue);
     
     /* Detect type */
     if(v0 < v1 && v1 > v2){
       /* UPDOWN_TOP */
-      u->type = UPDOWN_TOP;
+      ctx->type = UPDOWN_TOP;
     }
-
+    
     if(v0 > v1 && v1 < v2){
       /* UPDOWN_BOTTOM */
-      u->type = UPDOWN_BOTTOM;
+      ctx->type = UPDOWN_BOTTOM;
     }
   }
   
   return 0;
 }
 
-static void updown_reset(struct indicator *i) {
-
-  struct updown *u = __indicator_self__(i);
+static void updown_reset(struct indicator *i)
+{
+  struct updown *ctx = (void*)i;
   /* RAZ */
 }
 
-int updown_init(struct updown *u, indicator_id_t id, candle_value_t cvalue) {
-  
+int updown_init(struct updown *ctx, unique_id_t id, candle_value_t cvalue)
+{  
   /* Super() */
-  __indicator_super__(u, id, updown_feed, updown_reset);
-  __indicator_set_string__(u, "updown");
+  __indicator_init__(ctx, id, updown_feed, updown_reset);
+  __indicator_set_string__(ctx, "updown");
   
-  u->type = UPDOWN_NONE;
-  u->cvalue = cvalue;
-
+  ctx->type = UPDOWN_NONE;
+  ctx->cvalue = cvalue;
+  
   return 0;
 }
 
-void updown_release(struct updown *u)
+void updown_release(struct updown *ctx)
 {
-  __indicator_release__(u);
+  __indicator_release__(ctx);
 }

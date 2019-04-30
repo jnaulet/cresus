@@ -18,14 +18,14 @@ static double zz_thres = ZIGZAG_THRES;
 static int zz_window = ZIGZAG_WINDOW;
 
 static struct timeline *
-timeline_create(const char *filename, const char *name, time_info_t min) {
+timeline_create(const char *filename, const char *name, time64_t min) {
 
   struct yahoo *yahoo;
   struct zigzag *zigzag;
   struct timeline *timeline;
   
   /* TODO : Check return values */
-  yahoo_alloc(yahoo, filename, START_TIME, TIME_MAX); /* load everything */
+  yahoo_alloc(yahoo, filename, START_TIME, TIME64_MAX); /* load everything */
   timeline_alloc(timeline, name, __input__(yahoo));
   /* Indicators alloc */
   zigzag_alloc(zigzag, ZIGZAG, zz_thres, CANDLE_CLOSE);
@@ -38,7 +38,7 @@ timeline_create(const char *filename, const char *name, time_info_t min) {
 /* more final functions */
 
 static void add_timeline_to_cluster(struct cluster *c, const char *path,
-				    const char *name, time_info_t time) {
+				    const char *name, time64_t time) {
   
   struct timeline *sub;
   sub = timeline_create(path, name, time);
@@ -65,15 +65,15 @@ static int sim_feed(struct sim *s, struct cluster *c) {
   int status = 0;
   
   struct timeline *t;
-  struct timeline_entry *entry;
-  struct indicator_entry *ientry;
-  struct zigzag_entry *zref = NULL;
+  struct timeline_n3 *n3;
+  struct indicator_n3 *in3;
+  struct zigzag_n3 *zref = NULL;
   
   /* TODO : better management of this ? */
-  if(timeline_entry_current(__timeline__(c), &entry) != -1){
-    struct candle *candle = __timeline_entry_self__(entry);
-    if((ientry = candle_find_indicator_entry(candle, ZIGZAG))){
-      zref = __indicator_entry_self__(ientry);
+  if(timeline_n3_current(__timeline__(c), &n3) != -1){
+    struct candle *candle = __timeline_n3_self__(n3);
+    if((in3 = candle_find_indicator_n3(candle, ZIGZAG))){
+      zref = __indicator_n3_self__(in3);
       PR_WARN("%s ZIGZAG is %.2f\n", __timeline__(c)->name, zref->value);
       /* Manage cluster's status here */
       if(trend_set(zref->dir)){
@@ -96,19 +96,19 @@ static int sim_feed(struct sim *s, struct cluster *c) {
       continue;
     }
     
-    if(timeline_entry_current(t, &entry) != -1){
+    if(timeline_n3_current(t, &n3) != -1){
       struct position *p;
-      struct candle *candle = __timeline_entry_self__(entry);
-      if((ientry = candle_find_indicator_entry(candle, ZIGZAG))){
-	struct zigzag_entry *zentry = __indicator_entry_self__(ientry);
-	PR_WARN("%s ZZ is %.2f\n", t->name, zentry->value);
+      struct candle *candle = __timeline_n3_self__(n3);
+      if((in3 = candle_find_indicator_n3(candle, ZIGZAG))){
+	struct zigzag_n3 *zn3 = __indicator_n3_self__(in3);
+	PR_WARN("%s ZZ is %.2f\n", t->name, zn3->value);
 	
 	/* Always check if something's open */
 	sim_find_opened_position(s, t, &p);
 
 	/* LONG positions */
 	if(__trend__ == ZIGZAG_UP){
-	  if(zentry->value > zref->value &&
+	  if(zn3->value > zref->value &&
 	     zref->n_since_last_ref <= zz_window){
 	    if(p == NULL){
 	      sim_open_position(s, t, POSITION_LONG, 1);
@@ -126,7 +126,7 @@ static int sim_feed(struct sim *s, struct cluster *c) {
 
 	/* SHORT positions */
 	if(__trend__ == ZIGZAG_DOWN){
-	  if(zentry->value < zref->value &&
+	  if(zn3->value < zref->value &&
 	     zref->n_since_last_ref <= zz_window){
 	    if(p == NULL){
 	      sim_open_position(s, t, POSITION_SHORT, 1);
@@ -165,10 +165,10 @@ int main(int argc, char **argv) {
   
   /* 01/01/2000 */
   struct yahoo *yahoo;
-  time_info_t time = START_TIME;
+  time64_t time = START_TIME;
   /* Load ref data */
-  yahoo_alloc(yahoo, "data/%5EFCHI.yahoo", time, TIME_MAX);
-  cluster_init(&cluster, "my cluster", __input__(yahoo), time, TIME_MAX);
+  yahoo_alloc(yahoo, "data/%5EFCHI.yahoo", time, TIME64_MAX);
+  cluster_init(&cluster, "my cluster", __input__(yahoo), time, TIME64_MAX);
   /* Init general roc indicator */
   zigzag_init(&zigzag, ZIGZAG, zz_thres, CANDLE_CLOSE);
   timeline_add_indicator(__timeline__(&cluster), __indicator__(&zigzag));

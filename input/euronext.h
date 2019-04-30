@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <json-parser/json.h>
 
+#include "framework/types.h"
 #include "framework/alloc.h"
 #include "framework/input.h"
 
@@ -21,7 +22,7 @@
 
 struct euronext {
   /* Inherits from input */
-  __inherits_from_input__;
+  __inherits_from__(struct input);
   /* internals */
   json_char *json;
   json_value *value;

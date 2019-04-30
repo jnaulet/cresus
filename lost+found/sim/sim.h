@@ -30,8 +30,8 @@ struct sim_share {
 
 static inline int sim_share_init(struct sim_share *s,
 				 struct timeline *t) {
-  /* super() */
-  __slist_super__(s);
+  /* init() */
+  __slist_init__(s);
   /* params */
   s->t = t;
   /* own data */

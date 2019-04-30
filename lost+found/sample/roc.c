@@ -25,28 +25,28 @@
 
 static void run_timeline_roc(struct timeline *t,
 			     struct candle *c,
-			     struct roc_entry *re)
+			     struct roc_n3 *re)
 {
   printf("%.1f ", re->value);
 }
 
 static int feed(struct engine *e,
 		struct timeline *t,
-		struct timeline_entry *entry)
+		struct timeline_n3 *n3)
 {
   /* Step by step loop */
   static int n = 0;
-  struct indicator_entry *ientry;
-  struct candle *c = __timeline_entry_self__(entry);
+  struct indicator_n3 *in3;
+  struct candle *c = __timeline_n3_self__(n3);
   /* Execute */
   PR_INFO("%s - ", candle_str(c));
   /* Then check results */
-  __slist_for_each__(&c->slist_indicator, ientry){
+  __slist_for_each__(&c->slist_indicator, in3){
     /* Beware, some parsing will be required here to determine who's who */
-    printf("%s(%u) ", ientry->indicator->str, ientry->indicator->id);
-    switch(ientry->indicator->id){
+    printf("%s(%u) ", in3->indicator->str, in3->indicator->id);
+    switch(in3->indicator->id){
     case ROC : {
-      struct roc_entry *re = __indicator_entry_self__(ientry);
+      struct roc_n3 *re = __indicator_n3_self__(in3);
       run_timeline_roc(t, c, re);
       goto next;
     }}
@@ -63,7 +63,7 @@ static struct timeline *timeline_create(const char *filename)
   struct yahoo *yahoo;
   struct timeline *timeline;
   
-  if(yahoo_alloc(yahoo, filename, TIME_MIN, TIME_MAX)){
+  if(yahoo_alloc(yahoo, filename, TIME64_MIN, TIME64_MAX)){
     if(timeline_alloc(timeline, "roc", __input__(yahoo))){
       struct roc *roc;
       /* Add a ROC indicator */

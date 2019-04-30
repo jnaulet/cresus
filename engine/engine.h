@@ -9,10 +9,9 @@
 #ifndef __Cresus_EVO__engine__
 #define __Cresus_EVO__engine__
 
-#include "engine/candle.h"
 #include "engine/position.h"
-#include "engine/timeline.h"
-#include "framework/common_opt.h"
+#include "engine/common_opt.h"
+#include "framework/timeline.h"
 
 struct engine {
   struct timeline *timeline;
@@ -31,8 +30,8 @@ struct engine {
   /* Last close value */
   double close;
   /* Positions filter */
-  time_info_t start_time;
-  time_info_t end_time;
+  time64_t start_time;
+  time64_t end_time;
   /* Display info */
   int quiet;
   /* CSV graph output */
@@ -42,17 +41,17 @@ struct engine {
 
 #define engine_set_transaction_fee(ctx, fee)	\
   (ctx)->transaction_fee = fee
-#define engine_set_start_time(ctx, time_info)	\
-  (ctx)->start_time = time_info
-#define engine_set_end_time(ctx, time_info)	\
-  (ctx)->end_time = time_info
+#define engine_set_start_time(ctx, time64)	\
+  (ctx)->start_time = time64
+#define engine_set_end_time(ctx, time64)	\
+  (ctx)->end_time = time64
 #define engine_set_quiet(ctx, quiet)		\
   (ctx)->quiet = quiet
 #define engine_set_csv_output(ctx, boolean)     \
   (ctx)->csv_output = boolean
 
 /* External pointer to plugin */
-typedef int (*engine_feed_ptr)(struct engine*, struct timeline*, struct timeline_entry*);
+typedef int (*engine_feed_ptr)(struct engine*, struct timeline*, struct timeline_slice*);
 
 int engine_init(struct engine *e, struct timeline *t);
 void engine_release(struct engine *e);

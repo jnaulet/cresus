@@ -9,7 +9,7 @@
 
 static void _hilo_reset_(struct indicator *i)
 {
-  struct hilo *ctx =  __indicator_self__(i);
+  struct hilo *ctx =  (void*)i;
   // TODO
 }
 
@@ -21,34 +21,33 @@ void hilo_reset(struct hilo *ctx)
 #define HIGH(x, y) (((x) > (y)) ? (x) : (y))
 #define LOW(x, y) (((x) < (y)) ? (x) : (y))
 
-static int hilo_feed(struct indicator *i, struct timeline_entry *e)
+static int hilo_feed(struct indicator *i, struct timeline_track_n3 *e)
 {
-  struct hilo_entry *entry;
-  struct timeline_entry *prev = NULL;
-  struct hilo *ctx = __indicator_self__(i);
-  struct candle *c = __timeline_entry_self__(e);
+  struct hilo_n3 *n3;
+  struct hilo *ctx = (void*)i;
+  struct timeline_track_n3 *prev = NULL;
   
-  if(hilo_entry_alloc(entry, i)){
+  if(hilo_n3_alloc(n3, i)){
     /* Init */
     int n = ctx->period;
-    entry->high = c->high;
-    entry->low = c->low;
+    n3->high = e->high;
+    n3->low = e->low;
     
-    __list_for_each_prev__(__list__(e), prev){
-      struct candle *p = __timeline_entry_self__(prev);
+    __list_for_each_prev__(e, prev){
+      
       /* Out after ctx->period iterations */
       if(!--n)
 	break;
       
-      entry->high = HIGH(entry->high, p->high);
-      entry->low = LOW(entry->low, p->low);
+      n3->high = HIGH(n3->high, prev->high);
+      n3->low = LOW(n3->low, prev->low);
     }
-
+    
     if(ctx->filter && n)
       goto out;
     
-    /* Attach new entry */
-    candle_add_indicator_entry(c, __indicator_entry__(entry));
+    /* Attach new n3 */
+    timeline_track_n3_add_indicator_n3(e, __indicator_n3__(n3));
     return 1;
   }
 
@@ -56,10 +55,10 @@ static int hilo_feed(struct indicator *i, struct timeline_entry *e)
   return 0;
 }
 
-int hilo_init(struct hilo *ctx, indicator_id_t id, int period, int filter)
+int hilo_init(struct hilo *ctx, unique_id_t id, int period, int filter)
 {
   /* Super() */
-  __indicator_super__(ctx, id, hilo_feed, _hilo_reset_);
+  __indicator_init__(ctx, id, hilo_feed, _hilo_reset_);
   __indicator_set_string__(ctx, "hilo[%d]", period);
   
   ctx->period = period;

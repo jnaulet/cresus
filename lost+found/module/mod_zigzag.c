@@ -142,7 +142,7 @@ static void mod_zigzag_handle(struct module *m, const struct indicator *i,
 
 int mod_zigzag_init(struct mod_zigzag *m, const struct candle *seed) {
   
-  /* super() */
+  /* init() */
   module_init(&m->parent, CAPITAL, mod_zigzag_handle, NULL);
   
   /* Indicators */

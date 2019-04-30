@@ -21,23 +21,23 @@
 
 static int amount = 250;
 static int current_month = -1;
-time_info_t year_min = TIME_INIT(1900, 1, 1, 0, 0, 0, 0);
+time64_t year_min = TIME64_INIT(1900, 1, 1, 0, 0, 0, 0);
 
 /* Stats */
 static int quiet = 0;
 
 static int feed(struct engine *e,
 		struct timeline *t,
-		struct timeline_entry *entry)
+		struct timeline_n3 *n3)
 {
   /* Step by step loop */
-  time_info_t time = VAL_YEAR(year_min);
-  struct candle *c = __timeline_entry_self__(entry);
+  time64_t time = VAL_YEAR(year_min);
+  struct candle *c = (void*)n3;
 
 #define MONTH 6 /* June seems to work better */
   
   /* Execute */
-  int month = TIME_GET_MONTH(entry->time);
+  int month = TIME64_GET_MONTH(n3->time);
   if(month != current_month){
     if(month != MONTH) engine_set_order(e, BUY, amount, CASH, NULL);
     else engine_set_order(e, SELL, CASH, 100000, NULL); /* FIXME */
@@ -58,8 +58,9 @@ static struct timeline *timeline_create(const char *filename,
   inwrap_t t = inwrap_t_from_str(type);
   
   if(inwrap_alloc(inwrap, filename, t)){
-    if(timeline_alloc(timeline, "sell_in_may", __input__(inwrap))){
+    if(timeline_alloc(timeline, "sell_in_may")){
       /* Ok */
+      timeline_load(timeline, __input__(inwrap));
       return timeline;
     }
   }

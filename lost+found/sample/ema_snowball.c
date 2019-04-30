@@ -35,16 +35,16 @@ static double amount = 0;
 
 static int snowball_feed(struct engine *e,
 			 struct timeline *t,
-			 struct timeline_entry *entry) {
+			 struct timeline_n3 *n3) {
   
   struct position *p;
-  struct indicator_entry *i;
+  struct indicator_n3 *i;
   
   /* TODO : better management of this ? */
-  struct candle *c = __timeline_entry_self__(entry);
+  struct candle *c = __timeline_n3_self__(n3);
   /* Every month we recompute the shares */
-  if(TIME_GET_MONTH(entry->time) != last_month){
-    last_month = TIME_GET_MONTH(entry->time);
+  if(TIME64_GET_MONTH(n3->time) != last_month){
+    last_month = TIME64_GET_MONTH(n3->time);
     e->amount += 500.0; /* Add 500€ to capital every month */
     amount += 500.0;
     share = e->amount / max; //e->amount / SIGMA(max);
@@ -52,8 +52,8 @@ static int snowball_feed(struct engine *e,
 	    share, SIGMA(average));
   }
   /* What do the indicators say ? */
-  if((i = candle_find_indicator_entry(c, EMA))){
-    struct mobile_entry *m = __indicator_entry_self__(i);
+  if((i = candle_find_indicator_n3(c, EMA))){
+    struct mobile_n3 *m = __indicator_n3_self__(i);
     //PR_WARN("EMA is %.2f going %.2f\n", m->value, m->direction);
     if(m->direction <= 0 && e->amount > share){
       engine_place_order(e, ORDER_BUY, ORDER_BY_AMOUNT, share);
@@ -72,14 +72,14 @@ static int snowball_feed(struct engine *e,
 }
 
 static struct timeline *
-timeline_create(const char *filename, const char *name, time_info_t min) {
+timeline_create(const char *filename, const char *name, time64_t min) {
   
   struct yahoo *yahoo;
   struct mobile *mobile;
   struct timeline *timeline;
   
   /* TODO : Check return values */
-  yahoo_alloc(yahoo, filename, min, TIME_MAX); /* load everything */
+  yahoo_alloc(yahoo, filename, min, TIME64_MAX); /* load everything */
   timeline_alloc(timeline, name, __input__(yahoo));
   /* Indicators alloc */
   mobile_alloc(mobile, EMA, MOBILE_EMA, average, CANDLE_CLOSE);
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
   int c;
   struct timeline *t;
   struct engine engine;
-  struct timeline_entry *e;
+  struct timeline_n3 *e;
 
   /* VERBOSE_LEVEL(WARN); */
   

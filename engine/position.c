@@ -13,8 +13,8 @@
 int position_init(struct position *ctx, position_t type,
 		  position_req_t req, double n, struct cert *cert)
 {
-  /* super() */
-  __list_super__(ctx);
+  /* init() */
+  __list_init__(ctx);
 
   ctx->req = req;
   ctx->type = type;

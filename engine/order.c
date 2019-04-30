@@ -12,8 +12,8 @@
 int order_init(struct order *ctx, order_t t, order_by_t by,
 	       double value, struct cert *cert)
 {
-  /* super() */
-  __list_super__(ctx);
+  /* init() */
+  __list_init__(ctx);
   /* Internals */
   ctx->type = t;
   ctx->by = by;

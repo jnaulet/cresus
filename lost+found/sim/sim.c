@@ -27,7 +27,7 @@ int sim_init(struct sim *s, struct cluster *c) {
   __slist_for_each__(&c->slist_timeline, t){
     struct sim_share *share;
     if(sim_share_alloc(share, t))
-      __slist_insert__(&s->slist_share, share);
+      __slist_push__(&s->slist_share, share);
   }
 
   /* Stat */
@@ -180,8 +180,8 @@ static void sim_stat(struct sim *s, struct position *p) {
   
   /* What to do here */
   PR_DBG("%s at [%s:%s] is %.3lf / %.3lf\n",
-	 p->t->name, __timeline_entry_str__(p->in, buf, sizeof buf),
-	 p->out ? __timeline_entry_str__(p->out, buf2, sizeof buf2) : "N/A",
+	 p->t->name, __timeline_n3_str__(p->in, buf, sizeof buf),
+	 p->out ? __timeline_n3_str__(p->out, buf2, sizeof buf2) : "N/A",
 	 factor, sfactor);
 }
 
@@ -250,12 +250,12 @@ int sim_display_report(struct sim *s) {
   sim_todo(s);
 
   /* Some cool info */
-  struct timeline_entry *e =
-    __list_self__(__timeline__(s->cluster)->list_entry.next);
-  struct candle *first = __timeline_entry_self__(e);
+  struct timeline_n3 *e =
+    __list_self__(__timeline__(s->cluster)->list_n3.next);
+  struct candle *first = __timeline_n3_self__(e);
   /* Next */
-  e =  __list_self__(__timeline__(s->cluster)->list_entry.prev);
-  struct candle *last = __timeline_entry_self__(e);
+  e =  __list_self__(__timeline__(s->cluster)->list_n3.prev);
+  struct candle *last = __timeline_n3_self__(e);
   PR_ERR("factor to match : %.2lf\n", last->close / first->open);
   
   return 0;

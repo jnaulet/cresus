@@ -23,8 +23,8 @@ double portfolio_buy(struct portfolio *p, portfolio_t type, double value)
   if(p->index <= 0)
     return 0.0;
 
-  p->entry[--p->index].value = value;
-  p->entry[p->index].type = type;
+  p->n3[--p->index].value = value;
+  p->n3[p->index].type = type;
 
   return value;
 }
@@ -34,10 +34,10 @@ double portfolio_sell(struct portfolio *p, double value)
   if(p->index >= PORTFOLIO_MAX)
     return 0.0;
 
-  if(p->entry[p->index].type == PORTFOLIO_SHORT)
-    return (p->entry[p->index++].value - value);
+  if(p->n3[p->index].type == PORTFOLIO_SHORT)
+    return (p->n3[p->index++].value - value);
 
-  return (value - p->entry[p->index++].value);
+  return (value - p->n3[p->index++].value);
 }
 
 double portfolio_sell_all(struct portfolio *p, double value)

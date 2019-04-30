@@ -9,7 +9,8 @@
 #ifndef XTR_H
 #define XTR_H
 
-#include "framework/candle.h"
+#include "engine/candle.h"
+#include "framework/types.h"
 #include "framework/indicator.h"
 
 struct xtr {

@@ -3,9 +3,9 @@ project(cresus)
 
 # Src for cresus indicators
 add_library(indicator OBJECT
-  atr.c
-  bollinger.c
-  heikin_ashi.c
+#  atr.c
+#  bollinger.c
+#  heikin_ashi.c
   hilo.c
   jtrend.c
   linear_reg.c
@@ -14,14 +14,14 @@ add_library(indicator OBJECT
   mobile.c
   roc.c
   rs_dorsey.c
-  rsi.c
+#  rsi.c
   rs_mansfield.c
   rs_roc.c
-  smi.c
-  srsi.c
-  stochastic.c
-  stoploss.c
-  swing.c
-  updown.c
+#  smi.c
+#  srsi.c
+#  stochastic.c
+#  stoploss.c
+#  swing.c
+#  updown.c
   zigzag.c
   )

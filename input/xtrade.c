@@ -14,22 +14,21 @@
 #include <fcntl.h>
 
 #include "xtrade.h"
-#include "engine/candle.h"
 #include "framework/verbose.h"
-#include "framework/time_info.h"
+#include "framework/time64.h"
 
-static time_info_t xtrade_time(struct xtrade *ctx,
+static time64_t xtrade_time(struct xtrade *ctx,
 			       const char *str)
 {
   int y, m, d;
   sscanf(str, "%d-%d-%d", &y, &m, &d);
-  return TIME_INIT(y, m, d, 0, 0, 0, 0);
+  return TIME64_INIT(y, m, d, 0, 0, 0, 0);
 }
 
-static struct timeline_entry *xtrade_read(struct input *in)
+static struct input_n3 *xtrade_read(struct input *in)
 {
-  struct candle *c;
-  struct xtrade *ctx = __input_self__(in);
+  struct input_n3 *n3;
+  struct xtrade *ctx = (void*)in;
  
   /* Check for EOF at least */
   if(ctx->i < 0)
@@ -42,10 +41,10 @@ static struct timeline_entry *xtrade_read(struct input *in)
   double low = o->u.object.values[3].value->u.dbl;
   double high = o->u.object.values[4].value->u.dbl;
   
-  time_info_t time = xtrade_time(ctx, str);
-  if(candle_alloc(c, time, GRANULARITY_DAY,
-                  open, close, high, low, 0.0))
-    return __timeline_entry__(c);
+  time64_t time = xtrade_time(ctx, str);
+  if(input_n3_alloc(n3, time, GR_DAY,
+		       open, close, high, low, 0.0))
+    return n3;
   
  err:
   return NULL;
@@ -57,8 +56,8 @@ int xtrade_init(struct xtrade *ctx, const char *filename)
   size_t size;
   struct stat stat;
 
-  /* super */
-  __input_super__(ctx, xtrade_read);
+  /* init */
+  __input_init__(ctx, xtrade_read);
   
   /* internals */
   ctx->i = 0;

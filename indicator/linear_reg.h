@@ -14,57 +14,56 @@
  */
 
 #include "math/average.h"
-#include "engine/candle.h"
-
+#include "framework/types.h"
 #include "framework/alloc.h"
 #include "framework/indicator.h"
 
-/* Timeline entries object */
+/* Timeline n3s object */
 
-struct linear_reg_entry {
+struct linear_reg_n3 {
   /* As below */
-  __inherits_from_indicator_entry__;
+  __inherits_from__(struct indicator_n3);
   /* Single value */
   double value; /* End value for us */
   /* debug */
   double a, b; /* As in Y = aX + b */
 };
 
-#define linear_reg_entry_alloc(entry, parent, value)		\
-  DEFINE_ALLOC(struct linear_reg_entry, entry,			\
-	       linear_reg_entry_init, parent, value)
-#define linear_reg_entry_free(entry)		\
-  DEFINE_FREE(entry, linear_reg_entry_release)
+#define linear_reg_n3_alloc(ctx, parent, value)		\
+  DEFINE_ALLOC(struct linear_reg_n3, ctx,			\
+	       linear_reg_n3_init, parent, value)
+#define linear_reg_n3_free(ctx)		\
+  DEFINE_FREE(ctx, linear_reg_n3_release)
 
-static inline int linear_reg_entry_init(struct linear_reg_entry *entry,
+static inline int linear_reg_n3_init(struct linear_reg_n3 *ctx,
 					struct indicator *parent,
 					double value)
 {
-  __indicator_entry_super__(entry, parent);
-  entry->value = value;
+  __indicator_n3_init__(ctx, parent);
+  ctx->value = value;
   return 0;
 }
 
-static inline void linear_reg_entry_release(struct linear_reg_entry *entry)
+static inline void linear_reg_n3_release(struct linear_reg_n3 *ctx)
 {
-  __indicator_entry_release__(entry);
+  __indicator_n3_release__(ctx);
 }
 
 /* Main object */
 
-#define linear_reg_alloc(m, id, period)					\
-  DEFINE_ALLOC(struct linear_reg, m, linear_reg_init, id, period)
-#define linear_reg_free(m)			\
-  DEFINE_FREE(m, linear_reg_release)
+#define linear_reg_alloc(ctx, uid, period)                              \
+  DEFINE_ALLOC(struct linear_reg, ctx, linear_reg_init, uid, period)
+#define linear_reg_free(ctx)			\
+  DEFINE_FREE(ctx, linear_reg_release)
 
 struct linear_reg {
   /* As always */
-  __inherits_from_indicator__;
+  __inherits_from__(struct indicator);
   /* Internals */
   int period;
 };
 
-int linear_reg_init(struct linear_reg *m, indicator_id_t id, int period);
-void linear_reg_release(struct linear_reg *m);
+int linear_reg_init(struct linear_reg *ctx, unique_id_t id, int period);
+void linear_reg_release(struct linear_reg *ctx);
 
 #endif

@@ -11,14 +11,16 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+
+#include "framework/types.h"
 #include "framework/input.h"
 
 /* TODO : find a way to clearly tell what objects this input returns */
-#define __google_timeline_entry_t__(x) (struct candle*)(x)
+#define __google_timeline_n3_t__(x) (struct candle*)(x)
 
 struct google {
   /* Super */
-  __inherits_from_input__;
+  __inherits_from__(struct input);
   /* Loader */
   FILE *fp;
   struct {

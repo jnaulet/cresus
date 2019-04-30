@@ -12,36 +12,39 @@
 #include <stdlib.h>
 
 #include "math/average.h"
+#include "framework/types.h"
 #include "framework/alloc.h"
 #include "framework/indicator.h"
 
-struct macd_entry {
+struct macd_n3 {
   /* As always */
-  __inherits_from_indicator_entry__;
+  __inherits_from__(struct indicator_n3);
   /* Own data */
   double value;
   double signal;
   double histogram;
 };
 
-#define macd_entry_alloc(entry, parent, value, signal)		\
-  DEFINE_ALLOC(struct macd_entry, entry,			\
-	       macd_entry_init, parent, value, signal)
-#define macd_entry_free(entry)			\
-  DEFINE_FREE(entry, macd_entry_release)
+#define macd_n3_alloc(n3, parent, value, signal)		\
+  DEFINE_ALLOC(struct macd_n3, n3,			\
+	       macd_n3_init, parent, value, signal)
+#define macd_n3_free(n3)			\
+  DEFINE_FREE(n3, macd_n3_release)
 
-static inline int macd_entry_init(struct macd_entry *entry,
+static inline int macd_n3_init(struct macd_n3 *ctx,
 				  struct indicator *parent,
-				  double value, double signal){
-  __indicator_entry_super__(entry, parent);
-  entry->value = value;
-  entry->signal = signal;
-  entry->histogram = (value - signal);
+				  double value, double signal)
+{
+  __indicator_n3_init__(ctx, parent);
+  ctx->value = value;
+  ctx->signal = signal;
+  ctx->histogram = (value - signal);
   return 0;
 }
 
-static inline void macd_entry_release(struct macd_entry *entry) {
-  __indicator_entry_release__(entry);
+static inline void macd_n3_release(struct macd_n3 *ctx)
+{
+  __indicator_n3_release__(ctx);
 }
 
 /* Indicator events */
@@ -55,22 +58,21 @@ static inline void macd_entry_release(struct macd_entry *entry) {
 #define MACD_DEFAULT_SLOW_P   26
 #define MACD_DEFAULT_SIGNAL_P 9
 
-#define macd_alloc(m, id, fast_p, slow_p, signal_p)			\
-  DEFINE_ALLOC(struct macd, m, macd_init, id, fast_p, slow_p, signal_p)
+#define macd_alloc(m, uid, fast_p, slow_p, signal_p)			\
+  DEFINE_ALLOC(struct macd, m, macd_init, uid, fast_p, slow_p, signal_p)
 #define macd_free(m)				\
   DEFINE_FREE(m, macd_release)
 
 struct macd {
   /* Parent */
-  __inherits_from_indicator__;
+  __inherits_from__(struct indicator);
   /* 3 averages required */
   struct average fast;
   struct average slow;
   struct average signal;
 };
 
-int macd_init(struct macd *m, indicator_id_t id,
-	      int fast_p, int slow_p, int signal_p);
-void macd_release(struct macd *m);
+int macd_init(struct macd *ctx, unique_id_t uid, int fast_p, int slow_p, int signal_p);
+void macd_release(struct macd *ctx);
 
 #endif
