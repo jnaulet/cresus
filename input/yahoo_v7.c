@@ -30,7 +30,7 @@ yahoo_v7_parse_n3(struct yahoo_v7 *ctx, char *str)
   char *slo = strsep(&str, ",");
   char *sclose = strsep(&str, ",");
   char *adjclose = strsep(&str, ",");
-  char *svol = strsep(&str, ","); /* End */
+  char *svol = str; /* End */
 
   /* Check we got the right format */
   if(!stime || !sopen || !shi || !slo ||
@@ -55,8 +55,7 @@ yahoo_v7_parse_n3(struct yahoo_v7 *ctx, char *str)
   TIME64_SET_YEAR(time, year);
 
   if(open != 0.0 && close != 0.0 && high != 0.0 && low != 0.0)
-    if(input_n3_alloc(n3, time, GR_DAY,
-			 open, close, high, low, volume))
+    if(input_n3_alloc(n3, time, open, close, high, low, volume))
       return n3;
   
  err:
@@ -74,7 +73,7 @@ static struct input_n3 *yahoo_v7_read(struct input *in)
     /* Parse n3 */
     if((n3 = yahoo_v7_parse_n3(ctx, buf))){
       PR_DBG("%s %s loaded\n", ctx->filename,
-	     time64_str_r(n3->time, n3->g, buf));
+             time64_str_r(n3->time, GR_DAY, buf));
       /* We got a new candle */      
       return n3;
     }

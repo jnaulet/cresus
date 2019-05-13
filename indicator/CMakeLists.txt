@@ -25,3 +25,7 @@ add_library(indicator OBJECT
 #  updown.c
   zigzag.c
   )
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/indicator
+        DESTINATION include/cresus
+        FILES_MATCHING PATTERN "*.h")

@@ -11,11 +11,24 @@
 
 #include <stdlib.h>
 
-/* TODO : find a way to make an object easily "allocatable" */
-
-#define DEFINE_ALLOC(type, ptr, init, ...)				\
-  ((ptr = malloc(sizeof(type))) && !init(ptr, ##__VA_ARGS__)) /* FIXME */
+/*
+ * Object init MUST always return 0 on success & -1 on failure
+ */
+#define DEFINE_ALLOC(type, ptr, init, ...)                      \
+  ((ptr = malloc(sizeof(type))) ?                               \
+   (init(ptr, ##__VA_ARGS__) != -1 ? ptr : free_null(ptr)) :    \
+   NULL)
 #define DEFINE_FREE(ptr, release)		\
-  { release(ptr); free(ptr); }
+  ({ release(ptr); free(ptr); })
+
+static inline void *free_null(void *ptr)
+{
+  free(ptr);
+  return NULL;
+}
+
+static inline void release_dummy(void *ptr)
+{
+}
 
 #endif

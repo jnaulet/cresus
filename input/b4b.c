@@ -74,8 +74,7 @@ b4b_parse_n3(struct b4b *ctx, char *str)
   TIME64_SET_MONTH(time, month);
   TIME64_SET_YEAR(time, year);
 
-  if(input_n3_alloc(n3, time, GR_DAY,
-		       open, close, high, low, volume))
+  if(input_n3_alloc(n3, time, open, close, high, low, volume))
     return n3;
   
  err:
@@ -96,7 +95,7 @@ static struct input_n3 *b4b_read(struct input *in)
     /* Parse n3 */
     if((n3 = b4b_parse_n3(ctx, buf))){
       PR_DBG("%s %s loaded\n", ctx->filename,
-	     time64_str_r(n3->time, n3->g, buf));
+	     time64_str_r(n3->time, GR_DAY, buf));
       /* We got a new candle */
       return n3;
     }

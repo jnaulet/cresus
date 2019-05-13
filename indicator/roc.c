@@ -19,7 +19,7 @@ static int roc_feed(struct indicator *i, struct timeline_track_n3 *e)
     
     double value;
     struct roc_n3 *n3;
-    
+
     if(roc_compute(ctx, e, &value) != -1){
       if(roc_n3_alloc(n3, i, value)){
 	timeline_track_n3_add_indicator_n3(e, __indicator_n3__(n3));
@@ -45,14 +45,16 @@ void roc_reset(struct roc *ctx)
 int roc_compute(struct roc *ctx, struct timeline_track_n3 *e,
                 double *rvalue)
 {
-  struct timeline_track_n3 *ref = __list_relative__(e, -(ctx->period));
-  if(ref != NULL){
+  struct timeline_track_n3 *ref =
+    __list_prev_n__(e, ctx->period);
+  
+  if(!__list_is_head__(ref)){
     /* ROC formula :
      * ((candle[n] / candle[n - period]) - 1) * 100.0
      */
     double value = ((e->close / ref->close) - 1) * 100.0;
     double average = average_update(&ctx->average, value);
-    
+
     if(average_is_available(&ctx->average)){
       *rvalue = average;
       return 0;

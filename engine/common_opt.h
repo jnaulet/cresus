@@ -25,9 +25,9 @@ struct common_opt_tuple {
   { (tuple)->set = 1;                            \
     (tuple)->type = (val); };
 
-#define COMMON_OPTSTRING "cf:o:vF:S:E:"
+#define COMMON_OPTSTRING "c:f:o:qvF:S:E:"
 /*
- * -c enable csv output (for gnuplot)
+ * -c <file> enable csv output
  * -f <transaction fee>
  * -o <file type>
  * -q quiet
@@ -36,6 +36,9 @@ struct common_opt_tuple {
  * -S <start time> (format : YYYY-MM-DD)
  * -E <end time> (format : YYYY-MM-DD)
  */
+#define COMMON_OPT_USAGE \
+  "[-c file] [-f fee] [-q] [-v] [-F fixed_amount] " \
+  "[-S start_time (YYYY-MM-DD)] [-E end_time (YYYY-MM-DD)]"
 
 struct common_opt {
   /* Internals */
@@ -54,5 +57,6 @@ int common_opt_init(struct common_opt *ctx, const char *optstring);
 void common_opt_release(struct common_opt *ctx);
 
 int common_opt_getopt(struct common_opt *ctx, int argc, char **argv);
+int common_opt_getopt_linear(struct common_opt *ctx, int arc, char **argv, char **optarg);
 
 #endif

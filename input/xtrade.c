@@ -42,8 +42,7 @@ static struct input_n3 *xtrade_read(struct input *in)
   double high = o->u.object.values[4].value->u.dbl;
   
   time64_t time = xtrade_time(ctx, str);
-  if(input_n3_alloc(n3, time, GR_DAY,
-		       open, close, high, low, 0.0))
+  if(input_n3_alloc(n3, time, open, close, high, low, 0.0))
     return n3;
   
  err:

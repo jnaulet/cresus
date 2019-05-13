@@ -58,10 +58,7 @@
 /* Our basic types */
 
 typedef long long time64_t;
-typedef long long time64_gr_t;
-
-#define time64_interface                        \
-  long long time, g
+typedef long long time64_gr_t; /* Granularity */
 
 #define TIME64_MIN  0
 #define TIME64_MAX -1
@@ -121,9 +118,5 @@ int time64_dayofweek(time64_t t);
 /* Display */
 const char *time64_str(time64_t t, time64_gr_t g);
 const char *time64_str_r(time64_t t, time64_gr_t g, char *buf);
-
-/* Some kinda sync */
-#define TIME64_FOR_EACH(start, stop, g, time)		\
-  for(time = start; time < stop; TIMEADD(time, g, 1))
 
 #endif

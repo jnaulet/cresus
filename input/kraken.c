@@ -52,8 +52,7 @@ static struct input_n3 *kraken_read(struct input *in)
   double close = kraken_dbl(ctx, sclose);
   double vol = kraken_dbl(ctx, svol);
   
-  if(input_n3_alloc(n3, time, GR_DAY,
-		       open, close, high, low, vol))
+  if(input_n3_alloc(n3, time, open, close, high, low, vol))
     return n3;
   
  err:

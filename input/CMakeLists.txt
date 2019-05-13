@@ -10,3 +10,7 @@ add_library(input OBJECT
   euronext.c
   kraken.c
   )
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/input
+        DESTINATION include/cresus
+        FILES_MATCHING PATTERN "*.h")

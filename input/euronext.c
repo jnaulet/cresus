@@ -65,8 +65,7 @@ static struct input_n3 *euronext_read(struct input *in)
   double low = euronext_dbl(ctx, slow);
   double close = euronext_dbl(ctx, sclose);
   
-  if(input_n3_alloc(n3, time, GR_DAY,
-		       open, close, high, low, 0.0))
+  if(input_n3_alloc(n3, time, open, close, high, low, 0.0))
     return n3;
   
  err:

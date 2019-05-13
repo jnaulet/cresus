@@ -92,13 +92,21 @@ timeline_track_n3_add_indicator_n3(struct timeline_track_n3 *ctx,
   __slist_push__(&ctx->slist_indicator_n3s, indicator_n3);
 }
 
-static inline struct indicator_n3 *
-timeline_track_n3_get_indicator_n3(struct timeline_track_n3 *ctx,
-                                   unique_id_t indicator_uid)
+static inline struct timeline_track_n3 *
+timeline_track_n3_prev(struct timeline_track_n3 *ctx, int n)
 {
-  return (struct indicator_n3*)
-    __slist_by_uid_find__(&ctx->slist_indicator_n3s, indicator_uid);
+  while(n--){
+    /* Beware : if not enough data, will send 1st one again & again */
+    if(!list_is_head(__list__(ctx)->prev))
+      ctx = (void*)__list__(ctx)->prev;
+  }
+
+  return ctx;
 }
+
+struct indicator_n3 *
+timeline_track_n3_get_indicator_n3(struct timeline_track_n3 *ctx,
+				   unique_id_t indicator_uid);
 
 #define timeline_track_n3_for_each_indicator_n3(ctx, n3)                \
   for(struct slist *__ptr__ =                                           \
@@ -111,42 +119,51 @@ const char *timeline_track_n3_str(struct timeline_track_n3 *ctx);
 const char *timeline_track_n3_str_r(struct timeline_track_n3 *ctx, char *buf);
 
 #define timeline_track_n3_track_uid(ctx)	\
-  timeline_track_uid((ctx)->track)
+  __slist_uid_uid__((ctx)->track)
+#define timeline_track_n3_track_private(ctx)    \
+  (void*)(ctx)->track->private
 
 struct timeline_track {
   /* It's a slist of lists */
-  __inherits_from__(struct slist_by_uid);
+  __inherits_from__(struct slist_uid);
 #define TIMELINE_TRACK_NAME_MAX 64
   char name[TIMELINE_TRACK_NAME_MAX];
   /* Here's the beginning of the track */
   list_head_t(struct timeline_track_n3) list_track_n3s;
   /* The indicators we want to play on that particular track */
-  slist_head_t(struct indicator) slist_indicators;
+  slist_uid_head_t(struct indicator) slist_uid_indicators;
+  /* Fee depends on track, not engine */
+  double transaction_fee;
+  /* User might want ot expand this object */
+  void *private;
 };
 
 static inline int
 timeline_track_init(struct timeline_track *ctx, unique_id_t uid,
-                    const char *name)
+                    const char *name, void *private)
 {
-  __slist_by_uid_init__(ctx, uid); /* super() */
+  __slist_uid_init__(ctx, uid); /* super() */
   strncpy(ctx->name, name, sizeof(ctx->name));
   list_head_init(&ctx->list_track_n3s);
-  slist_head_init(&ctx->slist_indicators);
+  slist_uid_head_init(&ctx->slist_uid_indicators);
+  ctx->transaction_fee = 0;
+  ctx->private = private;
   return uid;
 }
 
-#define timeline_track_alloc(ctx, uid, name)                            \
-  DEFINE_ALLOC(struct timeline_track, ctx, timeline_track_init, uid, name)
+#define timeline_track_alloc(ctx, uid, name, private)			\
+  DEFINE_ALLOC(struct timeline_track, ctx,				\
+	       timeline_track_init, uid, name, private)
 
 static inline void
 timeline_track_add_indicator(struct timeline_track *ctx,
 			     struct indicator *indicator)
 {
-  __slist_push__(&ctx->slist_indicators, indicator);
+  __slist_push__(&ctx->slist_uid_indicators, indicator);
 }
 
-#define timeline_track_uid(ctx)			\
-  __slist_by_uid__(ctx)->uid
+#define timeline_track_set_fee(ctx, fee)	\
+  (ctx)->transaction_fee = fee;
 
 /*
  * Access by slice / indice / time
@@ -193,7 +210,7 @@ timeline_slice_get_track_n3(struct timeline_slice *ctx, unique_id_t uid);
 
 struct timeline {
   list_head_t(struct timeline_slice) by_slice;
-  slist_head_t(struct timeline_track) by_track;
+  slist_uid_head_t(struct timeline_track) by_track;
 };
 
 /* Interfaces */
@@ -203,6 +220,9 @@ void timeline_release(struct timeline *ctx);
 int timeline_add_track(struct timeline *ctx,
 		       struct timeline_track *track,
 		       struct input *input);
+
+#define timeline_find_track(ctx, uid)					\
+  (struct timeline_track*)__slist_uid_find__(&ctx->by_track, uid)
 
 /* Run & sync all */
 int timeline_run_and_sync(struct timeline *ctx);

@@ -8,3 +8,7 @@ add_library(framework OBJECT
   time64.c
   timeline.c
   )
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/framework
+        DESTINATION include/cresus
+        FILES_MATCHING PATTERN "*.h")

@@ -14,7 +14,7 @@ int indicator_init(struct indicator *ctx,
                    indicator_reset_ptr reset)
 {  
   /* Super */
-  __slist_by_uid_init__(ctx, uid);
+  __slist_uid_init__(ctx, uid);
   
   /* Self */
   ctx->feed = feed;
@@ -26,7 +26,7 @@ int indicator_init(struct indicator *ctx,
 
 void indicator_release(struct indicator *ctx)
 {
-  //__slist_release__(ctx);
+  __slist_uid_release__(ctx);
   ctx->feed = NULL;
 }
 

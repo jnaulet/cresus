@@ -13,15 +13,16 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "mdgms.h"
+#include "input/mdgms.h"
+#include "framework/types.h"
 #include "framework/verbose.h"
 
 static struct input_n3 *mdgms_read(struct input *in)
 {
   struct input_n3 *n3;
-  struct mdgms *ctx = (void*)(in);
-  
-  /* TODO: check !!! */
+  struct mdgms *ctx = (void*)in;
+
+  /* Values */
   json_value *ts = ctx->value->u.object.values[0].value;
   json_value *op = ctx->value->u.object.values[1].value;
   json_value *hi = ctx->value->u.object.values[2].value;
@@ -29,11 +30,11 @@ static struct input_n3 *mdgms_read(struct input *in)
   json_value *cl = ctx->value->u.object.values[4].value;
   json_value *vl = ctx->value->u.object.values[5].value;
   
-  /* Check for EOF */
-  if(ctx->i >= ts->u.array.length)
-    goto err;
+  /* Check */
+  __try__(!ts || !op || !hi || !lo || !cl || !vl, err); /* Parse error */
+  __try__(ctx->i >= ts->u.array.length, err); /* EOF */
   
-  /* ! */
+  /* How to check ? */
   time_t t = ts->u.array.values[ctx->i]->u.integer;
   double open = op->u.array.values[ctx->i]->u.dbl;
   double high = hi->u.array.values[ctx->i]->u.dbl;
@@ -45,11 +46,10 @@ static struct input_n3 *mdgms_read(struct input *in)
   ctx->i++;
   
   time64_t time = time64_epoch(t);
-  if(input_n3_alloc(n3, time, GR_DAY,
-		       open, close, high, low, vol))
+  if(input_n3_alloc(n3, time, open, close, high, low, vol))
     return n3;
   
- err:
+ __catch__(err):
   return NULL;
 }
 

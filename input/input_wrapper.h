@@ -36,4 +36,12 @@ input_wrapper_create(const char *filename, const char *filetype)
   return ret.input;
 }
 
+static inline struct input *
+input_wrapper_create_by_ext(const char *filename)
+{
+  /* TODO : check */
+  char *ext = strrchr(filename, '.') + 1;
+  return input_wrapper_create(filename, ext);
+}
+
 #endif

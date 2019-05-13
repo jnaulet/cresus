@@ -70,18 +70,24 @@ static inline struct slist *slist_pop(struct slist *ctx,
   for(ptr = (head)->next; (ptr) != NULL; ptr = (ptr)->next)
 
 /*
- * More advanced object : slist_by_uid
+ * More advanced object : slist_uid
  */
 
-#define __slist_by_uid__(x) ((struct slist_by_uid*)(x))
+#define __slist_uid__(x) ((struct slist_uid*)(x))
 
-struct slist_by_uid {
+struct slist_uid {
   __inherits_from__(struct slist);
   unique_id_t uid;
 };
 
+/* basic slist_uid object */
+
+#define slist_uid_head_t(type) struct slist_uid
+#define slist_uid_head_init(head) slist_uid_init(head, 0)
+#define slist_uid_head_release(head) slist_uid_release(head)
+
 static inline int
-slist_by_uid_init(struct slist_by_uid *ctx, unique_id_t uid)
+slist_uid_init(struct slist_uid *ctx, unique_id_t uid)
 {
   __slist_init__(ctx); /* super() */
   ctx->uid = uid;
@@ -89,20 +95,23 @@ slist_by_uid_init(struct slist_by_uid *ctx, unique_id_t uid)
 }
 
 static inline void
-slist_by_uid_release(struct slist_by_uid *ctx)
+slist_uid_release(struct slist_uid *ctx)
 {
   __slist_release__(ctx);
 }
 
-#define __slist_by_uid_init__(ctx, uid)         \
-  slist_by_uid_init(__slist_by_uid__(ctx), uid)
-#define __slist_by_uid_release__(ctx)		\
-  slist_by_uid_release(__slist_by_uid__(ctx))
+#define __slist_uid_init__(ctx, uid)         \
+  slist_uid_init(__slist_uid__(ctx), uid)
+#define __slist_uid_release__(ctx)		\
+  slist_uid_release(__slist_uid__(ctx))
 
-static inline struct slist_by_uid *
-slist_by_uid_find(struct slist_by_uid *ctx, unique_id_t uid)
+#define __slist_uid_uid__(ctx)                  \
+  __slist_uid__(ctx)->uid
+
+static inline struct slist_uid *
+slist_uid_find(struct slist_uid *ctx, unique_id_t uid)
 {
-  struct slist_by_uid *ptr;
+  struct slist_uid *ptr;
   __slist_for_each__(ctx, ptr){
     if(ptr->uid == uid)
       return ptr;
@@ -111,7 +120,7 @@ slist_by_uid_find(struct slist_by_uid *ctx, unique_id_t uid)
   return NULL;
 }
 
-#define __slist_by_uid_find__(ctx, uid)         \
-  slist_by_uid_find(__slist_by_uid__(ctx), uid)
+#define __slist_uid_find__(ctx, uid)			\
+  slist_uid_find(__slist_uid__(ctx), uid)
 
 #endif
