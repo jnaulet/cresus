@@ -23,28 +23,28 @@
 
 struct roc_n3 {
   /* As always... */
-  __inherits_from__(struct indicator_n3);
+  struct indicator_n3 indicator_n3;
   /* Data */
   double value;
 };
 
 #define roc_n3_alloc(n3, parent, value)				\
   DEFINE_ALLOC(struct roc_n3, n3, roc_n3_init, parent, value)
-#define roc_n3_free(n3)			\
+#define roc_n3_free(n3)				\
   DEFINE_FREE(n3, roc_n3_free)
 
 static inline int roc_n3_init(struct roc_n3 *ctx,
-				 struct indicator *parent,
-				 double value)
+			      struct indicator *parent,
+			      double value)
 {
-  __indicator_n3_init__(ctx, parent);
+  indicator_n3_init(&ctx->indicator_n3, parent);
   ctx->value = value;
   return 0;
 }
 
 static inline void roc_n3_release(struct roc_n3 *ctx)
 {
-  __indicator_n3_release__(ctx);
+  indicator_n3_release(&ctx->indicator_n3);
 }
 
 /* Main object */
@@ -56,8 +56,7 @@ static inline void roc_n3_release(struct roc_n3 *ctx)
 
 struct roc {
   /* Inherits from indicator */
-  __inherits_from__(struct indicator);
-  
+  struct indicator indicator;
   int period;
   struct average average;
 };
@@ -65,7 +64,7 @@ struct roc {
 int roc_init(struct roc *ctx, unique_id_t uid, int period, int average);
 void roc_release(struct roc *ctx);
 
-int roc_compute(struct roc *ctx, struct timeline_track_n3 *e, double *rvalue);
+int roc_compute(struct roc *ctx, struct track_n3 *e, double *rvalue);
 void roc_reset(struct roc *ctx);
 
 #endif

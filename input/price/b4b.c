@@ -6,11 +6,16 @@
  *
  */
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "b4b.h"
+#include "framework/price.h"
 #include "framework/verbose.h"
+
+struct b4b {
+  FILE *fp;
+};
 
 static ssize_t b4b_prepare_str(struct b4b *ctx, char *buf)
 {
@@ -36,12 +41,12 @@ static ssize_t b4b_prepare_str(struct b4b *ctx, char *buf)
   return -1;
 }
 
-static struct input_n3 *
+static struct price_n3 *
 b4b_parse_n3(struct b4b *ctx, char *str)
 {
   time64_t time = 0;
   int year, month, day;
-  struct input_n3 *n3;
+  struct price_n3 *n3;
   double open, close, high, low, volume; 
   
   /* Cut string */
@@ -74,28 +79,27 @@ b4b_parse_n3(struct b4b *ctx, char *str)
   TIME64_SET_MONTH(time, month);
   TIME64_SET_YEAR(time, year);
 
-  if(input_n3_alloc(n3, time, open, close, high, low, volume))
+  if(price_n3_alloc(n3, time, open, close, high, low, volume))
     return n3;
   
  err:
   return NULL;
 }
 
-static struct input_n3 *b4b_read(struct input *in)
-{
-  struct b4b *ctx = (void*)in;
-  
+static struct price_n3 *b4b_read(struct price *ctx)
+{  
   char buf[256];
-  struct input_n3 *n3;
+  struct price_n3 *n3;
+  struct b4b *b = ctx->private;
 
-  while(fgets(buf, sizeof buf, ctx->fp)){
+  while(fgets(buf, sizeof buf, b->fp)){
     /* Prepare string & pre-filter */
-    if(b4b_prepare_str(ctx, buf) < 0)
+    if(b4b_prepare_str(b, buf) < 0)
       continue;
     /* Parse n3 */
-    if((n3 = b4b_parse_n3(ctx, buf))){
+    if((n3 = b4b_parse_n3(b, buf))){
       PR_DBG("%s %s loaded\n", ctx->filename,
-	     time64_str_r(n3->time, GR_DAY, buf));
+             time64_str_r(n3->time, GR_DAY, buf));
       /* We got a new candle */
       return n3;
     }
@@ -105,27 +109,37 @@ static struct input_n3 *b4b_read(struct input *in)
   return NULL;
 }
 
-int b4b_init(struct b4b *ctx, const char *filename)
+static int b4b_init(struct price *ctx)
 {
   char dummy[256];
   
-  /* init */
-  __input_init__(ctx, b4b_read);
-
-  strncpy(ctx->filename, filename, sizeof(ctx->filename));
-  if(!(ctx->fp = fopen(ctx->filename, "r"))){
-    PR_ERR("unable to open file %s\n", ctx->filename);
-    return -1;
-  }
-
-  /* Ignore first line */
-  fgets(dummy, sizeof(dummy), ctx->fp);
+  struct b4b *b;
   
+  if(!(b = calloc(1, sizeof *b)))
+    return -ENOMEM;
+  
+  if(!(b->fp = fopen(ctx->filename, "r")))
+    goto err;
+  
+  /* Ignore first line */
+  fgets(dummy, sizeof(dummy), b->fp);
+  ctx->private = b;
   return 0;
+
+ err:
+  free(b);
+  return -1;
 }
 
-void b4b_release(struct b4b *ctx)
+void b4b_release(struct price *ctx)
 {
-  __input_release__(ctx);
-  if(ctx->fp) fclose(ctx->fp);
+  struct b4b *b = ctx->private;
+  if(b->fp) fclose(b->fp);
+  free(b);
 }
+
+struct price_ops b4b_ops = {
+  .init = b4b_init,
+  .release = b4b_release,
+  .read = b4b_read,
+};

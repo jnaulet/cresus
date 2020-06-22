@@ -9,24 +9,24 @@
 #include <string.h>
 #include "heikin_ashi.h"
 
-static int heikin_ashi_feed(struct indicator *i, struct timeline_track_n3 *e)
+static int heikin_ashi_feed(struct indicator *i, struct track_n3 *e)
 {  
   struct heikin_ashi *h = (void*)i;
   struct candle *c = (void*)e;
 
   if(i->is_empty){
     /* First data */
-    h->value.close = (c->open + c->close + c->high + c->low) / 4;
-    h->value.open = c->open; /* FIXME : Arbitrary */
-    h->value.high = c->high;
-    h->value.low = c->low;
+    h->value.close = (c->price->open + c->price->close + c->price->high + c->price->low) / 4;
+    h->value.open = c->price->open; /* FIXME : Arbitrary */
+    h->value.high = c->price->high;
+    h->value.low = c->price->low;
     goto out;
   }
   
   h->value.open = (h->value.close + h->value.open) / 2;
-  h->value.close = (c->open + c->close + c->high + c->low) / 4;
-  h->value.high = c->high;
-  h->value.low = c->low;
+  h->value.close = (c->price->open + c->price->close + c->price->high + c->price->low) / 4;
+  h->value.high = c->price->high;
+  h->value.low = c->price->low;
   
   /* Define new direction */
   heikin_ashi_dir_t dir = ((h->value.open - h->value.close) < 0 ?
@@ -58,10 +58,10 @@ int heikin_ashi_init(struct heikin_ashi *h, unique_id_t id)
   __indicator_set_string__(h, "heikin-ashi");
 
   /*
-  h->value.close = (seed->open + seed->close + seed->high + seed->low) / 4;
-  h->value.open = seed->open;
-  h->value.high = seed->high;
-  h->value.low = seed->low;
+  h->value.close = (seed->price->open + seed->price->close + seed->price->high + seed->price->low) / 4;
+  h->value.open = seed->price->open;
+  h->value.high = seed->price->high;
+  h->value.low = seed->price->low;
   */
   
   h->dir = HEIKIN_ASHI_DIR_NONE;

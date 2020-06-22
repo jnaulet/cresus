@@ -10,7 +10,7 @@
 #define ENGINE_V2_H
 
 #include "framework/time64.h"
-#include "framework/timeline.h"
+#include "framework/timeline_v2.h"
 
 #include "engine/portfolio.h"
 #include "engine/common_opt.h"
@@ -23,7 +23,6 @@ typedef enum { BUY, SELL } engine_v2_order_t;
 typedef enum { CASH, SHARES } engine_v2_order_by_t;
 
 struct engine_v2_order {
-  __inherits_from__(struct list);
   /* Common items */
   unique_id_t track_uid;
   engine_v2_order_t type;
@@ -43,7 +42,6 @@ engine_v2_order_init(struct engine_v2_order *ctx,
 		     double value,
 		     engine_v2_order_by_t by)
 {
-  __list_init__(ctx); /* super() */
   /* common */
   ctx->track_uid = track_uid;
   ctx->type = type;
@@ -94,9 +92,10 @@ engine_v2_order_set_leverage(struct engine_v2_order *ctx,
  */
 
 struct engine_v2 {
+  /* Main part, the timeline */
   struct timeline *timeline;
   /* Orders & more */
-  list_head_t(struct engine_v2_order) list_orders;
+  plist_head_t(struct engine_v2_order) plist_orders;
   /* Positions filter */
   time64_t start_time;
   time64_t end_time;
@@ -104,7 +103,7 @@ struct engine_v2 {
   double spent; /* Total money spent */
   double earned; /* Total money earned */
   double fees; /* Total fees paid */
-  struct timeline_slice *last_slice;
+  struct slice *last_slice;
   /* Portfolio */
   struct portfolio portfolio;
   /* CSV graph output */
@@ -112,10 +111,10 @@ struct engine_v2 {
 };
 
 /* External pointer to plugin */
-typedef void (*engine_v2_feed_slice_ptr)(struct engine_v2*, struct timeline_slice*);
-typedef void (*engine_v2_feed_track_n3_ptr)(struct engine_v2*, struct timeline_slice*, struct timeline_track_n3*);
-typedef void (*engine_v2_feed_indicator_n3_ptr)(struct engine_v2*, struct timeline_track_n3*, struct indicator_n3*);
-typedef void (*engine_v2_post_slice_ptr)(struct engine_v2*, struct timeline_slice*);
+typedef void (*engine_v2_feed_slice_ptr)(struct engine_v2*, struct slice*);
+typedef void (*engine_v2_feed_track_n3_ptr)(struct engine_v2*, struct slice*, struct track_n3*);
+typedef void (*engine_v2_feed_indicator_n3_ptr)(struct engine_v2*, struct track_n3*, struct indicator_n3*);
+typedef void (*engine_v2_post_slice_ptr)(struct engine_v2*, struct slice*);
 
 struct engine_v2_interface {
   engine_v2_feed_slice_ptr feed_slice; /* On every new slice */

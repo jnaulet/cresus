@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "bollinger.h"
 
-static int bollinger_feed(struct indicator *i, struct timeline_track_n3 *e)
+static int bollinger_feed(struct indicator *i, struct track_n3 *e)
 {  
   struct bollinger *ctx = (void*)i;
   struct candle *c = (void*)e;

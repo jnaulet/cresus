@@ -11,9 +11,9 @@
 
 #include <string.h>
 
-#include "framework/list.h"
 #include "framework/alloc.h"
 #include "framework/types.h"
+#include "framework/plist.h"
 #include "framework/verbose.h"
 
 /*
@@ -34,7 +34,6 @@ typedef enum {
 } portfolio_n3_t;
 
 struct portfolio_n3 {
-  __inherits_from__(struct list);
   /* Common */
   char name[64]; /* TODO : use macro */
   unique_id_t uid;
@@ -52,7 +51,6 @@ static inline int
 portfolio_n3_init(struct portfolio_n3 *ctx,
 		  const char *name, unique_id_t uid)
 {
-  __list_init__(ctx);
   ctx->uid = uid;
   ctx->shares = 0.0;
   ctx->cost_price = 0.0;
@@ -119,7 +117,7 @@ portfolio_n3_pr_stat(struct portfolio_n3 *ctx,
  */
 
 struct portfolio {
-  list_head_t(struct portfolio_n3) list_portfolio_n3s;
+  plist_head_t(struct portfolio_n3) plist_portfolio_n3s;
 };
 
 /* Init */

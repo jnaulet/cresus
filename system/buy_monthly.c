@@ -20,8 +20,7 @@
 #include "engine/common_opt.h"
 
 #include "framework/verbose.h"
-#include "framework/timeline.h"
-#include "input/input_wrapper.h"
+#include "framework/price.h"
 
 #include "indicator/lowest.h"
 
@@ -46,7 +45,7 @@ static int buy_monthly_init(struct buy_monthly *ctx)
 
 /* For each indicator */
 static void feed_indicator_n3(struct engine_v2 *engine,
-                              struct timeline_track_n3 *track_n3,
+                              struct track_n3 *track_n3,
                               struct indicator_n3 *indicator_n3)
 {
   struct lowest_n3 *lowest_n3 = (void*)indicator_n3;
@@ -55,7 +54,7 @@ static void feed_indicator_n3(struct engine_v2 *engine,
   switch(uid){
   case UID_LOWEST:
     PR_DBG("%s (lowest %.2lf)\n",
-	   timeline_track_n3_str(track_n3),
+	   track_n3_str(track_n3),
 	   lowest_n3->value);
     break;
     
@@ -67,15 +66,15 @@ static void feed_indicator_n3(struct engine_v2 *engine,
 
 /* For each track */
 static void feed_track_n3(struct engine_v2 *engine,
-                          struct timeline_slice *slice,
-                          struct timeline_track_n3 *track_n3)
+                          struct slice *slice,
+                          struct track_n3 *track_n3)
 {
   int month = TIME64_GET_MONTH(slice->time);
-  unique_id_t uid = __slist_uid_uid__(track_n3->track);
-  struct buy_monthly *ctx = timeline_track_n3_track_private(track_n3);
+  unique_id_t uid = track_n3->track->uid;
+  struct buy_monthly *ctx = track_n3->track->private;
   
   if(month != ctx->last_month && !(month % occurrence)){
-    //PR_WARN("%s - BUY %d\n", timeline_track_n3_str(track_n3), amount);
+    //PR_WARN("%s - BUY %d\n", track_n3_str(track_n3), amount);
     struct engine_v2_order *order;
     engine_v2_order_alloc(order, uid, BUY, 500.0, CASH);
     engine_v2_set_order(engine, order);
@@ -96,20 +95,21 @@ static int timeline_create(struct timeline *t, char *filename,
   /*
    * Data
    */
-  struct input *input;
-  if((input = input_wrapper_create_by_ext(filename))){
+  struct price *price;
+
+  if((price = price_alloc(price, filename, NULL))){
     /* Create tracks */
+    struct track *track;
     struct buy_monthly *ctx;
-    struct timeline_track *track;
     __try__(!buy_monthly_alloc(ctx), err);
-    __try__(!timeline_track_alloc(track, track_uid,
-                                  basename(filename), ctx), err);
+    __try__(!track_alloc(track, track_uid, basename(filename), price, ctx), err);
     /* Create indicators */
     struct lowest *lowest;
     __try__(!lowest_alloc(lowest, UID_LOWEST, 50), err);
-    timeline_track_add_indicator(track, __indicator__(lowest));
+    
     /* Add to timeline */
-    timeline_add_track(t, track, input);
+    track_add_indicator(track, &lowest->indicator);
+    timeline_add_track(t, track);
     return 0;
   }
   
@@ -146,8 +146,6 @@ int main(int argc, char **argv)
     }
   }
   
-  /* Execute timeline */
-  timeline_run_and_sync(&timeline);
   /* Start engine */
   engine_v2_init(&engine, &timeline);
   engine_v2_set_common_opt(&engine, &opt);

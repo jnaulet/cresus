@@ -10,21 +10,23 @@
 
 int portfolio_init(struct portfolio *ctx)
 {
-  list_head_init(&ctx->list_portfolio_n3s);
+  plist_head_init(&ctx->plist_portfolio_n3s);
   return 0;
 }
 
 void portfolio_release(struct portfolio *ctx)
 {
-  list_head_release(&ctx->list_portfolio_n3s);
+  plist_head_release(&ctx->plist_portfolio_n3s);
 }
 
 static struct portfolio_n3 *
 portfolio_find_n3(struct portfolio *ctx, unique_id_t uid,
 		  unique_id_t leveraged_uid)
 {
-  struct portfolio_n3 *pos;
-  __list_for_each__(&ctx->list_portfolio_n3s, pos){
+  struct plist *p;
+  
+  plist_for_each(&ctx->plist_portfolio_n3s, p){
+    struct portfolio_n3 *pos = p->ptr;
     if(pos->uid == uid && pos->leveraged_uid == leveraged_uid)
       return pos;
   }
@@ -39,9 +41,9 @@ double portfolio_add(struct portfolio *ctx,
   struct portfolio_n3 *pos;
   if(!(pos = portfolio_find_n3(ctx, uid, 0))){
     __try__(!portfolio_n3_alloc(pos, name, uid), err);
-    __list_add_tail__(&ctx->list_portfolio_n3s, pos);
+    plist_add_tail_ptr(&ctx->plist_portfolio_n3s, pos);
   }
-
+  
   pos->cost_price = (pos->cost_price * pos->shares +
 		     shares * price) / (pos->shares + shares);
   
@@ -66,7 +68,7 @@ double portfolio_add_leveraged(struct portfolio *ctx,
   
   if(!(pos = portfolio_find_n3(ctx, uid, leveraged_uid))){
     __try__(!portfolio_n3_alloc(pos, name, uid), err);
-    __list_add_tail__(&ctx->list_portfolio_n3s, pos);
+    plist_add_tail_ptr(&ctx->plist_portfolio_n3s, pos);
     /* Leverage info */
     portfolio_n3_set_leveraged(pos, funding, ratio, stoploss);
   }
@@ -103,12 +105,14 @@ double portfolio_sub(struct portfolio *ctx,
 
 int portfolio_run(struct portfolio *ctx, double low)
 {
-  struct portfolio_n3 *pos, *safe;
-  __list_for_each_safe__(&ctx->list_portfolio_n3s, pos, safe){
+  struct plist *p, *safe;
+  
+  plist_for_each_safe(&ctx->plist_portfolio_n3s, p, safe){
+    struct portfolio_n3 *pos = p->ptr;
     /* Check if pos <= 0 */
     if(low <= pos->stoploss){
       PR_ERR("%s stoploss hit at %.2lf !!!\n", pos->name, low);
-      __list_del__(pos);
+      plist_del(p);
       portfolio_n3_free(pos);
     }
   }

@@ -1,7 +1,0 @@
-TODOs
-
- * Port all commented-out indicators in indicator/CMakeLists.txt to CommonTL architecture
- * New engine to accomodate CommonTL data structure
- * Find an ergonomic way to play lots & lots of timeline_tracks simultaneously
- * Remove warnings caused by input_wrapper_create
- *

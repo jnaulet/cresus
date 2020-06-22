@@ -10,15 +10,15 @@
 #include "srsi.h"
 #include "engine/candle.h"
 
-static int srsi_feed(struct indicator *i, struct timeline_track_n3 *e)
+static int srsi_feed(struct indicator *i, struct track_n3 *e)
 {  
   struct srsi *ctx = (void*)i;
   struct candle *c = (void*)e;
-  int start = (c->open < c->close ? c->open : c->close);
-  int end = (c->close < c->open ? c->open : c->close);
+  int start = (c->price->open < c->price->close ? c->price->open : c->price->close);
+  int end = (c->price->close < c->price->open ? c->price->open : c->price->close);
   
   for(int i = start; i <= end; i++){
-    if(c->close >= c->open)
+    if(c->price->close >= c->price->open)
       ctx->array[i].bull++;
     else
       ctx->array[i].bear++;

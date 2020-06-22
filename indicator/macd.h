@@ -18,24 +18,24 @@
 
 struct macd_n3 {
   /* As always */
-  __inherits_from__(struct indicator_n3);
+  struct indicator_n3 indicator_n3;
   /* Own data */
   double value;
   double signal;
   double histogram;
 };
 
-#define macd_n3_alloc(n3, parent, value, signal)		\
+#define macd_n3_alloc(n3, parent, value, signal)	\
   DEFINE_ALLOC(struct macd_n3, n3,			\
 	       macd_n3_init, parent, value, signal)
 #define macd_n3_free(n3)			\
   DEFINE_FREE(n3, macd_n3_release)
 
 static inline int macd_n3_init(struct macd_n3 *ctx,
-				  struct indicator *parent,
-				  double value, double signal)
+			       struct indicator *parent,
+			       double value, double signal)
 {
-  __indicator_n3_init__(ctx, parent);
+  indicator_n3_init(&ctx->indicator_n3, parent);
   ctx->value = value;
   ctx->signal = signal;
   ctx->histogram = (value - signal);
@@ -44,7 +44,7 @@ static inline int macd_n3_init(struct macd_n3 *ctx,
 
 static inline void macd_n3_release(struct macd_n3 *ctx)
 {
-  __indicator_n3_release__(ctx);
+  indicator_n3_release(&ctx->indicator_n3);
 }
 
 /* Indicator events */
@@ -65,7 +65,7 @@ static inline void macd_n3_release(struct macd_n3 *ctx)
 
 struct macd {
   /* Parent */
-  __inherits_from__(struct indicator);
+  struct indicator indicator;
   /* 3 averages required */
   struct average fast;
   struct average slow;

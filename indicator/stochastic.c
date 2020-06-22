@@ -12,7 +12,7 @@
 
 #include "stochastic.h"
 
-static int stochastic_feed(struct indicator *i, struct timeline_track_n3 *e)
+static int stochastic_feed(struct indicator *i, struct track_n3 *e)
 {  
   struct stochastic *ctx = (void*)i;
   struct candle *candle = (void*)e;
@@ -27,7 +27,7 @@ static int stochastic_feed(struct indicator *i, struct timeline_track_n3 *e)
     lo = (ctx->array[i].low < lo ? ctx->array[i].low : lo);
   }
   
-  double pk = (candle->close - lo) / (hi - candle->close) * 100.0;
+  double pk = (candle->price->close - lo) / (hi - candle->price->close) * 100.0;
   double avg = average_update(&ctx->smooth_k, pk);
   if(average_is_available(&ctx->smooth_k))
     average_update(&ctx->d, avg);

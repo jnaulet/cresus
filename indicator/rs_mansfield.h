@@ -27,7 +27,7 @@
 
 struct rs_mansfield_n3 {
   /* As below */
-  __inherits_from__(struct indicator_n3);
+  struct indicator_n3 indicator_n3;
   /* Single value */
   double value;
   /* More info */
@@ -35,18 +35,18 @@ struct rs_mansfield_n3 {
   /* Events ? */
 };
 
-#define rs_mansfield_n3_alloc(ctx, parent, value, direction)         \
-  DEFINE_ALLOC(struct rs_mansfield_n3, ctx,                          \
+#define rs_mansfield_n3_alloc(ctx, parent, value, direction)		\
+  DEFINE_ALLOC(struct rs_mansfield_n3, ctx,				\
 	       rs_mansfield_n3_init, parent, value,			\
 	       direction)
-#define rs_mansfield_n3_free(ctx)            \
+#define rs_mansfield_n3_free(ctx)		\
   DEFINE_FREE(ctx, rs_mansfield_n3_release)
 
 static inline int rs_mansfield_n3_init(struct rs_mansfield_n3 *ctx,
-					  struct indicator *parent,
-					  double value, double direction)
+				       struct indicator *parent,
+				       double value, double direction)
 {
-  __indicator_n3_init__(ctx, parent);
+  indicator_n3_init(&ctx->indicator_n3, parent);
   ctx->value = value;
   ctx->direction = direction;
   return 0;
@@ -55,7 +55,7 @@ static inline int rs_mansfield_n3_init(struct rs_mansfield_n3 *ctx,
 static inline void
 rs_mansfield_n3_release(struct rs_mansfield_n3 *ctx)
 {
-  __indicator_n3_release__(ctx);
+  indicator_n3_release(&ctx->indicator_n3);
 }
 
 /* Object */
@@ -68,8 +68,7 @@ rs_mansfield_n3_release(struct rs_mansfield_n3 *ctx)
 
 struct rs_mansfield {
   /* As always, inherits from indicator */
-  __inherits_from__(struct indicator);
-  
+  struct indicator indicator;
   double value;
   struct average mma;
   unique_id_t ref_track_uid;

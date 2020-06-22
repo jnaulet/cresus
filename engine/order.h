@@ -11,7 +11,6 @@
 
 #include "engine/cert.h"
 #include "framework/types.h"
-#include "framework/list.h"
 #include "framework/alloc.h"
 
 typedef enum {
@@ -46,8 +45,6 @@ typedef enum {
   DEFINE_FREE(ctx, order_release)
 
 struct order {
-  /* listable */
-  __inherits_from__(struct list);
   /* Private data */
   order_t type;
   order_by_t by;

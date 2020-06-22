@@ -12,7 +12,7 @@
 #include "zigzag.h"
 
 static void zigzag_chdir(struct zigzag *ctx, zigzag_dir_t dir,
-                         struct timeline_track_n3 *e)
+                         struct track_n3 *e)
 {  
   ctx->base_ref = ctx->ref;
   ctx->dir = dir;
@@ -20,12 +20,12 @@ static void zigzag_chdir(struct zigzag *ctx, zigzag_dir_t dir,
   ctx->ref_count = 0;
 }
 
-static int zigzag_feed(struct indicator *i, struct timeline_track_n3 *e)
+static int zigzag_feed(struct indicator *i, struct track_n3 *e)
 {  
   double threshold;
   struct zigzag_n3 *n3;
   struct zigzag *ctx = (void*)i;
-  double value = input_n3_value(e, ctx->value);
+  double value = price_n3_value(e->price, ctx->value);
   
   if(!ctx->ref){
     ctx->ref = e;
@@ -35,8 +35,8 @@ static int zigzag_feed(struct indicator *i, struct timeline_track_n3 *e)
   }
   
   /* Compute limits (every time ? */
-  double base_ref_value = input_n3_value(ctx->base_ref, ctx->value);
-  double ref_value = input_n3_value(ctx->ref, ctx->value);
+  double base_ref_value = price_n3_value(ctx->base_ref->price, ctx->value);
+  double ref_value = price_n3_value(ctx->ref->price, ctx->value);
   double hi_limit = (1.0 + ctx->threshold) * ref_value;
   double lo_limit = (1.0 - ctx->threshold) * ref_value;
   
@@ -58,7 +58,7 @@ static int zigzag_feed(struct indicator *i, struct timeline_track_n3 *e)
   }
   
   if(zigzag_n3_alloc(n3, i, ctx->dir, (value / base_ref_value), ctx->ref_count))
-    timeline_track_n3_add_indicator_n3(e, __indicator_n3__(n3));
+    track_n3_add_indicator_n3(e, &n3->indicator_n3);
   
   ctx->ref_count++;
   return 0;
@@ -76,11 +76,11 @@ static void zigzag_reset(struct indicator *i)
 }
 
 int zigzag_init(struct zigzag *ctx, unique_id_t uid,
-		double threshold, input_n3_value_t value)
+		double threshold, price_n3_value_t value)
 {  
   /* Super */
-  __indicator_init__(ctx, uid, zigzag_feed, zigzag_reset);
-  __indicator_set_string__(ctx, "zigzag[%.1f%%]", threshold * 100.0);
+  indicator_init(&ctx->indicator, uid, zigzag_feed, zigzag_reset);
+  indicator_set_string(&ctx->indicator, "zigzag[%.1f%%]", threshold * 100.0);
   
   ctx->dir = ZIGZAG_NONE;
   ctx->value = value;
@@ -96,7 +96,7 @@ int zigzag_init(struct zigzag *ctx, unique_id_t uid,
 
 void zigzag_release(struct zigzag *ctx)
 {
-  __indicator_release__(ctx);
+  indicator_release(&ctx->indicator);
   ctx->ref_count = 0;
   ctx->dir = ZIGZAG_NONE;
 }

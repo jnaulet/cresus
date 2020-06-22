@@ -20,24 +20,24 @@
 
 struct rs_roc_n3 {
   /* As always... */
-  __inherits_from__(struct indicator_n3);
+  struct indicator_n3 indicator_n3;
   /* Data */
   double value;
   double roc, roc_ref;
 };
 
-#define rs_roc_n3_alloc(ctx, parent, value, roc, roc_ref)		\
+#define rs_roc_n3_alloc(ctx, parent, value, roc, roc_ref)	\
   DEFINE_ALLOC(struct rs_roc_n3, ctx, rs_roc_n3_init, parent,	\
 	       value, roc, roc_ref)
-#define rs_roc_n3_free(ctx)                  \
+#define rs_roc_n3_free(ctx)			\
   DEFINE_FREE(ctx, rs_roc_n3_free)
 
 static inline int rs_roc_n3_init(struct rs_roc_n3 *ctx,
-				    struct indicator *parent,
-				    double value, double roc,
-                                    double roc_ref)
+				 struct indicator *parent,
+				 double value, double roc,
+				 double roc_ref)
 {
-  __indicator_n3_init__(ctx, parent);
+  indicator_n3_init(&ctx->indicator_n3, parent);
   ctx->value = value;
   ctx->roc = roc;
   ctx->roc_ref = roc_ref;
@@ -46,7 +46,7 @@ static inline int rs_roc_n3_init(struct rs_roc_n3 *ctx,
 
 static inline void rs_roc_n3_release(struct rs_roc_n3 *ctx)
 {
-  __indicator_n3_release__(ctx);
+  indicator_n3_release(&ctx->indicator_n3);
 }
 
 /* Main object */
@@ -58,7 +58,7 @@ static inline void rs_roc_n3_release(struct rs_roc_n3 *ctx)
 
 struct rs_roc {
   /* Inherits from indicator */
-  __inherits_from__(struct indicator);
+  struct indicator indicator;
   /* Internals */
   int period;
   unique_id_t ref_track_uid;

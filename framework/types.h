@@ -16,7 +16,7 @@
 typedef unsigned int unique_id_t;
 
 /* Inheritance management. Beware : no multiple heritage */
-#define __inherits_from__(type) type __parent__
+//#define __inherits_from__(type) type __parent__
 #define __implements__(interface) interface
 
 /* Accessors */

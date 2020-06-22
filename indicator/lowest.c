@@ -15,22 +15,24 @@ static void _lowest_reset_(struct indicator *i)
 
 void lowest_reset(struct lowest *ctx)
 {
-  _lowest_reset_(__indicator__(ctx));
+  _lowest_reset_(&ctx->indicator);
 }
 
 static int lowest_feed(struct indicator *i,
-		       struct timeline_track_n3 *e)
+		       struct track_n3 *e)
 {
   int n = 0;
+  struct list *l;
   struct lowest_n3 *n3;
   struct lowest *ctx = (void*)i;
-  struct timeline_track_n3 *prev = NULL;
+  struct price_n3 *price = e->price;
   
   if(lowest_n3_alloc(n3, i)){
     /* Init n3 value */
-    n3->value = e->low;
+    n3->value = price->low;
     /* Find a lower value to exit */
-    __list_for_each_prev__(e, prev){
+    list_for_each_prev(&price->list, l){
+      struct price_n3 *prev = (void*)l;
       n3->value = MIN(prev->low, n3->value);
       /* End of loop */
       if(++n >= ctx->period)
@@ -38,7 +40,7 @@ static int lowest_feed(struct indicator *i,
     }
     
     /* Attach new n3 */
-    timeline_track_n3_add_indicator_n3(e, __indicator_n3__(n3));
+    track_n3_add_indicator_n3(e, &n3->indicator_n3);
     return 1;
   }
   
@@ -49,8 +51,8 @@ static int lowest_feed(struct indicator *i,
 int lowest_init(struct lowest *ctx, unique_id_t uid, int period)
 {
   /* Super() */
-  __indicator_init__(ctx, uid, lowest_feed, _lowest_reset_);
-  __indicator_set_string__(ctx, "lowest");
+  indicator_init(&ctx->indicator, uid, lowest_feed, _lowest_reset_);
+  indicator_set_string(&ctx->indicator, "lowest");
   /* Init internals */
   ctx->period = period;
   return 0;
@@ -58,5 +60,5 @@ int lowest_init(struct lowest *ctx, unique_id_t uid, int period)
 
 void lowest_release(struct lowest *ctx)
 {
-  __indicator_release__(ctx);
+  indicator_release(&ctx->indicator);
 }

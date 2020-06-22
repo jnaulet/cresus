@@ -22,31 +22,31 @@
 
 struct linear_reg_n3 {
   /* As below */
-  __inherits_from__(struct indicator_n3);
+  struct indicator_n3 indicator_n3;
   /* Single value */
   double value; /* End value for us */
   /* debug */
   double a, b; /* As in Y = aX + b */
 };
 
-#define linear_reg_n3_alloc(ctx, parent, value)		\
+#define linear_reg_n3_alloc(ctx, parent, value)			\
   DEFINE_ALLOC(struct linear_reg_n3, ctx,			\
 	       linear_reg_n3_init, parent, value)
-#define linear_reg_n3_free(ctx)		\
+#define linear_reg_n3_free(ctx)			\
   DEFINE_FREE(ctx, linear_reg_n3_release)
 
 static inline int linear_reg_n3_init(struct linear_reg_n3 *ctx,
-					struct indicator *parent,
-					double value)
+				     struct indicator *parent,
+				     double value)
 {
-  __indicator_n3_init__(ctx, parent);
+  indicator_n3_init(&ctx->indicator_n3, parent);
   ctx->value = value;
   return 0;
 }
 
 static inline void linear_reg_n3_release(struct linear_reg_n3 *ctx)
 {
-  __indicator_n3_release__(ctx);
+  indicator_n3_release(&ctx->indicator_n3);
 }
 
 /* Main object */
@@ -58,7 +58,7 @@ static inline void linear_reg_n3_release(struct linear_reg_n3 *ctx)
 
 struct linear_reg {
   /* As always */
-  __inherits_from__(struct indicator);
+  struct indicator indicator;
   /* Internals */
   int period;
 };

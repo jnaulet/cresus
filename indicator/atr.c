@@ -11,20 +11,20 @@
 
 #include "atr.h"
 
-static int atr_feed(struct indicator *i, struct timeline_track_n3 *e)
+static int atr_feed(struct indicator *i, struct track_n3 *e)
 {
   struct atr *a = (void*)i;
   struct candle *c = (void*)e;
 
   if(!a->ref){
-    a->value = c->high - c->low;
+    a->value = c->price->high - c->price->low;
     goto out;
   }
   
   /* Compute "True Range" */
-  double tr = c->high - c->low;
-  double h = fabs(c->high - a->ref->close);
-  double l = fabs(c->low - a->ref->close);
+  double tr = c->price->high - c->price->low;
+  double h = fabs(c->price->high - a->ref->price->close);
+  double l = fabs(c->price->low - a->ref->price->close);
   
   tr = (h > tr ? h : tr);
   tr = (l > tr ? l : tr);
@@ -54,7 +54,7 @@ int atr_init(struct atr *a, unique_id_t id, int period)
   a->period = period;
 
   /* First seed */
-  /* a->value = seed->high - seed->low; */
+  /* a->value = seed->price->high - seed->price->low; */
   
   return 0;
 }

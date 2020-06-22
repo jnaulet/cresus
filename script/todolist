@@ -1,5 +1,0 @@
-#!/bin/sh
-echo "TODOs"
-find . -name "[a-z0-9]*\.[ch]" -exec grep -n TODO {} +;
-echo "FIXMEs"
-find . -name "[a-z0-9]*\.[ch]" -exec grep -n FIXME {} +;

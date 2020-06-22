@@ -6,7 +6,8 @@ add_library(framework OBJECT
   indicator.c
   verbose.c
   time64.c
-  timeline.c
+  track.c
+  timeline_v2.c
   )
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/framework

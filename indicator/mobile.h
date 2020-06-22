@@ -51,7 +51,7 @@ typedef enum {
 
 struct mobile_n3 {
   /* As below */
-  __inherits_from__(struct indicator_n3);
+  struct indicator_n3 indicator_n3;
   /* Single value */
   double value;
   /* More info */
@@ -66,10 +66,10 @@ struct mobile_n3 {
   DEFINE_FREE(ctx, mobile_n3_release)
 
 static inline int mobile_n3_init(struct mobile_n3 *ctx,
-				    struct indicator *parent,
-				    double value, double direction)
+				 struct indicator *parent,
+				 double value, double direction)
 {
-  __indicator_n3_init__(ctx, parent);
+  indicator_n3_init(&ctx->indicator_n3, parent);
   ctx->value = value;
   ctx->direction = direction;
   return 0;
@@ -77,7 +77,7 @@ static inline int mobile_n3_init(struct mobile_n3 *ctx,
 
 static inline void mobile_n3_release(struct mobile_n3 *ctx)
 {
-  __indicator_n3_release__(ctx);
+  indicator_n3_release(&ctx->indicator_n3);
 }
 
 /* Main object */
@@ -89,15 +89,15 @@ static inline void mobile_n3_release(struct mobile_n3 *ctx)
 
 struct mobile {
   /* As always */
-  __inherits_from__(struct indicator);
+  struct indicator indicator;
   /* Basic data */
   mobile_t type;
-  input_n3_value_t value;
+  price_n3_value_t value;
   /* Average object */
   struct average avg;
 };
 
-int mobile_init(struct mobile *ctx, unique_id_t id, mobile_t type, int period, input_n3_value_t value);
+int mobile_init(struct mobile *ctx, unique_id_t id, mobile_t type, int period, price_n3_value_t value);
 void mobile_release(struct mobile *ctx);
 
 /* indicator-specific */

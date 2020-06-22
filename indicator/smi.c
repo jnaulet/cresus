@@ -11,7 +11,7 @@
 
 #include "smi.h"
 
-static int smi_feed(struct indicator *i, struct timeline_track_n3 *e)
+static int smi_feed(struct indicator *i, struct track_n3 *e)
 {  
   double hi = 0.0;
   double lo = DBL_MAX;
@@ -29,7 +29,7 @@ static int smi_feed(struct indicator *i, struct timeline_track_n3 *e)
     }
 
     /* Midpoint Delta */
-    double mpd = c->close - ((hi - lo) / 2.0);
+    double mpd = c->price->close - ((hi - lo) / 2.0);
     /* Double-smoothed midpoint delta */
     average_update(&ctx->smpd, average_update(&ctx->_smpd, mpd));
 

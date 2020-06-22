@@ -20,8 +20,8 @@
 #include "framework/indicator.h"
 
 struct hilo_n3 {
-  /* As always... */
-  __inherits_from__(struct indicator_n3);
+  /* Inherits from indicator_n3 */
+  struct indicator_n3 indicator_n3;
   /* Data */
   double high;
   double low;
@@ -33,15 +33,15 @@ struct hilo_n3 {
   DEFINE_FREE(n3, hilo_n3_free)
 
 static inline int hilo_n3_init(struct hilo_n3 *n3,
-				 struct indicator *parent)
+			       struct indicator *parent)
 {
-  __indicator_n3_init__(n3, parent);
+  indicator_n3_init(&n3->indicator_n3, parent); /* super() */
   return 0;
 }
 
 static inline void hilo_n3_release(struct hilo_n3 *n3)
 {
-  __indicator_n3_release__(n3);
+  indicator_n3_release(&n3->indicator_n3);
 }
 
 /* Main object */
@@ -53,8 +53,8 @@ static inline void hilo_n3_release(struct hilo_n3 *n3)
 
 struct hilo {
   /* Inherits from indicator */
-  __inherits_from__(struct indicator);
-  
+  struct indicator indicator;
+  /* Internals */
   int period;
   int filter;
 };

@@ -31,12 +31,12 @@ typedef enum {
 
 struct zigzag_n3 {
   /* As always */
-  __inherits_from__(struct indicator_n3);
+  struct indicator_n3 indicator_n3;
   /* Self */
   double value;
   zigzag_dir_t dir;
   int n_since_last_ref;
-  struct timeline_track_n3 *ref;
+  struct track_n3 *ref;
 };
 
 static inline int zigzag_n3_init(struct zigzag_n3 *ctx,
@@ -44,7 +44,7 @@ static inline int zigzag_n3_init(struct zigzag_n3 *ctx,
 				    zigzag_dir_t dir, double value,
 				    int count)
 {
-  __indicator_n3_init__(ctx, parent);
+  indicator_n3_init(&ctx->indicator_n3, parent);
   ctx->dir = dir;
   ctx->value = value;
   ctx->n_since_last_ref = count;
@@ -53,7 +53,7 @@ static inline int zigzag_n3_init(struct zigzag_n3 *ctx,
 
 static inline void zigzag_n3_release(struct zigzag_n3 *ctx)
 {
-  __indicator_n3_release__(ctx);
+  indicator_n3_release(&ctx->indicator_n3);
 }
 
 /* Indicator */
@@ -65,18 +65,18 @@ static inline void zigzag_n3_release(struct zigzag_n3 *ctx)
 
 struct zigzag {
   /* As usual */
-  __inherits_from__(struct indicator);
+  struct indicator indicator;
   /* Params */
   double threshold;
-  input_n3_value_t value;
+  price_n3_value_t value;
   /* Internals */
   zigzag_dir_t dir;
   /* Some other stuff */
   int ref_count; /* Candles since base ref */
-  struct timeline_track_n3 *ref, *base_ref;
+  struct track_n3 *ref, *base_ref;
 };
 
-int zigzag_init(struct zigzag *ctx, unique_id_t uid, double threshold, input_n3_value_t value);
+int zigzag_init(struct zigzag *ctx, unique_id_t uid, double threshold, price_n3_value_t value);
 void zigzag_release(struct zigzag *ctx);
 
 #endif

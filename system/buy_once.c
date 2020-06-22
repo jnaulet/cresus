@@ -18,8 +18,7 @@
 #include "engine/common_opt.h"
 
 #include "framework/verbose.h"
-#include "framework/timeline.h"
-#include "input/input_wrapper.h"
+#include "framework/price.h"
 
 static int amount = 500;
 
@@ -38,11 +37,11 @@ static int buy_once_init(struct buy_once *ctx)
 
 /* For each track */
 static void feed_track_n3(struct engine_v2 *engine,
-                          struct timeline_slice *slice,
-                          struct timeline_track_n3 *track_n3)
+                          struct slice *slice,
+                          struct track_n3 *track_n3)
 {
-  unique_id_t uid = __slist_uid_uid__(track_n3->track);
-  struct buy_once *ctx = timeline_track_n3_track_private(track_n3);
+  unique_id_t uid = track_n3->track->uid;
+  struct buy_once *ctx = track_n3->track->private;
 
   if(!ctx->once){
     struct engine_v2_order *order;
@@ -63,17 +62,17 @@ static int timeline_create(struct timeline *t, char *filename,
   /*
    * Data
    */
-  struct input *input;
-  if((input = input_wrapper_create_by_ext(filename))){
+  struct price *price;
+  
+  if((price = price_alloc(price, filename, NULL))){
     /* Create tracks */
+    struct track *track;
     struct buy_once *ctx;
-    struct timeline_track *track;
     __try__(!buy_once_alloc(ctx), err);
-    __try__(!timeline_track_alloc(track, track_uid,
-                                  basename(filename), ctx), err);
-    /* No indicators */
+    __try__(!track_alloc(track, track_uid, basename(filename), price, ctx), err);
+    
     /* Add to timeline */
-    timeline_add_track(t, track, input);
+    timeline_add_track(t, track);
     return 0;
   }
   
@@ -99,15 +98,14 @@ int main(int argc, char **argv)
   __try__(argc < 2, usage);
 
   /* Options */
-  timeline_init(&timeline); 
+  timeline_init(&timeline);
+  common_opt_init(&opt, "");
+  
   while((c = common_opt_getopt_linear(&opt, argc, argv, &optarg)) != -1)
     if(c == '-') timeline_create(&timeline, optarg, n++);
   /* Fixed amount opt */
   if(opt.fixed_amount.set)
     amount = opt.fixed_amount.i;
-  
-  /* Execute timeline data */
-  timeline_run_and_sync(&timeline);
   
   /* New engine */
   engine_v2_init(&engine, &timeline);

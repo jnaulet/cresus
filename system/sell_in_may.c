@@ -20,9 +20,7 @@
 #include "engine/common_opt.h"
 
 #include "framework/verbose.h"
-#include "framework/timeline.h"
-
-#include "input/input_wrapper.h"
+#include "framework/price.h"
 
 static int amount = 250;
 static int month = 5; /* Defautl : sell in May. June seems better :/ */
@@ -41,13 +39,13 @@ static int sell_in_may_init(struct sell_in_may *ctx)
   DEFINE_ALLOC(struct sell_in_may, ctx, sell_in_may_init)
 
 static void feed_track_n3(struct engine_v2 *engine,
-                          struct timeline_slice *slice,
-                          struct timeline_track_n3 *track_n3)
+                          struct slice *slice,
+                          struct track_n3 *track_n3)
 {
   struct engine_v2_order *order;
   int cur_month = TIME64_GET_MONTH(slice->time);
-  unique_id_t uid = __slist_uid_uid__(track_n3->track);
-  struct sell_in_may *ctx = timeline_track_n3_track_private(track_n3);
+  unique_id_t uid = track_n3->track->uid;
+  struct sell_in_may *ctx = track_n3->track->private;
   
   if(cur_month != ctx->cur_month){
     if(cur_month != month){
@@ -71,19 +69,20 @@ static int timeline_create(struct timeline *t,
                            char *filename,
                            unique_id_t track_uid)
 {
-  struct input *input;
-  if((input = input_wrapper_create_by_ext(filename))){
+  struct price *price;
+  
+  if((price = price_alloc(price, filename, NULL))){
     /* Create tracks */
+    struct track *track;
     struct sell_in_may *ctx;
-    struct timeline_track *track;
     __try__(!sell_in_may_alloc(ctx), err);
-    __try__(!timeline_track_alloc(track, track_uid,
-                                  basename(filename), ctx), err);
+    __try__(!track_alloc(track, track_uid, basename(filename), price, ctx), err);
+    
     /* Add to timeline */
-    timeline_add_track(t, track, input);
+    timeline_add_track(t, track);
     return 0;
   }
-
+  
  __catch__(err):
   return -1;
 }
@@ -117,8 +116,6 @@ int main(int argc, char **argv)
     }
   }
   
-  /* Execute timeline */
-  timeline_run_and_sync(&timeline);
   /* Start engine */
   engine_v2_init(&engine, &timeline);
   engine_v2_set_common_opt(&engine, &opt);

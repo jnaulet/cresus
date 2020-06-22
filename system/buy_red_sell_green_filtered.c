@@ -14,11 +14,12 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <math.h>
+#include <libgen.h>
 
-#include "input/inwrap.h"
-#include "engine/engine.h"
+#include "engine/engine_v2.h"
 #include "engine/common_opt.h"
 #include "framework/verbose.h"
+#include "framework/timeline_v2.h"
 
 typedef enum {
   STATE_NORMAL,
@@ -26,20 +27,29 @@ typedef enum {
   STATE_PRIME_SELL
 } state_t;
 
+/* n consecutive candles */
 static int level_buy_min = 1;
 static int level_sell_min = 1;
+/* amount to buy */
+static double amount = 500.0;
+/* State machine */
 static state_t state = STATE_NORMAL;
 
-static int feed(struct engine *e,
-		struct timeline *t,
-		struct timeline_n3 *n3)
+#define candle_is_red(x) ((x)->close < (x)->open)
+#define candle_is_green(x) ((x)->close > (x)->open)
+
+static void feed_track_n3(struct engine_v2 *engine,
+                          struct slice *slice,
+                          struct track_n3 *track_n3)
 {
+  struct engine_v2_order *order;
+  struct price_n3 *p = track_n3->price;
+  unique_id_t uid = track_n3->track->uid; /* FIXME */
   /* Step by step loop */
   static int level_buy = 0, level_sell = 0;
-  struct candle *c = (void*)n3;
   
   /* Execute */
-  if(candle_is_red(c)){
+  if(candle_is_red(p)){
     level_buy++;
     level_sell = 0;
   }else{
@@ -53,37 +63,38 @@ static int feed(struct engine *e,
   
   /* Trigger buy order */
   if(state == STATE_PRIME_BUY && !level_buy){
-    engine_set_order(e, BUY, 500, CASH, NULL);
+    engine_v2_order_alloc(order, uid, BUY, amount, CASH);
+    engine_v2_set_order(engine, order);
     state = STATE_NORMAL;
   }
   
   /* Trigger sell order */
   if(state == STATE_PRIME_SELL && !level_sell){
-    engine_set_order(e, SELL, 500, CASH, NULL);
+    engine_v2_order_alloc(order, uid, SELL, amount, CASH);
+    engine_v2_set_order(engine, order);
     state = STATE_NORMAL;
   }
-  
-  return 0;
 }
 
-static struct timeline *timeline_create(const char *filename, const char *type)
+static struct engine_v2_interface itf = {
+  .feed_track_n3 = feed_track_n3
+};
+
+static int timeline_create(struct timeline *t,
+                           char *filename,
+                           unique_id_t track_uid)
 {
-  /*
-   * Data
-   */
-  struct inwrap *inwrap;
-  struct timeline *timeline;
-  inwrap_t t = inwrap_t_from_str(type);
+  struct price *price;
   
-  if(inwrap_alloc(inwrap, filename, t)){
-    if(timeline_alloc(timeline, "buy_red_sell_green_filtered")){
-      /* Ok */
-      timeline_load(timeline, __input__(inwrap));
-      return timeline;
-    }
+  if((price = price_alloc(price, filename, NULL))){
+    /* Create tracks */
+    struct track *track;
+    __try__(!track_alloc(track, track_uid, basename(filename), price, NULL), err);
+    return timeline_add_track(t, track);
   }
   
-  return NULL;
+ __catch__(err):
+  return -1;
 }
 
 int main(int argc, char **argv)
@@ -93,59 +104,41 @@ int main(int argc, char **argv)
   /*
    * Data
    */
-  int c;
-  char *filename;
-  struct common_opt opt;
+  int c, n = 0;
+  char *optarg;
   
-  struct timeline *t;
-  struct engine engine;
+  struct common_opt opt;
+  struct engine_v2 engine;
+  struct timeline timeline;
 
-  if(argc < 2)
-    goto usage;
+  /* Check arguments */
+  __try__(argc < 2, usage);
 
-  /* Options */
-  common_opt_init(&opt, "b:s:");
-  while((c = common_opt_getopt(&opt, argc, argv)) != -1){
+  timeline_init(&timeline);
+  common_opt_init(&opt, "b:s:F:");
+  
+  while((c = common_opt_getopt_linear(&opt, argc, argv, &optarg)) != -1){
     switch(c){
     case 'b': level_buy_min = atoi(optarg); break;
     case 's': level_sell_min = atoi(optarg); break;
-    default: break;
+    case 'F': amount = atoi(optarg); break;
+    case '-': timeline_create(&timeline, optarg, n++);
     }
   }
-
-  /* Command line params */
-  filename = argv[optind];
-  if(!opt.input_type.set) goto usage;
   
-  if((t = timeline_create(filename, opt.input_type.s))){
-    /* Engine setup */
-    engine_init(&engine, t);
-    engine_set_common_opt(&engine, &opt);
-    /* Run */
-    engine_run(&engine, feed);
-
-    /* Print some info */
-    engine_display_stats(&engine);
-
-    /* Are there pending orders ? (FIXME : dedicated function in engine ?) */
-    struct position *p;
-    __list_for_each__(&engine.list_position, p){
-      if(p->status == POSITION_REQUESTED){
-	switch(p->type){
-	case BUY: PR_ERR("Buy now ! Quick ! Schnell !\n");
-	case SELL: PR_ERR("Sell now ! Quick ! Schnell !\n");
-	default: PR_ERR("C'mon do something\n");
-	}
-      }
-    }
-    
-    /* TODO : Don't forget to release everything */
-    engine_release(&engine);
-  }
+  /* Start engine */
+  engine_v2_init(&engine, &timeline);
+  engine_v2_set_common_opt(&engine, &opt);
+  /* Run */
+  engine_v2_run(&engine, &itf);
+  
+  /* Release engine & more */
+  engine_v2_release(&engine);
+  timeline_release(&timeline);
   
   return 0;
-
- usage:
+  
+ __catch__(usage):
   fprintf(stdout, "Usage: %s -o type filename\n", argv[0]);
   return -1;
 }

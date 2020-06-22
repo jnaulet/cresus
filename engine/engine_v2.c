@@ -34,7 +34,7 @@ int engine_v2_init(struct engine_v2 *ctx, struct timeline *t)
   ctx->last_slice = NULL;
 
   /* Init lists */
-  list_head_init(&ctx->list_orders);
+  plist_head_init(&ctx->plist_orders);
 
   /* Portfolio */
   portfolio_init(&ctx->portfolio);
@@ -57,26 +57,27 @@ int engine_v2_init(struct engine_v2 *ctx, struct timeline *t)
 
 static double
 engine_v2_total_value(struct engine_v2 *ctx,
-		      struct timeline_slice *slice)
+		      struct slice *slice)
 {
+  struct plist *p;
   double total_value = 0.0;
   
   /* Portfolio */
-  struct portfolio_n3 *pos;
-  __list_for_each__(&ctx->portfolio.list_portfolio_n3s, pos){
+  plist_for_each(&ctx->portfolio.plist_portfolio_n3s, p){
+    struct portfolio_n3 *pos = p->ptr;
     /* Find track_n3 by uid */
-    struct timeline_track_n3 *track_n3 =
-      timeline_slice_get_track_n3(slice, pos->uid);
+    struct price_n3 *price_n3 =
+      slice_get_track_n3(slice, pos->uid)->price;
     
     /* Compute total value */
-    total_value += portfolio_n3_total_value(pos, track_n3->close);
+    total_value += portfolio_n3_total_value(pos, price_n3->close);
   }
   
   return total_value;
 }
 
 static void engine_v2_csv_output(struct engine_v2 *ctx,
-				 struct timeline_slice *slice)
+				 struct slice *slice)
 {
   double value = engine_v2_total_value(ctx, slice);
   double balance = (ctx->spent + ctx->earned);
@@ -91,21 +92,23 @@ static void engine_v2_csv_output(struct engine_v2 *ctx,
 
 static void engine_v2_display_stats(struct engine_v2 *ctx)
 {
+  struct plist *p;
   double total_value = 0.0;
   
   /* Portfolio */
-  struct portfolio_n3 *pos;
-  __list_for_each__(&ctx->portfolio.list_portfolio_n3s, pos){
+  
+  plist_for_each(&ctx->portfolio.plist_portfolio_n3s, p){
+    struct portfolio_n3 *pos = p->ptr;
     /* Find track name by uid */
-    struct timeline_track *track =
+    struct track *track =
       timeline_find_track(ctx->timeline, pos->uid);
     /* Get last track n3 */
-    struct timeline_track_n3 *track_n3 = (void*)
-      track->list_track_n3s.prev;
+    struct track_n3 *track_n3 =
+      track->plist_track_n3s.prev->ptr;
     
     /* Display track stats */
-    portfolio_n3_pr_stat(pos, track_n3->close);
-    total_value += portfolio_n3_total_value(pos, track_n3->close);
+    portfolio_n3_pr_stat(pos, track_n3->price->close);
+    total_value += portfolio_n3_total_value(pos, track_n3->price->close);
   }
   
   /* Total */
@@ -116,17 +119,19 @@ static void engine_v2_display_stats(struct engine_v2 *ctx)
 static void
 engine_v2_display_pending_orders(struct engine_v2 *ctx)
 {
-  struct engine_v2_order *order;
-  __list_for_each__(&ctx->list_orders, order){
+  struct plist *p;
+  
+  plist_for_each(&ctx->plist_orders, p){
+    struct engine_v2_order *order = p->ptr;
     /* Find track name by uid */
-    struct timeline_track *track =
-      timeline_find_track(ctx->timeline, order->track_uid);
+    struct track *track =
+      timeline_find_track_by_uid(ctx->timeline, order->track_uid);
     /* Get last track n3 */
-    struct timeline_track_n3 *track_n3 = (void*)
-      track->list_track_n3s.prev;
+    struct track_n3 *track_n3 =
+      track->plist_track_n3s.prev->ptr;
     
     fprintf(stdout, "%s %.2lf %s %.2lf %d\n",
-	    track->name, track_n3->close,
+	    track->name, track_n3->price->close,
 	    (order->type == BUY ? "buy" : "sell"),
 	    order->value, order->level);
   }
@@ -165,60 +170,65 @@ int engine_v2_set_common_opt(struct engine_v2 *ctx,
 }
 
 static void engine_v2_buy_cash(struct engine_v2 *ctx,
-			       struct timeline_track_n3 *track_n3,
+			       struct track_n3 *track_n3,
 			       struct engine_v2_order *order)
 {
   /* Convert CASH to shares */
-  double shares = engine_v2_order_shares(order, track_n3->open);
+  double shares = engine_v2_order_shares(order,
+					 track_n3->price->open);
   
   /* Portfolio */
   if(order->funding > 0)
     portfolio_add_leveraged(&ctx->portfolio,
 			    track_n3->track->name, order->track_uid,
-			    shares, track_n3->open, order->funding,
-			    order->ratio, order->stoploss);
+			    shares, track_n3->price->open,
+			    order->funding, order->ratio,
+			    order->stoploss);
   else
     portfolio_add(&ctx->portfolio,
 		  track_n3->track->name, order->track_uid,
-		  shares, track_n3->open);
+		  shares, track_n3->price->open);
   
   /* Stats */
   ctx->spent += order->value;
   ctx->fees += track_n3->track->transaction_fee;
   
   PR_INFO("%s - Buy %.4lf securities for %.2lf CASH\n",
-	  timeline_track_n3_str(track_n3), shares, order->value);
+	  track_n3_str(track_n3), shares, order->value);
 }
 
 static void engine_v2_sell_cash(struct engine_v2 *ctx,
-				struct timeline_track_n3 *track_n3,
+				struct track_n3 *track_n3,
 				struct engine_v2_order *order)
 {
   /* Convert CASH to shares */
-  double shares = engine_v2_order_shares(order, track_n3->open);
+  double shares = engine_v2_order_shares(order,
+					 track_n3->price->open);
   
   /* Portfolio */
   order->value = portfolio_sub(&ctx->portfolio,
 			       track_n3->track->name,
-			       order->track_uid,
-			       shares, track_n3->open);
+			       order->track_uid, shares,
+			       track_n3->price->open);
   
   /* Stats */
   ctx->earned += order->value;
   ctx->fees += track_n3->track->transaction_fee;
   
   PR_INFO("%s - Sell %.4lf securities for %.2lf CASH\n",
-	  timeline_track_n3_str(track_n3), shares, order->value);
+	  track_n3_str(track_n3), shares, order->value);
 }
 
 static void engine_v2_run_orders(struct engine_v2 *ctx,
-				 struct timeline_track_n3 *track_n3)
+				 struct track_n3 *track_n3)
 {
-  struct engine_v2_order *order, *safe;
-  __list_for_each_safe__(&ctx->list_orders, order, safe){
+  struct plist *p, *safe;
+  
+  plist_for_each_safe(&ctx->plist_orders, p, safe){
+    struct engine_v2_order *order = p->ptr;
     /* Ignore non-relevant orders
      * (order might stay until data is available) */
-    if(order->track_uid != timeline_track_n3_track_uid(track_n3))
+    if(order->track_uid != track_n3->track->uid)
       continue;
     
     /* Run order */
@@ -228,22 +238,22 @@ static void engine_v2_run_orders(struct engine_v2 *ctx,
     }
     
     /* Remove executed order */
-    __list_del__(order);
+    plist_del(p);
     engine_v2_order_free(order);
   }
 }
 
 static void engine_run_before_start(struct engine_v2 *ctx,
-				    struct timeline_slice *slice,
+				    struct slice *slice,
 				    struct engine_v2_interface *i)
 {
   struct indicator_n3 *indicator_n3;
-  struct timeline_track_n3 *track_n3;
+  struct track_n3 *track_n3;
   
   /* Run "new" track */
-  timeline_slice_for_each_track_n3(slice, track_n3){
+  slice_for_each_track_n3(slice, track_n3){
     /* Run "new" indicators */
-    timeline_track_n3_for_each_indicator_n3(track_n3, indicator_n3){
+    track_n3_for_each_indicator_n3(track_n3, indicator_n3){
       if(i->feed_indicator_n3)
 	i->feed_indicator_n3(ctx, track_n3, indicator_n3);
     }
@@ -251,28 +261,28 @@ static void engine_run_before_start(struct engine_v2 *ctx,
 }
 
 static void engine_run_after_start(struct engine_v2 *ctx,
-				   struct timeline_slice *slice,
+				   struct slice *slice,
 				   struct engine_v2_interface *i)
 {
+  struct track_n3 *track_n3;
   struct indicator_n3 *indicator_n3;
-  struct timeline_track_n3 *track_n3;
   
   /* Run "new" slice */
   if(i->feed_slice)
     i->feed_slice(ctx, slice);
   
   /* Run "new" track */
-  timeline_slice_for_each_track_n3(slice, track_n3){
+  slice_for_each_track_n3(slice, track_n3){
     /* Run pending orders */
     engine_v2_run_orders(ctx, track_n3);
     /* Run portfolio */
-    portfolio_run(&ctx->portfolio, track_n3->low); /* FIXME */
+    portfolio_run(&ctx->portfolio, track_n3->price->low); /* FIXME */
     
     if(i->feed_track_n3)
       i->feed_track_n3(ctx, slice, track_n3);
     
     /* Run "new" indicators */
-    timeline_track_n3_for_each_indicator_n3(track_n3, indicator_n3){
+    track_n3_for_each_indicator_n3(track_n3, indicator_n3){
       if(i->feed_indicator_n3)
 	i->feed_indicator_n3(ctx, track_n3, indicator_n3);
     }
@@ -290,18 +300,19 @@ static void engine_run_after_start(struct engine_v2 *ctx,
 void engine_v2_run(struct engine_v2 *ctx,
 		   struct engine_v2_interface *i)
 {
-  struct timeline_slice *slice;
+  struct plist *p;
 
   /* Run all slices */
-  __list_for_each__(&ctx->timeline->by_slice, slice){    
+  plist_for_each(&ctx->timeline->by_slice, p){
+    struct slice *slice = p->ptr;
     /* We MUST stop at end_time */
     if(TIME64CMP(slice->time, ctx->end_time, GR_DAY) > 0)
       break;
-
+    
     /* Debug */
     PR_DBG("engine_v2.c: playing slice #%s\n",
 	   time64_str(slice->time, GR_DAY));
-
+    
     /* Run in two-state mode */
     if(TIME64CMP(slice->time, ctx->start_time, GR_DAY) < 0)
       engine_run_before_start(ctx, slice, i);
@@ -316,6 +327,6 @@ void engine_v2_run(struct engine_v2 *ctx,
 int engine_v2_set_order(struct engine_v2 *ctx,
 			struct engine_v2_order *order)
 {
-  __list_add__(&ctx->list_orders, order);
+  plist_add_ptr(&ctx->plist_orders, order);
   return 0;
 }

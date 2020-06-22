@@ -50,8 +50,6 @@ typedef enum {
   DEFINE_FREE(p, position_release)
 
 struct position {
-  /* slistable */
-  __inherits_from__(struct list);
   /* Internal data */
   position_t type;
   position_status_t status;

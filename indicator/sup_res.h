@@ -9,7 +9,7 @@
 
 struct sup_res_n3 {
   /* As always */
-  __inherits_from__(struct indicator_n3);
+  struct indicator_n3 indicator_n3;
   /* Self */
   double value;
 };
@@ -18,14 +18,14 @@ static inline int sup_res_n3_init(struct sup_res_n3 *n3,
 				     struct indicator *parent,
 				     double value)
 {
-  __indicator_n3_init__(n3, parent);
+  indicator_n3_init(&n3->indicator_n3, parent);
   n3->value = value;
   return 0;
 }
 
 static inline void sup_res_n3_release(struct sup_res_n3 *n3)
 {
-  __indicator_n3_release__(n3);
+  indicator_n3_release(&n3->indicator_n3);
 }
 
 /* Indicator */
@@ -37,7 +37,7 @@ static inline void sup_res_n3_release(struct sup_res_n3 *n3)
 
 struct sup_res {
   /* As usual */
-  __inherits_from__(struct indicator);
+  struct indicator indicator;
   /* Params */
   int step;
   candle_value_t cvalue;
@@ -46,6 +46,5 @@ struct sup_res {
 int sup_res_init(struct sup_res *s, unique_id_t id,
 		 int step, candle_value_t cvalue);
 void sup_res_release(struct sup_res *s);
-
 
 #endif

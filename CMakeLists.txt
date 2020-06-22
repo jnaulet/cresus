@@ -21,7 +21,8 @@ add_library(cresus SHARED
   $<TARGET_OBJECTS:engine>
   $<TARGET_OBJECTS:math>
   $<TARGET_OBJECTS:indicator>
-  $<TARGET_OBJECTS:input>
+  $<TARGET_OBJECTS:price>
+  $<TARGET_OBJECTS:balance_sheet>
   )
 
 target_link_libraries(cresus m jsonparser)

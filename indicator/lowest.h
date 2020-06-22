@@ -20,26 +20,26 @@
 
 struct lowest_n3 {
   /* As always... */
-  __inherits_from__(struct indicator_n3);
+  struct indicator_n3 indicator_n3;
   /* Data */
   double value;
 };
 
-#define lowest_n3_alloc(ctx, parent)                                 \
+#define lowest_n3_alloc(ctx, parent)				\
   DEFINE_ALLOC(struct lowest_n3, ctx, lowest_n3_init, parent)
-#define lowest_n3_free(ctx)                  \
+#define lowest_n3_free(ctx)			\
   DEFINE_FREE(ctx, lowest_n3_free)
 
 static inline int lowest_n3_init(struct lowest_n3 *ctx,
-                                    struct indicator *parent)
+				 struct indicator *parent)
 {
-  __indicator_n3_init__(ctx, parent);
+  indicator_n3_init(&ctx->indicator_n3, parent);
   return 0;
 }
 
 static inline void lowest_n3_release(struct lowest_n3 *ctx)
 {
-  __indicator_n3_release__(ctx);
+  indicator_n3_release(&ctx->indicator_n3);
 }
 
 /* Main object */
@@ -51,7 +51,7 @@ static inline void lowest_n3_release(struct lowest_n3 *ctx)
 
 struct lowest {
   /* Inherits from indicator */
-  __inherits_from__(struct indicator);
+  struct indicator indicator;
   int period;
 };
 

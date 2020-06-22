@@ -7,18 +7,19 @@
  */
 
 #include "jtrend.h"
+#include "framework/timeline_v2.h"
 
 static int jtrend_feed(struct indicator *i,
-		       struct timeline_track_n3 *e)
+		       struct track_n3 *e)
 {
   double value, ref_value;
   struct jtrend_n3 *n3;
 
   struct jtrend *ctx = (void*)i;
-  struct timeline_track_n3 *ref;
+  struct track_n3 *ref;
   
   /* Get synced track_n3 */
-  if(!(ref = timeline_slice_get_track_n3(e->slice, ctx->ref_track_uid)))
+  if(!(ref = slice_get_track_n3(e->slice, ctx->ref_track_uid)))
     goto err;
   
   if(roc_compute(&ctx->roc, e, &value) != -1){
@@ -27,8 +28,8 @@ static int jtrend_feed(struct indicator *i,
     /* Alloc jn3 & store in candle */
     value = value - ref_value;
     if(jtrend_n3_alloc(n3, i, value, ref_value))
-      timeline_track_n3_add_indicator_n3(e, __indicator_n3__(n3));
-
+      track_n3_add_indicator_n3(e, &n3->indicator_n3);
+    
     return 0;
   }
   
@@ -50,8 +51,8 @@ int jtrend_init(struct jtrend *ctx, unique_id_t uid,
                 int period, int average,
                 unique_id_t ref_track_uid)
 {
-  __indicator_init__(ctx, uid, jtrend_feed, jtrend_reset);
-  __indicator_set_string__(ctx, "jtrend[%d,%d]", period, average);
+  indicator_init(&ctx->indicator, uid, jtrend_feed, jtrend_reset);
+  indicator_set_string(&ctx->indicator, "jtrend[%d,%d]", period, average);
   
   /* Our sub-indicators */
   roc_init(&ctx->roc, uid, period, average);
@@ -63,5 +64,5 @@ int jtrend_init(struct jtrend *ctx, unique_id_t uid,
 
 void jtrend_release(struct jtrend *ctx)
 {  
-  __indicator_release__(ctx);
+  indicator_release(&ctx->indicator);
 }

@@ -6,22 +6,27 @@
  *
  */
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "yahoo_v7.h"
+#include "framework/price.h"
 #include "framework/verbose.h"
 
-static struct input_n3 *
+struct yahoo_v7 {
+  FILE *fp;
+};
+
+struct price_n3 *
 yahoo_v7_parse_n3(struct yahoo_v7 *ctx, char *str)
 {
-  struct input_n3 *n3;
+  struct price_n3 *n3;
 
   time64_t time = 0;
   int year, month, day;
   double open = 0.0, close = 0.0;
   double high = 0.0, low = 0.0;
-  double volume = 0.0; 
+  double volume = 0.0;
   
   /* Cut string */
   char *stime = strsep(&str, ",");
@@ -55,26 +60,25 @@ yahoo_v7_parse_n3(struct yahoo_v7 *ctx, char *str)
   TIME64_SET_YEAR(time, year);
 
   if(open != 0.0 && close != 0.0 && high != 0.0 && low != 0.0)
-    if(input_n3_alloc(n3, time, open, close, high, low, volume))
+    if(price_n3_alloc(n3, time, open, close, high, low, volume))
       return n3;
   
  err:
   return NULL;
 }
 
-static struct input_n3 *yahoo_v7_read(struct input *in)
+struct price_n3 *yahoo_v7_read(struct price *ctx)
 {
-  struct yahoo_v7 *ctx = (void*)in;
-  
   char buf[256];
-  struct input_n3 *n3;
+  struct price_n3 *n3;
+  struct yahoo_v7 *y = ctx->private;
   
-  while(fgets(buf, sizeof buf, ctx->fp)){
+  while(fgets(buf, sizeof buf, y->fp)){
     /* Parse n3 */
-    if((n3 = yahoo_v7_parse_n3(ctx, buf))){
+    if((n3 = yahoo_v7_parse_n3(y, buf))){
       PR_DBG("%s %s loaded\n", ctx->filename,
              time64_str_r(n3->time, GR_DAY, buf));
-      /* We got a new candle */      
+      /* We got a new candle */
       return n3;
     }
   }
@@ -83,27 +87,35 @@ static struct input_n3 *yahoo_v7_read(struct input *in)
   return NULL;
 }
 
-int yahoo_v7_init(struct yahoo_v7 *ctx, const char *filename)
+int yahoo_v7_init(struct price *ctx)
 {
   char dummy[256];
+
+  struct yahoo_v7 *y = calloc(1, sizeof(*y));
+  if(!y) return -ENOMEM;
   
-  /* init */
-  __input_init__(ctx, yahoo_v7_read);
-
-  strncpy(ctx->filename, filename, sizeof(ctx->filename));
-  if(!(ctx->fp = fopen(ctx->filename, "r"))){
-    PR_ERR("unable to open file %s\n", ctx->filename);
-    return -1;
-  }
-
+  if(!(y->fp = fopen(ctx->filename, "r")))
+    goto err;
+  
   /* Ignore first line */
-  fgets(dummy, sizeof(dummy), ctx->fp);
-  
+  fgets(dummy, sizeof(dummy), y->fp);
+  ctx->private = (void*)y;
   return 0;
+  
+ err:
+  free(y);
+  return -1;
 }
 
-void yahoo_v7_release(struct yahoo_v7 *ctx)
+void yahoo_v7_release(struct price *ctx)
 {
-  __input_release__(ctx);
-  if(ctx->fp) fclose(ctx->fp);
+  struct yahoo_v7 *y = ctx->private;
+  if(y->fp) fclose(y->fp);
+  free(y);
 }
+
+struct price_ops yahoo_v7_ops = {
+  .init = yahoo_v7_init,
+  .release = yahoo_v7_release,
+  .read = yahoo_v7_read,
+};

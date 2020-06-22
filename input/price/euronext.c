@@ -6,19 +6,31 @@
  *
  */
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <json-parser/json.h>
 
-#include "euronext.h"
+#include "framework/price.h"
 #include "framework/verbose.h"
 #include "framework/time64.h"
 
+struct euronext {
+  /* internals */
+  json_char *json;
+  json_value *value;
+  /* Our mix */
+  int i;
+  size_t len;
+  json_value *data;
+};
+
 static time64_t euronext_time(struct euronext *ctx,
-				 const char *str)
+			      const char *str)
 {
   int y, m, d;
   sscanf(str, "%d/%d/%d", &d, &m, &y);
@@ -43,80 +55,91 @@ static double euronext_dbl(struct euronext *ctx, char *str)
   return ((double)t * 1000.0) + (double)h + ((double)c / 100.0);
 }
 
-static struct input_n3 *euronext_read(struct input *in)
+static struct price_n3 *euronext_read(struct price *ctx)
 {
-  struct input_n3 *n3;
-  struct euronext *ctx = (void*)in;
+  struct price_n3 *n3;
+  struct euronext *e = ctx->private;
   
   /* Check for EOF at least */
-  if(ctx->i >= ctx->len)
+  if(e->i >= e->len)
     goto err;
   
-  json_value *o = ctx->data->u.array.values[ctx->i++];
+  json_value *o = e->data->u.array.values[e->i++];
   char *date = o->u.object.values[2].value->u.string.ptr;
   char *sopen = o->u.object.values[3].value->u.string.ptr;
   char *shigh = o->u.object.values[4].value->u.string.ptr;
   char *slow = o->u.object.values[5].value->u.string.ptr;
   char *sclose = o->u.object.values[6].value->u.string.ptr;
   
-  time64_t time = euronext_time(ctx, date);
-  double open = euronext_dbl(ctx, sopen);
-  double high = euronext_dbl(ctx, shigh);
-  double low = euronext_dbl(ctx, slow);
-  double close = euronext_dbl(ctx, sclose);
+  time64_t time = euronext_time(e, date);
+  double open = euronext_dbl(e, sopen);
+  double high = euronext_dbl(e, shigh);
+  double low = euronext_dbl(e, slow);
+  double close = euronext_dbl(e, sclose);
   
-  if(input_n3_alloc(n3, time, open, close, high, low, 0.0))
+  if(price_n3_alloc(n3, time, open, close, high, low, 0.0))
     return n3;
   
  err:
   return NULL;
 }
 
-int euronext_init(struct euronext *ctx, const char *filename)
+int euronext_init(struct price *ctx)
 {
   int fd;
   size_t size;
   struct stat stat;
+  struct euronext *e;
 
-  /* init */
-  __input_init__(ctx, euronext_read);
+  /* Alloc */
+  if(!(e = calloc(1, sizeof *e)))
+    return -ENOMEM;
   
-  /* internals */
-  ctx->i = 0;
-
-  if((fd = open(filename, O_RDONLY)) < 0)
-    return -1;
-
+  /* Open file */
+  if((fd = open(ctx->filename, O_RDONLY)) < 0)
+    goto err;
   /* Init +exception */
   if(fstat(fd, &stat) < 0)
-    goto err;
+    goto err2;
   /* allocate RAM */
   size = stat.st_size;
-  if(!(ctx->json = malloc(size)))
-    goto err;
+  if(!(e->json = malloc(size)))
+    goto err2;
   /* Load entire file to RAM */
-  if(read(fd, (void*)ctx->json, size) != size)
-    goto err;
+  if(read(fd, (void*)e->json, size) != size)
+    goto err3;
   /* json parse */
-  if(!(ctx->value = json_parse(ctx->json, size)))
-    goto err;
+  if(!(e->value = json_parse(e->json, size)))
+    goto err3;
   
   /* Ok */
-  ctx->data = ctx->value->u.object.values->value;
-  ctx->len = ctx->data->u.array.length;
+  e->data = e->value->u.object.values->value;
+  e->len = e->data->u.array.length;
+  e->i = 0;
   
+  ctx->private = e;
   close(fd);
   return 0;
   
- err:
+ err3:
+  free(e->json);
+ err2:
   close(fd);
-  PR_ERR("unable to load file %s\n", filename);
+ err:
+  free(e);
   return -1;
 }
 
-void euronext_release(struct euronext *ctx)
-{  
-  __input_release__(ctx);
-  json_value_free(ctx->value);
-  free(ctx->json);
+void euronext_release(struct price *ctx)
+{
+  struct euronext *e = ctx->private;
+  json_value_free(e->value);
+  free(e->json);
+  free(e);
 }
+
+struct price_ops euronext_ops = {
+  .init = euronext_init,
+  .release = euronext_release,
+  .read = euronext_read,
+};

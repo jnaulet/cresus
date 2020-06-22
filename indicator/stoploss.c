@@ -9,19 +9,19 @@
 #include "stoploss.h"
 #include "engine/candle.h"
 
-static int stoploss_feed(struct indicator *i, struct timeline_track_n3 *e)
+static int stoploss_feed(struct indicator *i, struct track_n3 *e)
 {  
   struct stoploss *ctx = (void*)i;
   struct candle *candle = (void*)e;
   
   if(ctx->type == STOPLOSS_UP){
-    if(candle->close >= ctx->value){
+    if(candle->price->close >= ctx->value){
       if(ctx->trigger)
         goto out;
     }
     
   }else{
-    if(candle->close <= ctx->value){
+    if(candle->price->close <= ctx->value){
       if(ctx->trigger)
         goto out;
     }
