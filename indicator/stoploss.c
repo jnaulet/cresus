@@ -15,13 +15,13 @@ static int stoploss_feed(struct indicator *i, struct track_n3 *e)
   struct candle *candle = (void*)e;
   
   if(ctx->type == STOPLOSS_UP){
-    if(candle->price->close >= ctx->value){
+    if(candle->quotes->close >= ctx->value){
       if(ctx->trigger)
         goto out;
     }
     
   }else{
-    if(candle->price->close <= ctx->value){
+    if(candle->quotes->close <= ctx->value){
       if(ctx->trigger)
         goto out;
     }

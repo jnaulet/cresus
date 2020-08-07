@@ -19,7 +19,7 @@ static int rs_dorsey_feed(struct indicator *i, struct track_n3 *e)
   if(!(ref = slice_get_track_n3(e->slice, ctx->ref_track_uid)))
     goto err;
   
-  ratio = e->price->close / ref->price->close * 100.0;
+  ratio = e->quotes->close / ref->quotes->close * 100.0;
   value = ratio / ctx->ratio_prev - 1.0; /* Ref is 0 */
   
   if(!i->is_empty){

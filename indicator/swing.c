@@ -10,8 +10,8 @@
 #include <string.h>
 
 #define is_inside_candle(c, p)					\
-  ((c)->price->high < (p)->price->high &&                                     \
-   (c)->price->low > (p)->price->low)
+  ((c)->quotes->high < (p)->quotes->high &&                                     \
+   (c)->quotes->low > (p)->quotes->low)
 
 static int swing_feed(struct indicator *i, struct track_n3 *e)
 {  
@@ -46,12 +46,12 @@ static int swing_feed(struct indicator *i, struct track_n3 *e)
   struct candle *s1 = table[1];
   struct candle *s0 = table[2];
   
-  if(s0->price->low < s1->price->low && s2->price->low < s1->price->low &&
-     s0->price->high < s1->price->high && s2->price->high < s1->price->high)
+  if(s0->quotes->low < s1->quotes->low && s2->quotes->low < s1->quotes->low &&
+     s0->quotes->high < s1->quotes->high && s2->quotes->high < s1->quotes->high)
     ctx->type = SWING_TOP;
   
-  if(s0->price->low > s1->price->low && s2->price->low > s1->price->low &&
-     s0->price->high > s1->price->high && s2->price->high > s1->price->high)
+  if(s0->quotes->low > s1->quotes->low && s2->quotes->low > s1->quotes->low &&
+     s0->quotes->high > s1->quotes->high && s2->quotes->high > s1->quotes->high)
     ctx->type = SWING_BOTTOM;
   
  out:

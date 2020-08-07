@@ -12,15 +12,10 @@
  */
 
 #include <stdio.h>
-#include <libgen.h>
 
 #include "engine/engine_v2.h"
-#include "engine/common_opt.h"
-
 #include "framework/verbose.h"
-#include "framework/price.h"
-
-static int amount = 500;
+#include "framework/quotes.h"
 
 struct buy_once {
   int once;
@@ -32,7 +27,7 @@ static int buy_once_init(struct buy_once *ctx)
   return 0;
 }
 
-#define buy_once_alloc(ctx)					\
+#define buy_once_alloc(ctx)				\
   DEFINE_ALLOC(struct buy_once, ctx, buy_once_init)
 
 /* For each track */
@@ -42,7 +37,8 @@ static void feed_track_n3(struct engine_v2 *engine,
 {
   unique_id_t uid = track_n3->track->uid;
   struct buy_once *ctx = track_n3->track->private;
-
+  double amount = track_get_amount(track_n3->track, 500.0);
+  
   if(!ctx->once){
     struct engine_v2_order *order;
     engine_v2_order_alloc(order, uid, BUY, amount, CASH);
@@ -52,33 +48,19 @@ static void feed_track_n3(struct engine_v2 *engine,
   }
 }
 
-static struct engine_v2_interface itf = {
-  .feed_track_n3 = feed_track_n3
+static struct engine_v2_interface engine_itf = {
+   .feed_track_n3 = feed_track_n3
 };
 
-static int timeline_create(struct timeline *t, char *filename,
-                           unique_id_t track_uid)
+static void customize_track(struct timeline_v2 *t, struct track *track)
 {
-  /*
-   * Data
-   */
-  struct price *price;
-  
-  if((price = price_alloc(price, filename, NULL))){
-    /* Create tracks */
-    struct track *track;
-    struct buy_once *ctx;
-    __try__(!buy_once_alloc(ctx), err);
-    __try__(!track_alloc(track, track_uid, basename(filename), price, ctx), err);
-    
-    /* Add to timeline */
-    timeline_add_track(t, track);
-    return 0;
-  }
-  
- __catch__(err):
-  return -1;
+  struct buy_once *buy_once;
+  track->private = buy_once_alloc(buy_once);
 }
+
+static struct timeline_v2_ex_interface timeline_itf = {
+   .customize_track = customize_track
+};
 
 int main(int argc, char **argv)
 {
@@ -87,40 +69,29 @@ int main(int argc, char **argv)
   /*
    * Data
    */
-  int c, n = 0;
-  char *optarg;
-
-  struct common_opt opt;
+  
+  int c;
   struct engine_v2 engine;
-  struct timeline timeline;
+  struct timeline_v2 timeline;
 
   /* Check arguments */
-  __try__(argc < 2, usage);
+  __try__(argc < 3, usage);
 
   /* Options */
-  timeline_init(&timeline);
-  common_opt_init(&opt, "");
-  
-  while((c = common_opt_getopt_linear(&opt, argc, argv, &optarg)) != -1)
-    if(c == '-') timeline_create(&timeline, optarg, n++);
-  /* Fixed amount opt */
-  if(opt.fixed_amount.set)
-    amount = opt.fixed_amount.i;
-  
-  /* New engine */
-  engine_v2_init(&engine, &timeline);
-  engine_v2_set_common_opt(&engine, &opt);
+  timeline_v2_init_ex(&timeline, argc, argv, &timeline_itf);
+  engine_v2_init_ex(&engine, &timeline, argc, argv);
 
   /* Run */
-  engine_v2_run(&engine, &itf);
+  engine_v2_run(&engine, &engine_itf);
   
   /* Release engine & more */
   engine_v2_release(&engine);
-  timeline_release(&timeline);
+  timeline_v2_release(&timeline);
   
   return 0;
 
  __catch__(usage):
-  fprintf(stderr, "Usage: %s [-F amount] [-c csv] file.ext\n", argv[0]);
+  fprintf(stderr, "Usage: %s %s %s\n", argv[0],
+	  timeline_v2_ex_args, engine_v2_init_ex_args);
   return -1;
 }

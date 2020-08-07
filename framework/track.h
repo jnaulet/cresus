@@ -13,7 +13,7 @@
 #include "framework/alloc.h"
 #include "framework/plist.h"
 
-#include "framework/price.h"
+#include "framework/quotes.h"
 #include "framework/balance-sheet.h"
 #include "framework/income-statement.h"
 #include "framework/cash-flow.h"
@@ -25,7 +25,7 @@ struct indicator_n3;
 struct track_n3 {
   /* Internal entries */
   time64_t time;
-  struct price_n3 *price;
+  struct quotes_n3 *quotes;
   struct balance_sheet_n3 *balance_sheet;
   struct income_statement_n3 *income_statement;
   /* Indicators */
@@ -37,12 +37,12 @@ struct track_n3 {
   struct plist *plist;
 };
 
-#define track_n3_alloc(ctx, price_n3, track)                            \
-  DEFINE_ALLOC(struct track_n3, ctx, track_n3_init, price_n3, track)
+#define track_n3_alloc(ctx, quotes_n3, track)                            \
+  DEFINE_ALLOC(struct track_n3, ctx, track_n3_init, quotes_n3, track)
 #define track_n3_free(ctx)                      \
   DEFINE_FREE(ctx, track_n3_release)
 
-int track_n3_init(struct track_n3 *ctx, struct price_n3 *price_n3, struct track *track);
+int track_n3_init(struct track_n3 *ctx, struct quotes_n3 *quotes_n3, struct track *track);
 void track_n3_release(struct track_n3 *ctx);
 
 /* Methods */
@@ -78,18 +78,19 @@ struct track {
   /* The indicators we want to play on that particular track */
   plist_head_t(struct indicator) plist_indicators;
   /* Fee depends on track, not engine */
+  double amount;
   double transaction_fee;
   /* User might want ot expand this object */
   void *private;
 };
 
-#define track_alloc(ctx, uid, name, price, private)     \
+#define track_alloc(ctx, uid, name, quotes, private)     \
   DEFINE_ALLOC(struct track, ctx,                       \
-	       track_init, uid, name, price, private)
+	       track_init, uid, name, quotes, private)
 #define track_free(ctx)                         \
   DEFINE_FREE(ctx, track_release)
 
-int track_init(struct track *ctx, unique_id_t uid, const char *name, struct price *price, void *private);
+int track_init(struct track *ctx, unique_id_t uid, const char *name, struct quotes *quotes, void *private);
 void track_release(struct track *ctx);
 
 /*
@@ -104,5 +105,7 @@ int track_add_cash_flow(struct track *ctx, struct cash_flow *c);
   plist_add_ptr(&(ctx)->plist_indicators, indicator)
 #define track_set_fee(ctx, fee)                 \
   (ctx)->transaction_fee = fee;
+#define track_get_amount(ctx, value)			\
+  ((ctx)->amount != 0 ? (ctx)->amount : (value))
 
 #endif

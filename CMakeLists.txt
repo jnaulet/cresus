@@ -21,7 +21,7 @@ add_library(cresus SHARED
   $<TARGET_OBJECTS:engine>
   $<TARGET_OBJECTS:math>
   $<TARGET_OBJECTS:indicator>
-  $<TARGET_OBJECTS:price>
+  $<TARGET_OBJECTS:quotes>
   $<TARGET_OBJECTS:balance_sheet>
   )
 

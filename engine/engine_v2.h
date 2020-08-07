@@ -13,7 +13,6 @@
 #include "framework/timeline_v2.h"
 
 #include "engine/portfolio.h"
-#include "engine/common_opt.h"
 
 /* 
  * Engine v2 orders management
@@ -84,8 +83,8 @@ engine_v2_order_set_leverage(struct engine_v2_order *ctx,
 /* Shortcuts */
 #define engine_v2_order_set_turbo(ctx, funding, ratio)		\
   engine_v2_order_set_leverage(ctx, funding, ratio, funding)
-#define engine_v2_order_shares(ctx, price)	\
-  ((ctx)->value / ((price) - (ctx)->funding))
+#define engine_v2_order_shares(ctx, quotes)	\
+  ((ctx)->value / ((quotes) - (ctx)->funding))
 
 /*
  * Main object
@@ -93,7 +92,7 @@ engine_v2_order_set_leverage(struct engine_v2_order *ctx,
 
 struct engine_v2 {
   /* Main part, the timeline */
-  struct timeline *timeline;
+  struct timeline_v2 *timeline_v2;
   /* Orders & more */
   plist_head_t(struct engine_v2_order) plist_orders;
   /* Positions filter */
@@ -123,11 +122,15 @@ struct engine_v2_interface {
   engine_v2_post_slice_ptr post_slice; /* After every slice */
 };
 
-int engine_v2_init(struct engine_v2 *ctx, struct timeline *t);
+int engine_v2_init(struct engine_v2 *ctx, struct timeline_v2 *t);
+int engine_v2_init_ex(struct engine_v2 *ctx, struct timeline_v2 *t, int argc, char **argv);
 void engine_v2_release(struct engine_v2 *ctx);
 
-int engine_v2_set_common_opt(struct engine_v2 *ctx, struct common_opt *opt);
 void engine_v2_run(struct engine_v2 *ctx, struct engine_v2_interface *i);
 int engine_v2_set_order(struct engine_v2 *ctx, struct engine_v2_order *order);
+
+#define engine_v2_init_ex_args				\
+  "[--csv output.csv] [--start YYYY-MM-DD] "		\
+  "[--stop/--end YYYY-MM-DD] [--verbose/--debug]"
 
 #endif

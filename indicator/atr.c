@@ -17,14 +17,14 @@ static int atr_feed(struct indicator *i, struct track_n3 *e)
   struct candle *c = (void*)e;
 
   if(!a->ref){
-    a->value = c->price->high - c->price->low;
+    a->value = c->quotes->high - c->quotes->low;
     goto out;
   }
   
   /* Compute "True Range" */
-  double tr = c->price->high - c->price->low;
-  double h = fabs(c->price->high - a->ref->price->close);
-  double l = fabs(c->price->low - a->ref->price->close);
+  double tr = c->quotes->high - c->quotes->low;
+  double h = fabs(c->quotes->high - a->ref->quotes->close);
+  double l = fabs(c->quotes->low - a->ref->quotes->close);
   
   tr = (h > tr ? h : tr);
   tr = (l > tr ? l : tr);
@@ -54,7 +54,7 @@ int atr_init(struct atr *a, unique_id_t id, int period)
   a->period = period;
 
   /* First seed */
-  /* a->value = seed->price->high - seed->price->low; */
+  /* a->value = seed->quotes->high - seed->quotes->low; */
   
   return 0;
 }

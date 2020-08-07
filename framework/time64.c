@@ -7,6 +7,9 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "time64.h"
 
 time64_t time64(void)
@@ -24,6 +27,15 @@ time64_t time64_epoch(time_t time)
                     tm.tm_hour, tm.tm_min, tm.tm_sec, 0);
   
   return t;
+}
+
+time64_t time64_atot(char *str)
+{
+  /* Time info format : YYYY-MM-DD (date +%Y-%M-%d) */
+  char *Y = strsep(&str, "-");
+  char *M = strsep(&str, "-");
+  char *d = str; /* End */
+  return TIME64_INIT(atoi(Y), atoi(M), atoi(d), 0, 0, 0, 0);
 }
 
 int time64_dayofweek(time64_t t)

@@ -12,12 +12,9 @@
  */
 
 #include <stdio.h>
-#include <getopt.h>
 #include <math.h>
-#include <libgen.h>
 
 #include "engine/engine_v2.h"
-#include "engine/common_opt.h"
 #include "framework/verbose.h"
 #include "framework/timeline_v2.h"
 
@@ -28,63 +25,74 @@ typedef enum {
 
 /* n consecutive red candles */
 static int level_min = 1;
-/* amount to buy */
-static double amount = 500.0;
-/* State machine */
-static state_t state = STATE_NORMAL;
-
 #define candle_is_red(x) ((x)->close < (x)->open)
+
+struct buy_red_filtered {
+  int level;
+  state_t state;
+};
+
+static int buy_red_filtered_init(struct buy_red_filtered *ctx)
+{
+  ctx->level = 0;
+  ctx->state = STATE_NORMAL;
+  return 0;
+}
+
+#define buy_red_filtered_alloc(ctx)					\
+  DEFINE_ALLOC(struct buy_red_filtered, ctx, buy_red_filtered_init)
 
 static void feed_track_n3(struct engine_v2 *engine,
                           struct slice *slice,
                           struct track_n3 *track_n3)
 {
   /* Step by step loop */
-  static int level = 0;
-  struct price_n3 *p = track_n3->price;
+  struct quotes_n3 *p = track_n3->quotes;
   unique_id_t uid = track_n3->track->uid; /* FIXME */
+  struct buy_red_filtered *ctx = track_n3->track->private;
   
   /* Execute */
-  if(candle_is_red(p)) level++;
-  else level = 0;
+  if(candle_is_red(p)) ctx->level++;
+  else ctx->level = 0;
   
-  if(level >= level_min)
-    state = STATE_PRIME;
+  if(ctx->level >= level_min)
+    ctx->state = STATE_PRIME;
   
-  if(state == STATE_PRIME && !level){
+  if(ctx->state == STATE_PRIME && !ctx->level){
     /* Trigger buy order */
     struct engine_v2_order *order;
+    double amount = track_get_amount(track_n3->track, 500.0);
     engine_v2_order_alloc(order, uid, BUY, amount, CASH);
     engine_v2_set_order(engine, order);
     /* Back to normal */
-    state = STATE_NORMAL;
+    ctx->state = STATE_NORMAL;
   }
 }
 
-static struct engine_v2_interface itf = {
+static struct engine_v2_interface engine_itf = {
   .feed_track_n3 = feed_track_n3
 };
 
-static int timeline_create(struct timeline *t,
-                           char *filename,
-                           unique_id_t track_uid)
+static void custom_opt(struct timeline_v2 *t, char *opt, char *optarg)
 {
-  struct price *price;
-  
-  if((price = price_alloc(price, filename, NULL))){
-    /* Create tracks */
-    struct track *track;
-    __try__(!track_alloc(track, track_uid, basename(filename), price, NULL), err);
-    return timeline_add_track(t, track);
-  }
-  
- __catch__(err):
-  return -1;
+  if(!strcmp(opt, "--level")) level_min = atoi(optarg);
 }
+
+static void customize_track(struct timeline_v2 *t, struct track *track)
+{
+  struct buy_red_filtered *buy_red_filtered;
+  track->private = buy_red_filtered_alloc(buy_red_filtered);
+}
+
+static struct timeline_v2_ex_interface timeline_itf = {
+   .custom_opt = custom_opt,
+   .customize_track = customize_track
+};
 
 static void print_usage(const char *argv0)
 {
-  fprintf(stderr, "Usage: %s -o type filename\n", argv0);
+  fprintf(stderr, "Usage: %s %s %s\n", argv0,
+	  timeline_v2_ex_args, engine_v2_init_ex_args);
 }
 
 int main(int argc, char **argv)
@@ -94,37 +102,24 @@ int main(int argc, char **argv)
   /*
    * Data
    */
-  int c, n = 0;
-  char *optarg;
   
-  struct common_opt opt;
+  int c;
   struct engine_v2 engine;
-  struct timeline timeline;
- 
+  struct timeline_v2 timeline;
+  
   /* Check arguments */
-  __try__(argc < 2, usage);
-
-  /* Options */
-  timeline_init(&timeline);
-  common_opt_init(&opt, "l:F:");
+  __try__(argc < 3, usage);
   
-  while((c = common_opt_getopt_linear(&opt, argc, argv, &optarg)) != -1){
-    switch(c){
-    case 'l': level_min = atoi(optarg); break;
-    case 'F': amount = atoi(optarg); break;
-    case '-': timeline_create(&timeline, optarg, n++);
-    }
-  }
+  /* Basics */
+  timeline_v2_init_ex(&timeline, argc, argv, &timeline_itf);
+  engine_v2_init_ex(&engine, &timeline, argc, argv);
   
-  /* Start engine */
-  engine_v2_init(&engine, &timeline);
-  engine_v2_set_common_opt(&engine, &opt);
   /* Run */
-  engine_v2_run(&engine, &itf);
+  engine_v2_run(&engine, &engine_itf);
   
   /* Release engine & more */
   engine_v2_release(&engine);
-  timeline_release(&timeline);
+  timeline_v2_release(&timeline);
   
   return 0;
 

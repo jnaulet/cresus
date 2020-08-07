@@ -19,7 +19,7 @@ static int mobile_feed(struct indicator *i, struct track_n3 *e)
   
   /* Trying to get average values */
   double last_avg = average_value(&ctx->avg);
-  double avg = average_update(&ctx->avg, price_n3_value(e->price, ctx->value));
+  double avg = average_update(&ctx->avg, quotes_n3_value(e->quotes, ctx->value));
   
   if(average_is_available(&ctx->avg)){
     /* Create new n3 */
@@ -39,7 +39,7 @@ static void mobile_reset(struct indicator *i)
 }
 
 int mobile_init(struct mobile *ctx, unique_id_t uid, mobile_t type,
-		int period, price_n3_value_t value)
+		int period, quotes_n3_value_t value)
 {  
   /* Super */
   indicator_init(&ctx->indicator, uid, mobile_feed, mobile_reset);

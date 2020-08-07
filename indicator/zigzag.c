@@ -25,7 +25,7 @@ static int zigzag_feed(struct indicator *i, struct track_n3 *e)
   double threshold;
   struct zigzag_n3 *n3;
   struct zigzag *ctx = (void*)i;
-  double value = price_n3_value(e->price, ctx->value);
+  double value = quotes_n3_value(e->quotes, ctx->value);
   
   if(!ctx->ref){
     ctx->ref = e;
@@ -35,8 +35,8 @@ static int zigzag_feed(struct indicator *i, struct track_n3 *e)
   }
   
   /* Compute limits (every time ? */
-  double base_ref_value = price_n3_value(ctx->base_ref->price, ctx->value);
-  double ref_value = price_n3_value(ctx->ref->price, ctx->value);
+  double base_ref_value = quotes_n3_value(ctx->base_ref->quotes, ctx->value);
+  double ref_value = quotes_n3_value(ctx->ref->quotes, ctx->value);
   double hi_limit = (1.0 + ctx->threshold) * ref_value;
   double lo_limit = (1.0 - ctx->threshold) * ref_value;
   
@@ -76,7 +76,7 @@ static void zigzag_reset(struct indicator *i)
 }
 
 int zigzag_init(struct zigzag *ctx, unique_id_t uid,
-		double threshold, price_n3_value_t value)
+		double threshold, quotes_n3_value_t value)
 {  
   /* Super */
   indicator_init(&ctx->indicator, uid, zigzag_feed, zigzag_reset);

@@ -25,14 +25,14 @@ static int lowest_feed(struct indicator *i,
   struct list *l;
   struct lowest_n3 *n3;
   struct lowest *ctx = (void*)i;
-  struct price_n3 *price = e->price;
+  struct quotes_n3 *quotes = e->quotes;
   
   if(lowest_n3_alloc(n3, i)){
     /* Init n3 value */
-    n3->value = price->low;
+    n3->value = quotes->low;
     /* Find a lower value to exit */
-    list_for_each_prev(&price->list, l){
-      struct price_n3 *prev = (void*)l;
+    list_for_each_prev(&quotes->list, l){
+      struct quotes_n3 *prev = (void*)l;
       n3->value = MIN(prev->low, n3->value);
       /* End of loop */
       if(++n >= ctx->period)

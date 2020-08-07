@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "framework/price.h"
+#include "framework/quotes.h"
 #include "framework/verbose.h"
 
 struct b4b {
@@ -41,12 +41,12 @@ static ssize_t b4b_prepare_str(struct b4b *ctx, char *buf)
   return -1;
 }
 
-static struct price_n3 *
+static struct quotes_n3 *
 b4b_parse_n3(struct b4b *ctx, char *str)
 {
   time64_t time = 0;
   int year, month, day;
-  struct price_n3 *n3;
+  struct quotes_n3 *n3;
   double open, close, high, low, volume; 
   
   /* Cut string */
@@ -79,17 +79,17 @@ b4b_parse_n3(struct b4b *ctx, char *str)
   TIME64_SET_MONTH(time, month);
   TIME64_SET_YEAR(time, year);
 
-  if(price_n3_alloc(n3, time, open, close, high, low, volume))
+  if(quotes_n3_alloc(n3, time, open, close, high, low, volume))
     return n3;
   
  err:
   return NULL;
 }
 
-static struct price_n3 *b4b_read(struct price *ctx)
+static struct quotes_n3 *b4b_read(struct quotes *ctx)
 {  
   char buf[256];
-  struct price_n3 *n3;
+  struct quotes_n3 *n3;
   struct b4b *b = ctx->private;
 
   while(fgets(buf, sizeof buf, b->fp)){
@@ -109,7 +109,7 @@ static struct price_n3 *b4b_read(struct price *ctx)
   return NULL;
 }
 
-static int b4b_init(struct price *ctx)
+static int b4b_init(struct quotes *ctx)
 {
   char dummy[256];
   
@@ -131,14 +131,14 @@ static int b4b_init(struct price *ctx)
   return -1;
 }
 
-void b4b_release(struct price *ctx)
+void b4b_release(struct quotes *ctx)
 {
   struct b4b *b = ctx->private;
   if(b->fp) fclose(b->fp);
   free(b);
 }
 
-struct price_ops b4b_ops = {
+struct quotes_ops b4b_ops = {
   .init = b4b_init,
   .release = b4b_release,
   .read = b4b_read,

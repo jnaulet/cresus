@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <json-parser/json.h>
 
-#include "framework/price.h"
+#include "framework/quotes.h"
 #include "framework/verbose.h"
 
 struct mdgms {
@@ -24,9 +24,9 @@ struct mdgms {
   json_value *value;
 };
 
-static struct price_n3 *mdgms_read(struct price *ctx)
+static struct quotes_n3 *mdgms_read(struct quotes *ctx)
 {
-  struct price_n3 *n3;
+  struct quotes_n3 *n3;
   struct mdgms *m = ctx->private;
   
   /* Values */
@@ -53,14 +53,14 @@ static struct price_n3 *mdgms_read(struct price *ctx)
   m->i++;
   
   time64_t time = time64_epoch(t);
-  if(price_n3_alloc(n3, time, open, close, high, low, vol))
+  if(quotes_n3_alloc(n3, time, open, close, high, low, vol))
     return n3;
   
  __catch__(err):
   return NULL;
 }
 
-static int mdgms_init(struct price *ctx)
+static int mdgms_init(struct quotes *ctx)
 {
   int fd;
   size_t size;
@@ -105,7 +105,7 @@ static int mdgms_init(struct price *ctx)
   return -1;
 }
 
-static void mdgms_release(struct price *ctx)
+static void mdgms_release(struct quotes *ctx)
 {
   struct mdgms *m = ctx->private;
   json_value_free(m->value);
@@ -113,7 +113,7 @@ static void mdgms_release(struct price *ctx)
   free(m);
 }
 
-struct price_ops mdgms_ops = {
+struct quotes_ops mdgms_ops = {
   .init = mdgms_init,
   .release = mdgms_release,
   .read = mdgms_read,

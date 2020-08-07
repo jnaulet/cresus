@@ -14,11 +14,11 @@ static int srsi_feed(struct indicator *i, struct track_n3 *e)
 {  
   struct srsi *ctx = (void*)i;
   struct candle *c = (void*)e;
-  int start = (c->price->open < c->price->close ? c->price->open : c->price->close);
-  int end = (c->price->close < c->price->open ? c->price->open : c->price->close);
+  int start = (c->quotes->open < c->quotes->close ? c->quotes->open : c->quotes->close);
+  int end = (c->quotes->close < c->quotes->open ? c->quotes->open : c->quotes->close);
   
   for(int i = start; i <= end; i++){
-    if(c->price->close >= c->price->open)
+    if(c->quotes->close >= c->quotes->open)
       ctx->array[i].bull++;
     else
       ctx->array[i].bear++;

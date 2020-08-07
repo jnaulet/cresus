@@ -27,7 +27,7 @@
  */
 
 /*
- * Timeline slice object
+ * Timeline_V2 slice object
  */
 
 struct slice {
@@ -52,20 +52,37 @@ struct track_n3 *slice_get_track_n3(struct slice *ctx, unique_id_t uid);
       __p__ = __p__->next)
 
 /*
- * Timeline
+ * Timeline_V2
  */
 
-struct timeline {
+struct timeline_v2 {
   plist_head_t(struct slice) by_slice;
   plist_head_t(struct track) by_track;
 };
 
-int timeline_init(struct timeline *ctx);
-void timeline_release(struct timeline *ctx);
+typedef void (*custom_opt_ptr)(struct timeline_v2*, char*, char*);
+typedef void (*customize_track_ptr)(struct timeline_v2*, struct track*);
 
-int timeline_add_track(struct timeline *ctx, struct track *track);
-struct track *timeline_find_track_by_uid(struct timeline *ctx, unique_id_t uid);
+struct timeline_v2_ex_interface {
+  custom_opt_ptr custom_opt; /* Our own options */
+  customize_track_ptr customize_track; /* Finalize track creation */
+};
+
+int timeline_v2_init(struct timeline_v2 *ctx);
+void timeline_v2_release(struct timeline_v2 *ctx);
+
+/* Special case */
+int timeline_v2_init_ex(struct timeline_v2 *ctx, int argc, char **argv,
+			struct timeline_v2_ex_interface *itf);
+
+int timeline_v2_add_track(struct timeline_v2 *ctx, struct track *track);
+struct track *timeline_v2_find_track_by_uid(struct timeline_v2 *ctx, unique_id_t uid);
+
 /* Backwards compatibility */
-#define timeline_find_track(ctx, uid) timeline_find_track_by_uid(ctx, uid)
+#define timeline_v2_find_track(ctx, uid) timeline_v2_find_track_by_uid(ctx, uid)
+
+#define timeline_v2_ex_args					\
+  "--track quotes.type [--balance-sheet balance.type] "		\
+  "[--fee fee] [--amount amount]"
 
 #endif

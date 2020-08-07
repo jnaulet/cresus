@@ -3,7 +3,6 @@ project(cresus)
 
 # src for cresus engine
 add_library(engine OBJECT
-  common_opt.c
   engine_v2.c
   portfolio.c
   )

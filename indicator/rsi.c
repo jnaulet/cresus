@@ -28,7 +28,7 @@ static int rsi_feed(struct indicator *i, struct track_n3 *e)
    * where h is the ema of ups of last n days
    * and b is the fabs ema of downs of last n days
    */
-  sub = c->price->close - ctx->last->price->close;
+  sub = c->quotes->close - ctx->last->quotes->close;
   if(sub > 0) h = average_update(&ctx->h, sub);
   if(sub < 0) b = average_update(&ctx->b, fabs(sub));
   /* Compute RSI the easy way */

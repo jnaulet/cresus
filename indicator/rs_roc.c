@@ -32,8 +32,8 @@ static int rs_roc_feed(struct indicator *i, struct track_n3 *e)
   /* ROC formula :
    * ((candle[n] / candle[n - period]) - 1) * 100.0
    */
-  roc = (e->price->close / last->price->close - 1) * 100.0;
-  roc_ref = (ref->price->close / ref_last->price->close - 1) * 100.0;
+  roc = (e->quotes->close / last->quotes->close - 1) * 100.0;
+  roc_ref = (ref->quotes->close / ref_last->quotes->close - 1) * 100.0;
   value = roc - roc_ref;
   
   if(rs_roc_n3_alloc(n3, i, value, roc, roc_ref)){

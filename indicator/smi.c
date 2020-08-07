@@ -29,7 +29,7 @@ static int smi_feed(struct indicator *i, struct track_n3 *e)
     }
 
     /* Midpoint Delta */
-    double mpd = c->price->close - ((hi - lo) / 2.0);
+    double mpd = c->quotes->close - ((hi - lo) / 2.0);
     /* Double-smoothed midpoint delta */
     average_update(&ctx->smpd, average_update(&ctx->_smpd, mpd));
 

@@ -12,17 +12,16 @@
 /*
  * Extern ops here
  */
+extern struct balance_sheet_ops eodhistoricaldata_ops;
 
 /*
  * Private
  */
 
-
 static struct balance_sheet_ops *
 balance_sheet_ops_from_ext(struct balance_sheet *ctx, const char *ext)
 {
-  /* Fail */
-  return NULL;
+  return &eodhistoricaldata_ops;
 }
 
 static int balance_sheet_load(struct balance_sheet *ctx)

@@ -17,10 +17,10 @@
  * Engine v2
  */
 
-int engine_v2_init(struct engine_v2 *ctx, struct timeline *t)
+int engine_v2_init(struct engine_v2 *ctx, struct timeline_v2 *t)
 {
   /* Timeline */
-  ctx->timeline = t;
+  ctx->timeline_v2 = t;
   /* Time */
   ctx->start_time = TIME64_MIN;
   ctx->end_time = TIME64_MAX;
@@ -40,6 +40,35 @@ int engine_v2_init(struct engine_v2 *ctx, struct timeline *t)
   portfolio_init(&ctx->portfolio);
   
   return 0;
+}
+
+int engine_v2_init_ex(struct engine_v2 *ctx, struct timeline_v2 *t,
+		      int argc, char **argv)
+{
+  /* Basics */
+  engine_v2_init(ctx, t);
+
+  for(int i = 0; i < argc; i++){
+    /* Csv output */
+    if(!strcmp(argv[i], "--csv")){
+      ctx->csv_output = open(argv[++i], O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR|S_IRUSR);
+      dprintf(ctx->csv_output, "date, invested, spent, earned, gain/loss, index\n");
+    }
+    /* Start */
+    if(!strcmp(argv[i], "--start")){
+      ctx->start_time = time64_atot(argv[++i]);
+    }
+    /* Stop/end */
+    if(!strcmp(argv[i], "--stop") ||
+       !strcmp(argv[i], "--end")){
+      ctx->end_time = time64_atot(argv[++i]);
+    }
+    /* Verbosity */
+    if(!strcmp(argv[i], "--verbose") ||
+       !strcmp(argv[i], "--debug")){
+      VERBOSE_LEVEL(DBG);
+    }
+  }
 }
 
 /*
@@ -66,11 +95,11 @@ engine_v2_total_value(struct engine_v2 *ctx,
   plist_for_each(&ctx->portfolio.plist_portfolio_n3s, p){
     struct portfolio_n3 *pos = p->ptr;
     /* Find track_n3 by uid */
-    struct price_n3 *price_n3 =
-      slice_get_track_n3(slice, pos->uid)->price;
+    struct quotes_n3 *quotes_n3 =
+      slice_get_track_n3(slice, pos->uid)->quotes;
     
     /* Compute total value */
-    total_value += portfolio_n3_total_value(pos, price_n3->close);
+    total_value += portfolio_n3_total_value(pos, quotes_n3->close);
   }
   
   return total_value;
@@ -101,14 +130,14 @@ static void engine_v2_display_stats(struct engine_v2 *ctx)
     struct portfolio_n3 *pos = p->ptr;
     /* Find track name by uid */
     struct track *track =
-      timeline_find_track(ctx->timeline, pos->uid);
+      timeline_v2_find_track(ctx->timeline_v2, pos->uid);
     /* Get last track n3 */
     struct track_n3 *track_n3 =
       track->plist_track_n3s.prev->ptr;
     
     /* Display track stats */
-    portfolio_n3_pr_stat(pos, track_n3->price->close);
-    total_value += portfolio_n3_total_value(pos, track_n3->price->close);
+    portfolio_n3_pr_stat(pos, track_n3->quotes->close);
+    total_value += portfolio_n3_total_value(pos, track_n3->quotes->close);
   }
   
   /* Total */
@@ -125,13 +154,13 @@ engine_v2_display_pending_orders(struct engine_v2 *ctx)
     struct engine_v2_order *order = p->ptr;
     /* Find track name by uid */
     struct track *track =
-      timeline_find_track_by_uid(ctx->timeline, order->track_uid);
+      timeline_v2_find_track_by_uid(ctx->timeline_v2, order->track_uid);
     /* Get last track n3 */
     struct track_n3 *track_n3 =
       track->plist_track_n3s.prev->ptr;
     
     fprintf(stdout, "%s %.2lf %s %.2lf %d\n",
-	    track->name, track_n3->price->close,
+	    track->name, track_n3->quotes->close,
 	    (order->type == BUY ? "buy" : "sell"),
 	    order->value, order->level);
   }
@@ -153,41 +182,25 @@ void engine_v2_release(struct engine_v2 *ctx)
     close(ctx->csv_output);
 }
 
-int engine_v2_set_common_opt(struct engine_v2 *ctx,
-			     struct common_opt *opt)
-{
-  if(opt->start_time.set) ctx->start_time = opt->start_time.t;
-  if(opt->end_time.set) ctx->end_time = opt->end_time.t;
-  if(opt->csv_output.set){
-    if((ctx->csv_output = open(opt->csv_output.s,
-			       O_WRONLY|O_CREAT|O_TRUNC,
-			       S_IWUSR|S_IRUSR)) != -1)
-      dprintf(ctx->csv_output,
-	      "date, invested, spent, earned, gain/loss, index\n");
-  }
-  
-  return 0;
-}
-
 static void engine_v2_buy_cash(struct engine_v2 *ctx,
 			       struct track_n3 *track_n3,
 			       struct engine_v2_order *order)
 {
   /* Convert CASH to shares */
   double shares = engine_v2_order_shares(order,
-					 track_n3->price->open);
+					 track_n3->quotes->open);
   
   /* Portfolio */
   if(order->funding > 0)
     portfolio_add_leveraged(&ctx->portfolio,
 			    track_n3->track->name, order->track_uid,
-			    shares, track_n3->price->open,
+			    shares, track_n3->quotes->open,
 			    order->funding, order->ratio,
 			    order->stoploss);
   else
     portfolio_add(&ctx->portfolio,
 		  track_n3->track->name, order->track_uid,
-		  shares, track_n3->price->open);
+		  shares, track_n3->quotes->open);
   
   /* Stats */
   ctx->spent += order->value;
@@ -203,13 +216,13 @@ static void engine_v2_sell_cash(struct engine_v2 *ctx,
 {
   /* Convert CASH to shares */
   double shares = engine_v2_order_shares(order,
-					 track_n3->price->open);
+					 track_n3->quotes->open);
   
   /* Portfolio */
   order->value = portfolio_sub(&ctx->portfolio,
 			       track_n3->track->name,
 			       order->track_uid, shares,
-			       track_n3->price->open);
+			       track_n3->quotes->open);
   
   /* Stats */
   ctx->earned += order->value;
@@ -276,7 +289,7 @@ static void engine_run_after_start(struct engine_v2 *ctx,
     /* Run pending orders */
     engine_v2_run_orders(ctx, track_n3);
     /* Run portfolio */
-    portfolio_run(&ctx->portfolio, track_n3->price->low); /* FIXME */
+    portfolio_run(&ctx->portfolio, track_n3->quotes->low); /* FIXME */
     
     if(i->feed_track_n3)
       i->feed_track_n3(ctx, slice, track_n3);
@@ -303,7 +316,7 @@ void engine_v2_run(struct engine_v2 *ctx,
   struct plist *p;
 
   /* Run all slices */
-  plist_for_each(&ctx->timeline->by_slice, p){
+  plist_for_each(&ctx->timeline_v2->by_slice, p){
     struct slice *slice = p->ptr;
     /* We MUST stop at end_time */
     if(TIME64CMP(slice->time, ctx->end_time, GR_DAY) > 0)

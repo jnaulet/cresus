@@ -113,6 +113,7 @@ typedef long long time64_gr_t; /* Granularity */
 /* Current time */
 time64_t time64(void);
 time64_t time64_epoch(time_t time);
+time64_t time64_atot(char *str);
 /* Some algorithm */
 int time64_dayofweek(time64_t t);
 /* Display */

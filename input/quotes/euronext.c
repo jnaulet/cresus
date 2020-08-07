@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <json-parser/json.h>
 
-#include "framework/price.h"
+#include "framework/quotes.h"
 #include "framework/verbose.h"
 #include "framework/time64.h"
 
@@ -55,9 +55,9 @@ static double euronext_dbl(struct euronext *ctx, char *str)
   return ((double)t * 1000.0) + (double)h + ((double)c / 100.0);
 }
 
-static struct price_n3 *euronext_read(struct price *ctx)
+static struct quotes_n3 *euronext_read(struct quotes *ctx)
 {
-  struct price_n3 *n3;
+  struct quotes_n3 *n3;
   struct euronext *e = ctx->private;
   
   /* Check for EOF at least */
@@ -77,14 +77,14 @@ static struct price_n3 *euronext_read(struct price *ctx)
   double low = euronext_dbl(e, slow);
   double close = euronext_dbl(e, sclose);
   
-  if(price_n3_alloc(n3, time, open, close, high, low, 0.0))
+  if(quotes_n3_alloc(n3, time, open, close, high, low, 0.0))
     return n3;
   
  err:
   return NULL;
 }
 
-int euronext_init(struct price *ctx)
+int euronext_init(struct quotes *ctx)
 {
   int fd;
   size_t size;
@@ -130,7 +130,7 @@ int euronext_init(struct price *ctx)
   return -1;
 }
 
-void euronext_release(struct price *ctx)
+void euronext_release(struct quotes *ctx)
 {
   struct euronext *e = ctx->private;
   json_value_free(e->value);
@@ -138,7 +138,7 @@ void euronext_release(struct price *ctx)
   free(e);
 }
 
-struct price_ops euronext_ops = {
+struct quotes_ops euronext_ops = {
   .init = euronext_init,
   .release = euronext_release,
   .read = euronext_read,

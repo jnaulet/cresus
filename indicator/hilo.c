@@ -25,17 +25,17 @@ static int hilo_feed(struct indicator *i, struct track_n3 *e)
 {
   struct list *l;
   struct hilo_n3 *n3;
-  struct price_n3 *price = e->price;
+  struct quotes_n3 *quotes = e->quotes;
   struct hilo *ctx = (struct hilo*)i;
   
   if(hilo_n3_alloc(n3, i)){
     /* Init */
     int n = ctx->period;
-    n3->high = price->high;
-    n3->low = price->low;
+    n3->high = quotes->high;
+    n3->low = quotes->low;
     
-    list_for_each_prev(&price->list, l){
-      struct price_n3 *prev = (void*)l;
+    list_for_each_prev(&quotes->list, l){
+      struct quotes_n3 *prev = (void*)l;
       
       /* Out after ctx->period iterations */
       if(!--n)

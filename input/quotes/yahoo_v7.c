@@ -10,17 +10,17 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "framework/price.h"
+#include "framework/quotes.h"
 #include "framework/verbose.h"
 
 struct yahoo_v7 {
   FILE *fp;
 };
 
-struct price_n3 *
+struct quotes_n3 *
 yahoo_v7_parse_n3(struct yahoo_v7 *ctx, char *str)
 {
-  struct price_n3 *n3;
+  struct quotes_n3 *n3;
 
   time64_t time = 0;
   int year, month, day;
@@ -60,17 +60,17 @@ yahoo_v7_parse_n3(struct yahoo_v7 *ctx, char *str)
   TIME64_SET_YEAR(time, year);
 
   if(open != 0.0 && close != 0.0 && high != 0.0 && low != 0.0)
-    if(price_n3_alloc(n3, time, open, close, high, low, volume))
+    if(quotes_n3_alloc(n3, time, open, close, high, low, volume))
       return n3;
   
  err:
   return NULL;
 }
 
-struct price_n3 *yahoo_v7_read(struct price *ctx)
+struct quotes_n3 *yahoo_v7_read(struct quotes *ctx)
 {
   char buf[256];
-  struct price_n3 *n3;
+  struct quotes_n3 *n3;
   struct yahoo_v7 *y = ctx->private;
   
   while(fgets(buf, sizeof buf, y->fp)){
@@ -87,7 +87,7 @@ struct price_n3 *yahoo_v7_read(struct price *ctx)
   return NULL;
 }
 
-int yahoo_v7_init(struct price *ctx)
+int yahoo_v7_init(struct quotes *ctx)
 {
   char dummy[256];
 
@@ -107,14 +107,14 @@ int yahoo_v7_init(struct price *ctx)
   return -1;
 }
 
-void yahoo_v7_release(struct price *ctx)
+void yahoo_v7_release(struct quotes *ctx)
 {
   struct yahoo_v7 *y = ctx->private;
   if(y->fp) fclose(y->fp);
   free(y);
 }
 
-struct price_ops yahoo_v7_ops = {
+struct quotes_ops yahoo_v7_ops = {
   .init = yahoo_v7_init,
   .release = yahoo_v7_release,
   .read = yahoo_v7_read,

@@ -12,19 +12,16 @@
  */
 
 #include <stdio.h>
-#include <getopt.h>
 #include <math.h>
-#include <libgen.h>
 
 #include "engine/engine_v2.h"
-#include "engine/common_opt.h"
 
+#include "framework/timeline_v2.h"
 #include "framework/verbose.h"
-#include "framework/price.h"
+#include "framework/quotes.h"
 
 #include "indicator/lowest.h"
 
-static int amount = 250;
 static int occurrence = 1;
 
 struct buy_monthly {
@@ -37,7 +34,7 @@ static int buy_monthly_init(struct buy_monthly *ctx)
   return 0;
 }
 
-#define buy_monthly_alloc(ctx)                                  \
+#define buy_monthly_alloc(ctx)					\
   DEFINE_ALLOC(struct buy_monthly, ctx, buy_monthly_init)
 
 /* UIDs */
@@ -72,11 +69,12 @@ static void feed_track_n3(struct engine_v2 *engine,
   int month = TIME64_GET_MONTH(slice->time);
   unique_id_t uid = track_n3->track->uid;
   struct buy_monthly *ctx = track_n3->track->private;
-  
+
   if(month != ctx->last_month && !(month % occurrence)){
     //PR_WARN("%s - BUY %d\n", track_n3_str(track_n3), amount);
     struct engine_v2_order *order;
-    engine_v2_order_alloc(order, uid, BUY, 500.0, CASH);
+    double amount = track_get_amount(track_n3->track, 500.0);
+    engine_v2_order_alloc(order, uid, BUY, amount, CASH);
     engine_v2_set_order(engine, order);
   }
 
@@ -84,38 +82,33 @@ static void feed_track_n3(struct engine_v2 *engine,
   ctx->last_month = month;
 }
 
-static struct engine_v2_interface itf = {
+static struct engine_v2_interface engine_itf = {
   .feed_track_n3 = feed_track_n3,
   .feed_indicator_n3 = feed_indicator_n3
 };
 
-static int timeline_create(struct timeline *t, char *filename,
-                           unique_id_t track_uid)
+static void custom_opt(struct timeline_v2 *t, char *opt, char *optarg)
 {
-  /*
-   * Data
-   */
-  struct price *price;
-
-  if((price = price_alloc(price, filename, NULL))){
-    /* Create tracks */
-    struct track *track;
-    struct buy_monthly *ctx;
-    __try__(!buy_monthly_alloc(ctx), err);
-    __try__(!track_alloc(track, track_uid, basename(filename), price, ctx), err);
-    /* Create indicators */
-    struct lowest *lowest;
-    __try__(!lowest_alloc(lowest, UID_LOWEST, 50), err);
-    
-    /* Add to timeline */
-    track_add_indicator(track, &lowest->indicator);
-    timeline_add_track(t, track);
-    return 0;
-  }
-  
- __catch__(err):
-  return -1;
+  if(!strcmp(opt, "--modulo")) occurrence = atoi(optarg);
 }
+
+static void customize_track(struct timeline_v2 *t, struct track *track)
+{
+  struct lowest *lowest;
+  struct buy_monthly *buy_monthly;
+  
+  /* Add indicators per track */
+  if(lowest_alloc(lowest, UID_LOWEST, 50))
+    track_add_indicator(track, &lowest->indicator);
+
+  /* Allocate object */
+  track->private = buy_monthly_alloc(buy_monthly);
+}
+
+static struct timeline_v2_ex_interface timeline_itf = {
+   .custom_opt = custom_opt,
+   .customize_track = customize_track
+};
 
 int main(int argc, char **argv)
 {
@@ -124,41 +117,29 @@ int main(int argc, char **argv)
   /*
    * Data
    */
-  int c, n = 0;
-  char *optarg;
-
-  struct common_opt opt;
+  
+  int c;
   struct engine_v2 engine;
-  struct timeline timeline;
-
+  struct timeline_v2 timeline;
+  
   /* Check arguments */
-  __try__(argc < 2, usage);
+  __try__(argc < 3, usage);
 
-  /* Options */
-  timeline_init(&timeline);
-  common_opt_init(&opt, "m:");
-  
-  while((c = common_opt_getopt_linear(&opt, argc, argv, &optarg)) != -1){
-    switch(c){
-    case 'm': occurrence = atoi(optarg); break;
-    case 'F': amount = atoi(optarg); break;
-    case '-': timeline_create(&timeline, optarg, n++); break;
-    }
-  }
-  
+  /* Timeline + engine */
+  timeline_v2_init_ex(&timeline, argc, argv, &timeline_itf);
+  engine_v2_init_ex(&engine, &timeline, argc, argv);
+
   /* Start engine */
-  engine_v2_init(&engine, &timeline);
-  engine_v2_set_common_opt(&engine, &opt);
-  /* Run */
-  engine_v2_run(&engine, &itf);
+  engine_v2_run(&engine, &engine_itf);
   
   /* Release engine & more */
   engine_v2_release(&engine);
-  timeline_release(&timeline);
+  timeline_v2_release(&timeline);
   
   return 0;
 
  __catch__(usage):
-  fprintf(stderr, "Usage: %s -o type filename [-m occurrence]\n", argv[0]);
+  fprintf(stderr, "Usage: %s %s %s [--module m]\n",
+	  argv[0], timeline_v2_ex_args, engine_v2_init_ex_args);
   return -1;
 }

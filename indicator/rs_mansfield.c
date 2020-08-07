@@ -25,7 +25,7 @@ static int rs_mansfield_feed(struct indicator *i,
   if(!(ref = slice_get_track_n3(e->slice, ctx->ref_track_uid)))
     goto err;
   
-  double rsd = e->price->close / ref->price->close;
+  double rsd = e->quotes->close / ref->quotes->close;
   double last = average_value(&ctx->mma);
   double mma = average_update(&ctx->mma, rsd);
   if(average_is_available(&ctx->mma)){

@@ -68,7 +68,7 @@ struct zigzag {
   struct indicator indicator;
   /* Params */
   double threshold;
-  price_n3_value_t value;
+  quotes_n3_value_t value;
   /* Internals */
   zigzag_dir_t dir;
   /* Some other stuff */
@@ -76,7 +76,7 @@ struct zigzag {
   struct track_n3 *ref, *base_ref;
 };
 
-int zigzag_init(struct zigzag *ctx, unique_id_t uid, double threshold, price_n3_value_t value);
+int zigzag_init(struct zigzag *ctx, unique_id_t uid, double threshold, quotes_n3_value_t value);
 void zigzag_release(struct zigzag *ctx);
 
 #endif

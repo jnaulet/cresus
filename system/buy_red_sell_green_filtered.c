@@ -12,12 +12,9 @@
  */
 
 #include <stdio.h>
-#include <getopt.h>
 #include <math.h>
-#include <libgen.h>
 
 #include "engine/engine_v2.h"
-#include "engine/common_opt.h"
 #include "framework/verbose.h"
 #include "framework/timeline_v2.h"
 
@@ -30,72 +27,85 @@ typedef enum {
 /* n consecutive candles */
 static int level_buy_min = 1;
 static int level_sell_min = 1;
-/* amount to buy */
-static double amount = 500.0;
-/* State machine */
-static state_t state = STATE_NORMAL;
 
 #define candle_is_red(x) ((x)->close < (x)->open)
 #define candle_is_green(x) ((x)->close > (x)->open)
+
+struct buy_red_sell_green {
+  state_t state;
+  int level_buy;
+  int level_sell;
+};
+
+int buy_red_sell_green_init(struct buy_red_sell_green *ctx)
+{
+  ctx->state = STATE_NORMAL;
+  ctx->level_buy = 0;
+  ctx->level_sell = 0;
+  return 0;
+}
+
+#define buy_red_sell_green_alloc(ctx)					\
+  DEFINE_ALLOC(struct buy_red_sell_green, ctx, buy_red_sell_green_init)
 
 static void feed_track_n3(struct engine_v2 *engine,
                           struct slice *slice,
                           struct track_n3 *track_n3)
 {
   struct engine_v2_order *order;
-  struct price_n3 *p = track_n3->price;
+  struct quotes_n3 *p = track_n3->quotes;
   unique_id_t uid = track_n3->track->uid; /* FIXME */
-  /* Step by step loop */
-  static int level_buy = 0, level_sell = 0;
+  struct buy_red_sell_green *ctx = track_n3->track->private;
+  double amount = track_get_amount(track_n3->track, 500.0);
   
   /* Execute */
   if(candle_is_red(p)){
-    level_buy++;
-    level_sell = 0;
+    ctx->level_buy++;
+    ctx->level_sell = 0;
   }else{
-    level_sell++;
-    level_buy = 0;
+    ctx->level_sell++;
+    ctx->level_buy = 0;
   }
 
   /* State machine */
-  if(level_buy >= level_buy_min) state = STATE_PRIME_BUY;
-  if(level_sell >= level_sell_min) state = STATE_PRIME_SELL;
+  if(ctx->level_buy >= level_buy_min) ctx->state = STATE_PRIME_BUY;
+  if(ctx->level_sell >= level_sell_min) ctx->state = STATE_PRIME_SELL;
   
   /* Trigger buy order */
-  if(state == STATE_PRIME_BUY && !level_buy){
+  if(ctx->state == STATE_PRIME_BUY && !ctx->level_buy){
     engine_v2_order_alloc(order, uid, BUY, amount, CASH);
     engine_v2_set_order(engine, order);
-    state = STATE_NORMAL;
+    ctx->state = STATE_NORMAL;
   }
   
   /* Trigger sell order */
-  if(state == STATE_PRIME_SELL && !level_sell){
+  if(ctx->state == STATE_PRIME_SELL && !ctx->level_sell){
     engine_v2_order_alloc(order, uid, SELL, amount, CASH);
     engine_v2_set_order(engine, order);
-    state = STATE_NORMAL;
+    ctx->state = STATE_NORMAL;
   }
 }
 
-static struct engine_v2_interface itf = {
+static struct engine_v2_interface engine_itf = {
   .feed_track_n3 = feed_track_n3
 };
 
-static int timeline_create(struct timeline *t,
-                           char *filename,
-                           unique_id_t track_uid)
+static void custom_opt(struct timeline_v2 *t, char *opt, char *optarg)
 {
-  struct price *price;
-  
-  if((price = price_alloc(price, filename, NULL))){
-    /* Create tracks */
-    struct track *track;
-    __try__(!track_alloc(track, track_uid, basename(filename), price, NULL), err);
-    return timeline_add_track(t, track);
-  }
-  
- __catch__(err):
-  return -1;
+  if(!strcmp(opt, "--buy")) level_buy_min = atoi(optarg);
+  if(!strcmp(opt, "--sell")) level_sell_min = atoi(optarg);
 }
+
+static void customize_track(struct timeline_v2 *t, struct track *track)
+{
+  struct buy_red_sell_green *buy_red_sell_green;
+  track->private = buy_red_sell_green_alloc(buy_red_sell_green);
+}
+
+static struct timeline_v2_ex_interface timeline_itf = {
+   .custom_opt = custom_opt,
+   .customize_track = customize_track
+};
 
 int main(int argc, char **argv)
 {
@@ -104,41 +114,28 @@ int main(int argc, char **argv)
   /*
    * Data
    */
-  int c, n = 0;
-  char *optarg;
-  
-  struct common_opt opt;
+  int c;
   struct engine_v2 engine;
-  struct timeline timeline;
+  struct timeline_v2 timeline;
 
   /* Check arguments */
-  __try__(argc < 2, usage);
+  __try__(argc < 3, usage);
 
-  timeline_init(&timeline);
-  common_opt_init(&opt, "b:s:F:");
+  timeline_v2_init_ex(&timeline, argc, argv, &timeline_itf);
+  engine_v2_init_ex(&engine, &timeline, argc, argv);
   
-  while((c = common_opt_getopt_linear(&opt, argc, argv, &optarg)) != -1){
-    switch(c){
-    case 'b': level_buy_min = atoi(optarg); break;
-    case 's': level_sell_min = atoi(optarg); break;
-    case 'F': amount = atoi(optarg); break;
-    case '-': timeline_create(&timeline, optarg, n++);
-    }
-  }
-  
-  /* Start engine */
-  engine_v2_init(&engine, &timeline);
-  engine_v2_set_common_opt(&engine, &opt);
   /* Run */
-  engine_v2_run(&engine, &itf);
+  engine_v2_run(&engine, &engine_itf);
   
   /* Release engine & more */
   engine_v2_release(&engine);
-  timeline_release(&timeline);
+  timeline_v2_release(&timeline);
   
   return 0;
   
  __catch__(usage):
-  fprintf(stdout, "Usage: %s -o type filename\n", argv[0]);
+  fprintf(stdout, "Usage: %s %s %s [--buy buy_min] "	\
+	  "[--sell sell_min]\n",
+	  argv[0], timeline_v2_ex_args, engine_v2_init_ex_args);
   return -1;
 }

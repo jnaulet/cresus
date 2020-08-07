@@ -92,12 +92,12 @@ struct mobile {
   struct indicator indicator;
   /* Basic data */
   mobile_t type;
-  price_n3_value_t value;
+  quotes_n3_value_t value;
   /* Average object */
   struct average avg;
 };
 
-int mobile_init(struct mobile *ctx, unique_id_t id, mobile_t type, int period, price_n3_value_t value);
+int mobile_init(struct mobile *ctx, unique_id_t id, mobile_t type, int period, quotes_n3_value_t value);
 void mobile_release(struct mobile *ctx);
 
 /* indicator-specific */

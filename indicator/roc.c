@@ -51,7 +51,7 @@ int roc_compute(struct roc *ctx, struct track_n3 *e,
   /* ROC formula :
    * ((candle[n] / candle[n - period]) - 1) * 100.0
    */
-  double value = ((e->price->close / ref->price->close) - 1) * 100.0;
+  double value = ((e->quotes->close / ref->quotes->close) - 1) * 100.0;
   double average = average_update(&ctx->average, value);
   
   if(average_is_available(&ctx->average)){

@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <json-parser/json.h>
 
-#include "framework/price.h"
+#include "framework/quotes.h"
 #include "framework/verbose.h"
 #include "framework/time64.h"
 
@@ -34,9 +34,9 @@ static time64_t xtrade_time(struct xtrade *ctx,
   return TIME64_INIT(y, m, d, 0, 0, 0, 0);
 }
 
-static struct price_n3 *xtrade_read(struct price *ctx)
+static struct quotes_n3 *xtrade_read(struct quotes *ctx)
 {
-  struct price_n3 *n3;
+  struct quotes_n3 *n3;
   struct xtrade *x = ctx->private;
   
   /* Check for EOF at least */
@@ -51,14 +51,14 @@ static struct price_n3 *xtrade_read(struct price *ctx)
   double high = o->u.object.values[4].value->u.dbl;
   
   time64_t time = xtrade_time(x, str);
-  if(price_n3_alloc(n3, time, open, close, high, low, 0.0))
+  if(quotes_n3_alloc(n3, time, open, close, high, low, 0.0))
     return n3;
   
  err:
   return NULL;
 }
 
-int xtrade_init(struct price *ctx)
+int xtrade_init(struct quotes *ctx)
 {
   int fd;
   size_t size;
@@ -103,7 +103,7 @@ int xtrade_init(struct price *ctx)
   return -1;
 }
 
-void xtrade_release(struct price *ctx)
+void xtrade_release(struct quotes *ctx)
 {
   struct xtrade *x = ctx->private;
   json_value_free(x->value);
@@ -111,7 +111,7 @@ void xtrade_release(struct price *ctx)
   free(x);
 }
 
-struct price_ops xtrade_ops = {
+struct quotes_ops xtrade_ops = {
   .init = xtrade_init,
   .release = xtrade_release,
   .read = xtrade_read,

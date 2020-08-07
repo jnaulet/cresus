@@ -17,7 +17,7 @@ static int linear_reg_feed(struct indicator *i,
 {
   struct list *l;
   struct linear_reg_n3 *n3;
-  struct price_n3 *price = e->price;
+  struct quotes_n3 *quotes = e->quotes;
   struct linear_reg *ctx = (void*)i;
   
   int n = ctx->period;
@@ -25,10 +25,10 @@ static int linear_reg_feed(struct indicator *i,
   /* Some required variables */
   double a, b, value;
   double xysum = 0, xxsum = 0;
-  double xsum = x, ysum = price->close;
+  double xsum = x, ysum = quotes->close;
   
-  list_for_each_prev(&price->list, l){
-    struct price_n3 *prev = (void*)l;
+  list_for_each_prev(&quotes->list, l){
+    struct quotes_n3 *prev = (void*)l;
     double y = prev->close;
     
     if(!--x)

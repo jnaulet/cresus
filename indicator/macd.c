@@ -16,8 +16,8 @@ static int macd_feed(struct indicator *i, struct track_n3 *e)
   struct macd *ctx = (void*)i;
 
   /* Set 2 main averages */
-  double fast = average_update(&ctx->fast, e->price->close);
-  double slow = average_update(&ctx->slow, e->price->close);
+  double fast = average_update(&ctx->fast, e->quotes->close);
+  double slow = average_update(&ctx->slow, e->quotes->close);
   if(average_is_available(&ctx->fast) &&
      average_is_available(&ctx->slow)){
     /* Compute signal */
