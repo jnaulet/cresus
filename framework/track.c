@@ -23,15 +23,16 @@ int track_n3_init(struct track_n3 *ctx,
 {
   /* Internals */
   ctx->quotes = quotes_n3;
-  ctx->balance_sheet = NULL;
-  ctx->income_statement = NULL;
+  ctx->balance_sheet.quarterly = NULL;
+  ctx->balance_sheet.yearly = NULL;
+  ctx->income_statement.quarterly = NULL;
+  ctx->income_statement.yearly = NULL;
   plist_head_init(&ctx->plist_indicator_n3s);
   ctx->track = track;
   /* General */
   ctx->time = quotes_n3->time; /* FIXME */
   return 0;
 }
-
 
 void track_n3_release(struct track_n3 *ctx)
 {
@@ -116,8 +117,7 @@ static int track_add_quotes(struct track *ctx, struct quotes *quotes)
 }
 
 int track_init(struct track *ctx, unique_id_t uid,
-               const char *name, struct quotes *quotes,
-               void *private)
+               const char *name, struct quotes *quotes)
 {
   ctx->uid = uid;
   strncpy(ctx->name, name, sizeof(ctx->name));
@@ -125,7 +125,7 @@ int track_init(struct track *ctx, unique_id_t uid,
   plist_head_init(&ctx->plist_indicators);
   ctx->amount = 0;
   ctx->transaction_fee = 0;
-  ctx->private = private;
+  ctx->private = NULL;
   return track_add_quotes(ctx, quotes);
 }
 
@@ -137,22 +137,57 @@ void track_release(struct track *ctx)
   
 int track_add_balance_sheet(struct track *ctx, struct balance_sheet *b)
 {
+  struct list *l;
   struct plist *p;
+  
   /* Fill-in with balance_sheet values */
   plist_for_each(&ctx->plist_track_n3s, p){
     struct track_n3 *track_n3 = p->ptr;
-    /* By date */
+    /* TODO: optimize this */
+    list_for_each(&b->list_balance_sheet_n3s, l){
+      struct balance_sheet_n3 *balance_sheet_n3 = (void*)l;
+      if(TIME64CMP(track_n3->time, balance_sheet_n3->time, GR_DAY) >= 0)
+        track_n3->balance_sheet.period[b->period] = balance_sheet_n3;
+    }
   }
-
+  
   return 0;
 }
 
 int track_add_income_statement(struct track *ctx, struct income_statement *i)
 {
-  return -1;
+  struct list *l;
+  struct plist *p;
+  
+  /* Fill-in with balance_sheet values */
+  plist_for_each(&ctx->plist_track_n3s, p){
+    struct track_n3 *track_n3 = p->ptr;
+    /* TODO: optimize this */
+    list_for_each(&i->list_income_statement_n3s, l){
+      struct income_statement_n3 *income_statement_n3 = (void*)l;
+      if(TIME64CMP(track_n3->time, income_statement_n3->time, GR_DAY) >= 0)
+        track_n3->income_statement.period[i->period] = income_statement_n3;
+    }
+  }
+  
+  return 0;
 }
 
 int track_add_cash_flow(struct track *ctx, struct cash_flow *c)
 {
-  return -1;
+  struct list *l;
+  struct plist *p;
+  
+  /* Fill-in with balance_sheet values */
+  plist_for_each(&ctx->plist_track_n3s, p){
+    struct track_n3 *track_n3 = p->ptr;
+    /* TODO: optimize this */
+    list_for_each(&c->list_cash_flow_n3s, l){
+      struct cash_flow_n3 *cash_flow_n3 = (void*)l;
+      if(TIME64CMP(track_n3->time, cash_flow_n3->time, GR_DAY) >= 0)
+        track_n3->cash_flow.period[c->period] = cash_flow_n3;
+    }
+  }
+  
+  return 0;
 }

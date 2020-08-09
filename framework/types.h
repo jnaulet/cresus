@@ -14,14 +14,12 @@
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 typedef unsigned int unique_id_t;
-
-/* Inheritance management. Beware : no multiple heritage */
-//#define __inherits_from__(type) type __parent__
-#define __implements__(interface) interface
-
-/* Accessors */
-#define __parent__(self) (&(self)->__parent__)
-#define __child__(self, type) ((type*)self)
+typedef enum {
+  QUARTERLY,
+  YEARLY,
+  /* Max */
+  PERIOD_MAX
+} period_t;
 
 /* Exceptions */
 #define __try__(cond, label) if(cond){ goto label; }

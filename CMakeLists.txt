@@ -23,11 +23,14 @@ add_library(cresus SHARED
   $<TARGET_OBJECTS:indicator>
   $<TARGET_OBJECTS:quotes>
   $<TARGET_OBJECTS:balance_sheet>
+  $<TARGET_OBJECTS:income_statement>
+  $<TARGET_OBJECTS:cash_flow>
   )
 
 target_link_libraries(cresus m jsonparser)
 
 # add_subdirectory(sample)
 add_subdirectory(system)
+add_subdirectory(unit_test)
 
 install(TARGETS cresus DESTINATION lib)

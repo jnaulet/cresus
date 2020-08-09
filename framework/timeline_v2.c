@@ -7,7 +7,6 @@
  */
 
 #include <stdio.h>
-#include <libgen.h>
 
 #include "framework/types.h"
 #include "framework/verbose.h"
@@ -17,6 +16,7 @@
 /*
  * Timeline slice object
  */
+
 int slice_init(struct slice *ctx, time64_t time)
 {
   ctx->time = time;
@@ -93,59 +93,143 @@ int timeline_v2_init(struct timeline_v2 *ctx)
 {
   plist_head_init(&ctx->by_slice);
   plist_head_init(&ctx->by_track);
+
+  /* Params */
+  ctx->track_uid = 0;
+  ctx->amount = 0.0;
+  ctx->transaction_fee = 0.0;
+  
   return 0;
 }
 
-/* FIXME */
-static double amount = 0.0;
-static double transaction_fee = 0.0;
+static const char *basename(const char *filename)
+{
+  char *base = strrchr(filename, '/');
+  return (base ? base + 1 : filename);
+}
+
+static struct track *
+timeline_v2_init_ex_track(struct timeline_v2 *ctx,
+                          const char *filename,
+                          struct timeline_v2_ex_interface *itf)
+{
+  struct quotes *quotes;
+  struct track *track = NULL;
+  
+  quotes_alloc(quotes, filename);
+  track_alloc(track, ctx->track_uid++, basename(filename), quotes);
+  /* Callback for indicators here */
+  if(itf && itf->customize_track)
+    itf->customize_track(ctx, track);
+  /* Add to timeline_v2 */
+  timeline_v2_add_track(ctx, track);
+
+  /* Set fees & amount */
+  track->transaction_fee = ctx->transaction_fee;
+  track->amount = ctx->amount;
+  
+  /* FIXME */
+  return track;
+}
+
+static int timeline_v2_init_ex_balance_sheet(struct timeline_v2 *ctx,
+                                             struct track *track,
+                                             const char *filename)
+{
+  struct balance_sheet *balance;
+  
+  /* Quarterly */
+  balance_sheet_alloc(balance, filename, QUARTERLY);
+  track_add_balance_sheet(track, balance);
+  /* Yearly */
+  balance_sheet_alloc(balance, filename, YEARLY);
+  track_add_balance_sheet(track, balance);
+  
+  /* FIXME */
+  return 0;
+}
+
+static int timeline_v2_init_ex_income_statement(struct timeline_v2 *ctx,
+                                                struct track *track,
+                                                const char *filename)
+{
+  struct income_statement *income;
+  
+  /* Quarterly */
+  income_statement_alloc(income, filename, QUARTERLY);
+  track_add_income_statement(track, income);
+  /* Yearly */
+  income_statement_alloc(income, filename, YEARLY);
+  track_add_income_statement(track, income);
+  
+  /* FIXME */
+  return 0;
+}
+
+static int timeline_v2_init_ex_cash_flow(struct timeline_v2 *ctx,
+                                         struct track *track,
+                                         const char *filename)
+{
+  struct cash_flow *cash;
+  
+  /* Quarterly */
+  cash_flow_alloc(cash, filename, QUARTERLY);
+  track_add_cash_flow(track, cash);
+  /* Yearly */
+  cash_flow_alloc(cash, filename, YEARLY);
+  track_add_cash_flow(track, cash);
+  
+  /* FIXME */
+  return 0;
+}
 
 int timeline_v2_init_ex(struct timeline_v2 *ctx,
 			int argc, char **argv,
 			struct timeline_v2_ex_interface *itf)
 {
-  unique_id_t track_uid = 0;
   struct track *track = NULL;
-
-  struct quotes *quotes;
-  struct balance_sheet *balance;
-
+  
   /* Base */
   timeline_v2_init(ctx);
 
   for(int i = 0; i < argc; i++){
     /* Quotes */
     if(!strcmp(argv[i], "--track")){
-      char *filename = argv[++i];
-      quotes_alloc(quotes, filename, NULL);
-      track_alloc(track, track_uid++, basename(filename), quotes, NULL);
-      /* Callback for indicators here */
-      if(itf && itf->customize_track)
-	itf->customize_track(ctx, track);
-      /* Add to timeline_v2 */
-      timeline_v2_add_track(ctx, track);
-      /* Set fees & amount ? */
-      track->transaction_fee = transaction_fee;
-      track->amount = amount;
+      track = timeline_v2_init_ex_track(ctx, argv[++i], itf);
       continue;
     }
     /* Balance sheet */
     if(!strcmp(argv[i], "--balance-sheet")){
-      char *filename = argv[++i];
-      balance_sheet_alloc(balance, filename, NULL);
-      track_add_balance_sheet(track, balance);
+      timeline_v2_init_ex_balance_sheet(ctx, track, argv[++i]);
+      continue;
+    }
+    /* Income statement */
+    if(!strcmp(argv[i], "--income-statement")){
+      timeline_v2_init_ex_income_statement(ctx, track, argv[++i]);
+      continue;
+    }
+    /* Cash flow */
+    if(!strcmp(argv[i], "--cash-flow")){
+      timeline_v2_init_ex_cash_flow(ctx, track, argv[++i]);
+      continue;
+    }
+    /* All in one */
+    if(!strcmp(argv[i], "--fundamentals")){
+      timeline_v2_init_ex_balance_sheet(ctx, track, argv[++i]);
+      timeline_v2_init_ex_income_statement(ctx, track, argv[i]);
+      timeline_v2_init_ex_cash_flow(ctx, track, argv[i]);
       continue;
     }
     /* Fees */
     if(!strcmp(argv[i], "--fee")){
-      sscanf(argv[++i], "%lf", &transaction_fee);
-      if(track) track->transaction_fee = transaction_fee;
+      sscanf(argv[++i], "%lf", &ctx->transaction_fee);
+      if(track) track->transaction_fee = ctx->transaction_fee;
       continue;
     }
     /* Fixed amount */
     if(!strcmp(argv[i], "--amount")){
-      sscanf(argv[++i], "%lf", &amount);
-      if(track) track->amount = amount;
+      sscanf(argv[++i], "%lf", &ctx->amount);
+      if(track) track->amount = ctx->amount;
       continue;
     }
     /* Unknown command */

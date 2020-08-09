@@ -12,7 +12,7 @@
 /*
  * Extern ops here
  */
-extern struct balance_sheet_ops eodhistoricaldata_ops;
+extern struct balance_sheet_ops balance_sheet_eodhistoricaldata_ops;
 
 /*
  * Private
@@ -21,7 +21,7 @@ extern struct balance_sheet_ops eodhistoricaldata_ops;
 static struct balance_sheet_ops *
 balance_sheet_ops_from_ext(struct balance_sheet *ctx, const char *ext)
 {
-  return &eodhistoricaldata_ops;
+  return &balance_sheet_eodhistoricaldata_ops;
 }
 
 static int balance_sheet_load(struct balance_sheet *ctx)
@@ -63,18 +63,20 @@ static int balance_sheet_load(struct balance_sheet *ctx)
  * Public
  */
 
-int balance_sheet_init(struct balance_sheet *ctx, const char *filename, const char *ext)
+int balance_sheet_init(struct balance_sheet *ctx,
+                       const char *filename,
+                       period_t period)
 {
+  char *ext;
   int err = 0;
   
   ctx->private = NULL;
+  ctx->period = period;
   list_head_init(&ctx->list_balance_sheet_n3s);
   strncpy(ctx->filename, filename, sizeof ctx->filename);
   
   /* Wrapper */
-  if(!ext) ext = strrchr(filename, '.') + 1;
-  strncpy(ctx->ext, ext, sizeof ctx->ext);
-  
+  ext = strrchr(filename, '.') + 1;
   if(!(ctx->ops = balance_sheet_ops_from_ext(ctx, ext))){
     PR_ERR("Unable to find balance_sheet loader for extension .%s\n", ext);
     return -1;

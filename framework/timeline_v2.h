@@ -58,6 +58,10 @@ struct track_n3 *slice_get_track_n3(struct slice *ctx, unique_id_t uid);
 struct timeline_v2 {
   plist_head_t(struct slice) by_slice;
   plist_head_t(struct track) by_track;
+  /* Params */
+  unique_id_t track_uid;
+  double amount;
+  double transaction_fee;
 };
 
 typedef void (*custom_opt_ptr)(struct timeline_v2*, char*, char*);
@@ -81,8 +85,9 @@ struct track *timeline_v2_find_track_by_uid(struct timeline_v2 *ctx, unique_id_t
 /* Backwards compatibility */
 #define timeline_v2_find_track(ctx, uid) timeline_v2_find_track_by_uid(ctx, uid)
 
-#define timeline_v2_ex_args					\
-  "--track quotes.type [--balance-sheet balance.type] "		\
-  "[--fee fee] [--amount amount]"
+#define timeline_v2_ex_args                                             \
+  "--track quotes.type [--balance-sheet balance.type] "                 \
+  "[--income-statement income.type] [--cash-flow cash.type] "           \
+  "[--fundamentals fundamentals.type] [--fee fee] [--amount amount]"
 
 #endif

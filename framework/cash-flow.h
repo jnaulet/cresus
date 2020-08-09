@@ -16,29 +16,42 @@
 #include "framework/alloc.h"
 #include "framework/time64.h"
 
-typedef enum {
-  CF_SOMETHING = 0, CF_OTHER = 1 /* TBD */
-} cash_flow_n3_value_t;
-
 /* Generic object */
 struct cash_flow_n3 {
   /* Inherits from list */
   struct list list;
-  /* Internal data */
+  /* Time */
   time64_t time;
-  union {
-    struct {
-      double value1;
-      double value2;
-    };
-    double __cash_flow_n3_value__[0];
-  };
+  /* Data */
+  double investments;
+  double change_to_liabilities;
+  double total_cashflows_from_investing_activities;
+  double net_borrowings;
+  double total_cash_from_financing_activities;
+  double change_to_operating_activities;
+  double net_income;
+  double change_in_cash;
+  double total_cash_from_operating_activities;
+  double depreciation;
+  double other_cashflows_from_investing_activities;
+  double dividends_paid;
+  double change_to_inventory;
+  double change_to_account_receivables;
+  double sale_purchase_of_stock;
+  double other_cashflows_from_financing_activities;
+  double change_to_netincome;
+  double capital_expenditures;
+  double change_receivables;
+  double cash_flows_other_operating;
+  double exchange_rate_changes;
+  double cash_and_cash_equivalents_changes;
 };
 
 static inline int cash_flow_n3_init(struct cash_flow_n3 *ctx,
                                     time64_t time)
 {
   list_init(&ctx->list); /* super() */
+  ctx->time = time;
   return 0;
 }
 
@@ -63,16 +76,17 @@ struct cash_flow_ops {
 
 struct cash_flow {
   list_head_t(struct cash_flow_n3) list_cash_flow_n3s;
-  char filename[256], ext[256];
+  period_t period;
+  char filename[256];
   struct cash_flow_ops *ops;
   void *private;
 };
 
-int cash_flow_init(struct cash_flow *ctx, const char *filename, const char *ext);
+int cash_flow_init(struct cash_flow *ctx, const char *filename, period_t period);
 void cash_flow_release(struct cash_flow *ctx);
 
-#define cash_flow_alloc(ctx, filename, ext)                             \
-  DEFINE_ALLOC(struct cash_flow, ctx, cash_flow_init, filename, ext)
+#define cash_flow_alloc(ctx, filename, period)                          \
+  DEFINE_ALLOC(struct cash_flow, ctx, cash_flow_init, filename, period)
 #define cash_flow_free(ctx)                     \
   DEFINE_FREE(ctx, cash_flow_release)
 

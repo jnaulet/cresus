@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include "time64.h"
+#include "framework/verbose.h"
 
 time64_t time64(void)
 {
@@ -35,6 +36,8 @@ time64_t time64_atot(char *str)
   char *Y = strsep(&str, "-");
   char *M = strsep(&str, "-");
   char *d = str; /* End */
+  
+  PR_DBG("time64_atot: %s %s %s\n", Y, M, d);
   return TIME64_INIT(atoi(Y), atoi(M), atoi(d), 0, 0, 0, 0);
 }
 

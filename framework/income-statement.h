@@ -16,29 +16,47 @@
 #include "framework/alloc.h"
 #include "framework/time64.h"
 
-typedef enum {
-  IS_SOMETHING = 0, IS_OTHER = 1 /* TBD */
-} income_statement_n3_value_t;
-
 /* Generic object */
 struct income_statement_n3 {
   /* Inherits from list */
   struct list list;
-  /* Internal data */
+  /* Time */
   time64_t time;
-  union {
-    struct {
-      double value1;
-      double value2;
-    };
-    double __income_statement_n3_value__[0];
-  };
+  /* Internal data */
+  double research_development;
+  double effect_of_accounting_charges;
+  double income_before_tax;
+  double minority_interest;
+  double net_income;
+  double selling_general_administrative;
+  double gross_profit;
+  double ebit;
+  double non_operating_income_net_other;
+  double operating_income;
+  double other_operating_expenses;
+  double interest_expense;
+  double tax_provision;
+  double interest_income;
+  double net_interest_income;
+  double extraordinary_items;
+  double non_recurring;
+  double other_items;
+  double income_tax_expense;
+  double total_revenue;
+  double total_operating_expenses;
+  double cost_of_revenue;
+  double total_other_income_expense_net;
+  double discontinued_operations;
+  double net_income_from_continuing_ops;
+  double net_income_applicable_to_common_shares;
+  double preferred_stock_and_other_adjustments;
 };
 
 static inline int income_statement_n3_init(struct income_statement_n3 *ctx,
                                            time64_t time)
 {
   list_init(&ctx->list); /* super() */
+  ctx->time = time;
   return 0;
 }
 
@@ -63,12 +81,13 @@ struct income_statement_ops {
 
 struct income_statement {
   list_head_t(struct income_statement_n3) list_income_statement_n3s;
-  char filename[256], ext[256];
+  period_t period;
+  char filename[256];
   struct income_statement_ops *ops;
   void *private;
 };
 
-int income_statement_init(struct income_statement *ctx, const char *filename, const char *ext);
+int income_statement_init(struct income_statement *ctx, const char *filename, period_t period);
 void income_statement_release(struct income_statement *ctx);
 
 #define income_statement_alloc(ctx, filename, ext)                      \

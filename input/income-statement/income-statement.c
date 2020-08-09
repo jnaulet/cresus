@@ -12,17 +12,16 @@
 /*
  * Extern ops here
  */
+extern struct income_statement_ops income_statement_eodhistoricaldata_ops;
 
 /*
  * Private
  */
 
-
 static struct income_statement_ops *
 income_statement_ops_from_ext(struct income_statement *ctx, const char *ext)
 {
-  /* Fail */
-  return NULL;
+  return &income_statement_eodhistoricaldata_ops;
 }
 
 static int income_statement_load(struct income_statement *ctx)
@@ -64,18 +63,20 @@ static int income_statement_load(struct income_statement *ctx)
  * Public
  */
 
-int income_statement_init(struct income_statement *ctx, const char *filename, const char *ext)
+int income_statement_init(struct income_statement *ctx,
+                          const char *filename,
+                          period_t period)
 {
+  char *ext;
   int err = 0;
   
   ctx->private = NULL;
+  ctx->period = period;
   list_head_init(&ctx->list_income_statement_n3s);
   strncpy(ctx->filename, filename, sizeof ctx->filename);
   
   /* Wrapper */
-  if(!ext) ext = strrchr(filename, '.') + 1;
-  strncpy(ctx->ext, ext, sizeof ctx->ext);
-  
+  ext = strrchr(filename, '.') + 1;
   if(!(ctx->ops = income_statement_ops_from_ext(ctx, ext))){
     PR_ERR("Unable to find income_statement loader for extension .%s\n", ext);
     return -1;

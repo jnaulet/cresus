@@ -59,6 +59,11 @@ static inline struct list *list_pop(struct list *l)
   return n;
 }
 
+static inline struct list *list_prev_safe(struct list *l)
+{
+  return (!l->prev->is_head ? l->prev : l);
+}
+
 /* Head */
 
 #define list_head_t(type) struct list /* Type is purely indicative */

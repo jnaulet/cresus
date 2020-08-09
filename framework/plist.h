@@ -9,6 +9,8 @@
 #ifndef PLIST_H
 #define PLIST_H
 
+#include "framework/alloc.h"
+
 struct plist {
   struct plist *prev, *next;
   void *ptr;

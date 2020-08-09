@@ -26,8 +26,34 @@ struct track_n3 {
   /* Internal entries */
   time64_t time;
   struct quotes_n3 *quotes;
-  struct balance_sheet_n3 *balance_sheet;
-  struct income_statement_n3 *income_statement;
+  
+  /* Balance sheet */
+  union {
+    struct {
+      struct balance_sheet_n3 *quarterly;
+      struct balance_sheet_n3 *yearly;
+    };
+    struct balance_sheet_n3 *period[PERIOD_MAX];
+  } balance_sheet;
+
+  /* Income statement */
+  union {
+    struct {
+      struct income_statement_n3 *quarterly;
+      struct income_statement_n3 *yearly;
+    };
+    struct income_statement_n3 *period[PERIOD_MAX];
+  } income_statement;
+
+  /* Cash flow */
+  union {
+    struct {
+      struct cash_flow_n3 *quarterly;
+      struct cash_flow_n3 *yearly;
+    };
+    struct cash_flow_n3 *period[PERIOD_MAX];
+  } cash_flow;
+  
   /* Indicators */
   plist_head_t(struct indicator_n3) plist_indicator_n3s;
   /* Where are we from ? */
@@ -84,13 +110,12 @@ struct track {
   void *private;
 };
 
-#define track_alloc(ctx, uid, name, quotes, private)     \
-  DEFINE_ALLOC(struct track, ctx,                       \
-	       track_init, uid, name, quotes, private)
+#define track_alloc(ctx, uid, name, quotes)                             \
+  DEFINE_ALLOC(struct track, ctx, track_init, uid, name, quotes)
 #define track_free(ctx)                         \
   DEFINE_FREE(ctx, track_release)
 
-int track_init(struct track *ctx, unique_id_t uid, const char *name, struct quotes *quotes, void *private);
+int track_init(struct track *ctx, unique_id_t uid, const char *name, struct quotes *quotes);
 void track_release(struct track *ctx);
 
 /*

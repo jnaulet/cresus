@@ -83,7 +83,7 @@ struct quotes_ops {
 
 struct quotes {
   list_head_t(struct quotes_n3) list_quotes_n3s;
-  char filename[256], ext[256];
+  char filename[256];
   struct quotes_ops *ops;
   void *private;
 };
@@ -92,12 +92,12 @@ struct quotes {
  * Main quotes object
  */
 
-int quotes_init(struct quotes *ctx, const char *filename, const char *ext);
+int quotes_init(struct quotes *ctx, const char *filename);
 void quotes_release(struct quotes *ctx);
 
-#define quotes_alloc(ctx, filename, ext)                         \
-  DEFINE_ALLOC(struct quotes, ctx, quotes_init, filename, ext)
-#define quotes_free(ctx)                         \
+#define quotes_alloc(ctx, filename)                             \
+  DEFINE_ALLOC(struct quotes, ctx, quotes_init, filename)
+#define quotes_free(ctx)                        \
   DEFINE_FREE(ctx, quotes_release)
 
 #endif /* defined(PRICE_H) */

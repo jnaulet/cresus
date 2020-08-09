@@ -191,16 +191,9 @@ static void engine_v2_buy_cash(struct engine_v2 *ctx,
 					 track_n3->quotes->open);
   
   /* Portfolio */
-  if(order->funding > 0)
-    portfolio_add_leveraged(&ctx->portfolio,
-			    track_n3->track->name, order->track_uid,
-			    shares, track_n3->quotes->open,
-			    order->funding, order->ratio,
-			    order->stoploss);
-  else
-    portfolio_add(&ctx->portfolio,
-		  track_n3->track->name, order->track_uid,
-		  shares, track_n3->quotes->open);
+  portfolio_add(&ctx->portfolio,
+		track_n3->track->name, order->track_uid,
+		shares, track_n3->quotes->open);
   
   /* Stats */
   ctx->spent += order->value;
@@ -260,6 +253,7 @@ static void engine_run_before_start(struct engine_v2 *ctx,
 				    struct slice *slice,
 				    struct engine_v2_interface *i)
 {
+#if 0
   struct indicator_n3 *indicator_n3;
   struct track_n3 *track_n3;
   
@@ -271,6 +265,7 @@ static void engine_run_before_start(struct engine_v2 *ctx,
 	i->feed_indicator_n3(ctx, track_n3, indicator_n3);
     }
   }
+#endif
 }
 
 static void engine_run_after_start(struct engine_v2 *ctx,
@@ -288,9 +283,8 @@ static void engine_run_after_start(struct engine_v2 *ctx,
   slice_for_each_track_n3(slice, track_n3){
     /* Run pending orders */
     engine_v2_run_orders(ctx, track_n3);
-    /* Run portfolio */
-    portfolio_run(&ctx->portfolio, track_n3->quotes->low); /* FIXME */
-    
+
+    /* Callback */
     if(i->feed_track_n3)
       i->feed_track_n3(ctx, slice, track_n3);
     

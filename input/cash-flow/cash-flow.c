@@ -12,17 +12,16 @@
 /*
  * Extern ops here
  */
+extern struct cash_flow_ops cash_flow_eodhistoricaldata_ops;
 
 /*
  * Private
  */
 
-
 static struct cash_flow_ops *
 cash_flow_ops_from_ext(struct cash_flow *ctx, const char *ext)
 {
-  /* Fail */
-  return NULL;
+  return &cash_flow_eodhistoricaldata_ops;
 }
 
 static int cash_flow_load(struct cash_flow *ctx)
@@ -64,18 +63,18 @@ static int cash_flow_load(struct cash_flow *ctx)
  * Public
  */
 
-int cash_flow_init(struct cash_flow *ctx, const char *filename, const char *ext)
+int cash_flow_init(struct cash_flow *ctx, const char *filename, period_t period)
 {
+  char *ext;
   int err = 0;
   
   ctx->private = NULL;
+  ctx->period = period;
   list_head_init(&ctx->list_cash_flow_n3s);
   strncpy(ctx->filename, filename, sizeof ctx->filename);
   
   /* Wrapper */
-  if(!ext) ext = strrchr(filename, '.') + 1;
-  strncpy(ctx->ext, ext, sizeof ctx->ext);
-  
+  ext = strrchr(filename, '.') + 1;
   if(!(ctx->ops = cash_flow_ops_from_ext(ctx, ext))){
     PR_ERR("Unable to find cash_flow loader for extension .%s\n", ext);
     return -1;

@@ -28,8 +28,6 @@ struct engine_v2_order {
   engine_v2_order_by_t by;
   /* Content */
   double value;
-  /* Leverage */
-  double funding, ratio, stoploss;
   /* For info */
   int level; 
 };
@@ -47,10 +45,6 @@ engine_v2_order_init(struct engine_v2_order *ctx,
   ctx->by = by;
   /* Content */
   ctx->value = value;
-  /* Leverage */
-  ctx->funding = 0.0;
-  ctx->ratio = 1.0;
-  ctx->stoploss = 0.0;
   /* Info */
   ctx->level = 0;
   return 0;
@@ -70,21 +64,9 @@ engine_v2_order_set_level(struct engine_v2_order *ctx, int level)
   ctx->level = level;
 }
 
-static inline void
-engine_v2_order_set_leverage(struct engine_v2_order *ctx,
-			     double funding, double ratio,
-			     double stoploss)
-{
-  ctx->funding = funding;
-  ctx->stoploss = funding;
-  ctx->ratio = ratio;
-}
-
 /* Shortcuts */
-#define engine_v2_order_set_turbo(ctx, funding, ratio)		\
-  engine_v2_order_set_leverage(ctx, funding, ratio, funding)
 #define engine_v2_order_shares(ctx, quotes)	\
-  ((ctx)->value / ((quotes) - (ctx)->funding))
+  ((ctx)->value / (quotes))
 
 /*
  * Main object
