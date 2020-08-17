@@ -8,10 +8,28 @@
 
 #include "engine_v2.h"
 #include "framework/verbose.h"
+#include "framework/indicator.h"
 
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+static void engine_v2_init_indicators(struct engine_v2 *ctx)
+{
+  struct plist *p, *q, *r;
+  
+  plist_for_each(&ctx->timeline_v2->by_track, p){
+    struct track *track = p->ptr;
+    plist_for_each(&track->plist_track_n3s, q){
+      struct track_n3 *track_n3 = q->ptr;
+      /* Execute all indicators */
+      plist_for_each(&track->plist_indicators, r){
+        struct indicator *indicator = r->ptr;
+        indicator_feed(indicator, track_n3);
+      }
+    }
+  }
+}
 
 /*
  * Engine v2
@@ -38,6 +56,9 @@ int engine_v2_init(struct engine_v2 *ctx, struct timeline_v2 *t)
 
   /* Portfolio */
   portfolio_init(&ctx->portfolio);
+
+  /* Indicators. TODO: put somewhere else ? */
+  engine_v2_init_indicators(ctx);
   
   return 0;
 }

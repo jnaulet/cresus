@@ -20,17 +20,24 @@
 #include "framework/verbose.h"
 #include "framework/quotes.h"
 
+#include "indicator/metrics.h"
+
 static int occurrence = 1;
 static int check_income = 0;
 static int check_debt = 0;
+static int check_metrics = 0;
+
+#define METRICS_UID 0
 
 struct buy_monthly {
   int last_month;
+  int metrics_ok;
 };
 
 static int buy_monthly_init(struct buy_monthly *ctx)
 {
   ctx->last_month = -1;
+  ctx->metrics_ok = 0;
   return 0;
 }
 
@@ -65,7 +72,7 @@ static int check_net_debt(struct buy_monthly *ctx,
   return (b->short_term_debt + b->long_term_debt -
 	  b->cash_and_short_term_investments);
 }
-                           
+
 /* For each track */
 static void feed_track_n3(struct engine_v2 *engine,
                           struct slice *slice,
@@ -97,6 +104,11 @@ static void feed_track_n3(struct engine_v2 *engine,
       }
     }
 
+    if(check_metrics && !ctx->metrics_ok){
+      PR_ERR("%s: metrics are trash\n", time64_str(track_n3->time, GR_DAY));
+      order_anyway = 0;
+    }
+    
     if(order_anyway){
       /* Send order */
       engine_v2_order_alloc(order, uid, BUY, amount, CASH);
@@ -108,8 +120,29 @@ static void feed_track_n3(struct engine_v2 *engine,
   ctx->last_month = month;
 }
 
+/* For each indicator */
+static void feed_indicator_n3(struct engine_v2 *engine,
+                              struct track_n3 *track_n3,
+                              struct indicator_n3 *indicator_n3)
+{
+  struct metrics_n3 *m = (void*)indicator_n3;
+  struct buy_monthly *ctx = track_n3->track->private; /* FIXME */
+  
+  switch(indicator_n3->indicator->uid){
+  case METRICS_UID:
+    ctx->metrics_ok = (m->pe < 15) && (m->pbv > 0.1 && m->pbv < 1.0);
+    metrics_n3_display(m); /* Debug */
+    break;
+    
+  default:
+    PR_WARN("buy_monthly: unknown indicator %d\n",
+            indicator_n3->indicator->uid);
+  }
+}
+
 static struct engine_v2_interface engine_itf = {
   .feed_track_n3 = feed_track_n3,
+  .feed_indicator_n3 = feed_indicator_n3,
 };
 
 static void custom_opt(struct timeline_v2 *t, char *opt, char *optarg)
@@ -117,12 +150,19 @@ static void custom_opt(struct timeline_v2 *t, char *opt, char *optarg)
   if(!strcmp(opt, "--modulo")) occurrence = atoi(optarg);
   if(!strcmp(opt, "--check-income")) check_income = atoi(optarg);
   if(!strcmp(opt, "--check-debt")) check_debt = 1;
+  if(!strcmp(opt, "--check-metrics")) check_metrics = 1;
 }
 
 static void customize_track(struct timeline_v2 *t, struct track *track)
 {
   /* Allocate object */
+  struct metrics *metrics;
   struct buy_monthly *buy_monthly;
+  
+  /* Add indicator. FIXME */
+  if(metrics_alloc(metrics, METRICS_UID))
+    track_add_indicator(track, &metrics->indicator);
+  
   track->private = buy_monthly_alloc(buy_monthly);
 }
 

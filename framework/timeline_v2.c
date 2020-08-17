@@ -10,7 +10,6 @@
 
 #include "framework/types.h"
 #include "framework/verbose.h"
-#include "framework/indicator.h"
 #include "framework/timeline_v2.h"
 
 /*
@@ -251,7 +250,6 @@ int timeline_v2_add_track(struct timeline_v2 *ctx,
 {
   struct plist *p, *q;
   struct slice *slice;
-  struct track_n3 *track_n3;
 
   /* Add track to timeline_v2 */
   plist_add_ptr(&ctx->by_track, track);
@@ -264,11 +262,6 @@ int timeline_v2_add_track(struct timeline_v2 *ctx,
       /* Register track n3 into slice */
       track_n3->slice = slice; /* Put marker */
       plist_add_ptr(&slice->plist_track_n3s, track_n3); /* any end should do */
-      /* Execute all indicators */
-      plist_for_each(&track->plist_indicators, q){
-	struct indicator *indicator = q->ptr;
-	indicator_feed(indicator, track_n3);
-      }
     }
   }
   
