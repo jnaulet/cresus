@@ -26,35 +26,10 @@ cash_flow_ops_from_ext(struct cash_flow *ctx, const char *ext)
 
 static int cash_flow_load(struct cash_flow *ctx)
 {
-  time64_t t;
-  struct list *l;
-  struct cash_flow_n3 *n3;
-
   /* Read cash_flow */
-  while((n3 = ctx->ops->read(ctx)) != NULL){
-    /* Check errors */
-    struct cash_flow_n3 *p = (void*)ctx->list_cash_flow_n3s.prev;
-    
-    if(list_is_head(&p->list))
-      goto next;
-    
-    t = TIME64CMP(n3->time, p->time, GR_DAY);
-    if(!t){ /* item already exists */
-      PR_WARN("cash_flow_load: new n3 (%s) already exists\n",
-              time64_str(n3->time, GR_DAY));
-      continue;
-    }
-    if(t < 0){ /* list is ahead, warn */
-      PR_WARN("cash_flow_load: new n3 (%s) comes before last n3 (%s)\n",
-              time64_str(n3->time, GR_DAY), time64_str(p->time, GR_DAY));
-      continue;
-    }
-    
-  next:
-    /* Append */
-    list_add_tail(&ctx->list_cash_flow_n3s, &n3->list);
-    PR_DBG("cash_flow.c: new n3 at %s\n", time64_str(n3->time, GR_DAY));
-  }
+  struct cash_flow_n3 *n3;
+  while((n3 = ctx->ops->read(ctx)) != NULL)
+    SORT_BY_TIME(&ctx->list_cash_flow_n3s, n3, ctx->filename);
   
   return 0;
 }

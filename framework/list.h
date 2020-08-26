@@ -64,6 +64,21 @@ static inline struct list *list_prev_safe(struct list *l)
   return (!l->prev->is_head ? l->prev : l);
 }
 
+static inline struct list *list_prev_null(struct list *l)
+{
+  return (!l->prev->is_head ? l->prev : NULL);
+}
+
+static inline struct list *list_next_safe(struct list *l)
+{
+  return (!l->next->is_head ? l->next : l);
+}
+
+static inline struct list *list_next_null(struct list *l)
+{
+  return (!l->next->is_head ? l->next : NULL);
+}
+
 /* Head */
 
 #define list_head_t(type) struct list /* Type is purely indicative */

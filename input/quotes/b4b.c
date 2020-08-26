@@ -44,7 +44,8 @@ static ssize_t b4b_prepare_str(struct b4b *ctx, char *buf)
 static struct quotes_n3 *
 b4b_parse_n3(struct b4b *ctx, char *str)
 {
-  time64_t time = 0;
+  struct tm tm;
+  time_t time = 0;
   int year, month, day;
   struct quotes_n3 *n3;
   double open, close, high, low, volume; 
@@ -70,15 +71,13 @@ b4b_parse_n3(struct b4b *ctx, char *str)
   sscanf(slo, "%lf", &low);
   sscanf(svol, "%lf", &volume);
 
-  /* Dummy values for control */
-  TIME64_SET_SECOND(time, 1);
-  TIME64_SET_MINUTE(time, 30);
-  TIME64_SET_HOUR(time, 17);
+  /* Date/time */
+  memset(&tm, 0, sizeof tm);
+  tm.tm_mday = day;
+  tm.tm_mon = month - 1;
+  tm.tm_year = year - 1900;
+  time = mktime(&tm);
   
-  TIME64_SET_DAY(time, day);
-  TIME64_SET_MONTH(time, month);
-  TIME64_SET_YEAR(time, year);
-
   if(quotes_n3_alloc(n3, time, open, close, high, low, volume))
     return n3;
   
@@ -98,8 +97,7 @@ static struct quotes_n3 *b4b_read(struct quotes *ctx)
       continue;
     /* Parse n3 */
     if((n3 = b4b_parse_n3(b, buf))){
-      PR_DBG("%s %s loaded\n", ctx->filename,
-             time64_str_r(n3->time, GR_DAY, buf));
+      PR_DBG("%s %s loaded\n", ctx->filename, time_to_iso8601(n3->time));
       /* We got a new candle */
       return n3;
     }

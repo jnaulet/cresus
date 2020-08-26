@@ -51,7 +51,7 @@ double portfolio_add(struct portfolio *ctx,
   return (shares * price);
   
  __catch__(err):
-  perror(__FUNCTION__);
+  PR_ERR("%s: cannot alloc portfolio\n", __FUNCTION__);
   return 0.0;
 }
 
@@ -69,4 +69,35 @@ double portfolio_sub(struct portfolio *ctx,
   pos->nsell++;
   
   return n * price;
+}
+
+double portfolio_add_split(struct portfolio *ctx, const char *name,
+			   unique_id_t uid, double fact, double denm)
+{
+  struct portfolio_n3 *pos;
+  if(!(pos = portfolio_find_n3(ctx, uid)))
+    return 0.0;
+  
+  /* Apply split */
+  pos->shares *= (fact / denm);
+  PR_WARN("%s: new split at %.1lf:%.1lf (new shares = %.2lf)\n",
+	  name, fact, denm, pos->shares);
+  
+  return pos->shares;
+}
+
+double portfolio_add_dividends_per_share(struct portfolio *ctx,
+                                         const char *name,
+                                         unique_id_t uid,
+                                         double value)
+{
+  struct portfolio_n3 *pos;
+  if(!(pos = portfolio_find_n3(ctx, uid)))
+    return 0.0;
+
+  PR_WARN("%s: received dividends (DPS: %.2lf, total: %.2lf)\n",
+	  name, value, pos->shares * value);
+  
+  pos->dividends += pos->shares * value;
+  return pos->dividends;
 }

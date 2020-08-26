@@ -19,6 +19,7 @@ struct metrics_n3 {
   double book_value; /* Book value */
   /* Metrics / ratios */
   double pe; /* P/E metrics */
+  double peg; /* P/E over EPS growth */
   double pbv; /* Price to book value */
   double eps; /* Earnings per share */
   double roe; /* Return on equity */
@@ -27,6 +28,8 @@ struct metrics_n3 {
   double cr; /* Current ratio */
   double qr; /* Quick ratio */
   double de; /* Debt / equity ratio */
+  double da; /* Debt to assets ratio */
+  double cd; /* Operation cash flow to debt ratio */
 };
 
 #define metrics_n3_alloc(ctx, parent)                           \
@@ -46,12 +49,15 @@ static inline void metrics_n3_release(struct metrics_n3 *ctx)
   indicator_n3_release(&ctx->indicator_n3);
 }
 
-static inline void metrics_n3_display(struct metrics_n3 *ctx)
+static inline void metrics_n3_display(struct metrics_n3 *ctx, const char *name)
 {
-  PR_INFO("shares %.2lf cap %.2lf working_cap %.2lf book_value %.2lf\n",
-          ctx->shares, ctx->market_cap, ctx->working_cap, ctx->book_value);
-  PR_INFO("PE %.2lf PBV %.2lf EPS %.2lf ROE %.2lf ROCE %.2lf BVPS %.2lf CR %.2lf QR %.2lf DE %.2lf\n",
-	  ctx->pe, ctx->pbv, ctx->eps, ctx->roe, ctx->roce, ctx->bvps, ctx->cr, ctx->qr, ctx->de);
+  if(ctx){
+    PR_ERR("%s: shares %.2lf cap %.2lf working_cap %.2lf book_value %.2lf\n",
+	   name, ctx->shares, ctx->market_cap, ctx->working_cap, ctx->book_value);
+    PR_ERR("%s: PE %.2lf PBV %.2lf EPS %.2lf ROE %.2lf ROCE %.2lf BVPS %.2lf CR %.2lf QR %.2lf DE %.2lf DR %.2lf\n",
+	   name, ctx->pe, ctx->pbv, ctx->eps, ctx->roe, ctx->roce, ctx->bvps, ctx->cr, ctx->qr, ctx->de, ctx->da);
+  }else
+    PR_ERR("%s: no fundamental data available\n", name);
 }
 
 struct metrics {

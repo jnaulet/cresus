@@ -5,7 +5,6 @@ project(cresus)
 add_library(framework OBJECT
   indicator.c
   verbose.c
-  time64.c
   track.c
   timeline_v2.c
   )

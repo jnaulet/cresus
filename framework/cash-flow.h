@@ -13,15 +13,16 @@
 #include <limits.h>
 
 #include "framework/list.h"
+#include "framework/time.h"
 #include "framework/alloc.h"
-#include "framework/time64.h"
+#include "framework/types.h"
 
 /* Generic object */
 struct cash_flow_n3 {
   /* Inherits from list */
   struct list list;
   /* Time */
-  time64_t time;
+  time_t time;
   /* Data */
   double investments;
   double change_to_liabilities;
@@ -48,7 +49,7 @@ struct cash_flow_n3 {
 };
 
 static inline int cash_flow_n3_init(struct cash_flow_n3 *ctx,
-                                    time64_t time)
+                                    time_t time)
 {
   list_init(&ctx->list); /* super() */
   ctx->time = time;

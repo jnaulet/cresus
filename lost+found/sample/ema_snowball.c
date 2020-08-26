@@ -72,7 +72,7 @@ static int snowball_feed(struct engine *e,
 }
 
 static struct timeline *
-timeline_create(const char *filename, const char *name, time64_t min) {
+timeline_create(const char *filename, const char *name, time_t min) {
   
   struct yahoo *yahoo;
   struct mobile *mobile;

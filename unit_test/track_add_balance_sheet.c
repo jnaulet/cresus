@@ -26,8 +26,8 @@ int main(int argc, char **argv)
     for(int i = QUARTERLY; i < PERIOD_MAX; i++){
       if(n3->quotes && n3->balance_sheet.period[i])
         PR_INFO("%s: %s (%s)\n",
-                time64_str_r(n3->quotes->time, GR_DAY, str),
-                time64_str_r(n3->balance_sheet.period[i]->time, GR_DAY, str2),
+                time_str_r(n3->quotes->time, GR_DAY, str),
+                time_str_r(n3->balance_sheet.period[i]->time, GR_DAY, str2),
                 i == QUARTERLY ? "quarterly" : "yearly");
     }
   }

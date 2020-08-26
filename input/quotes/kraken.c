@@ -18,7 +18,7 @@
 #include "framework/list.h"
 #include "framework/quotes.h"
 #include "framework/verbose.h"
-#include "framework/time64.h"
+#include "framework/time.h"
 
 typedef enum {
   INIT,
@@ -82,14 +82,13 @@ static int process_json_array(struct kraken *k, json_value *value)
   /* FIXME */
   if(k->state == RESULT && value->u.array.length == 8){
     /* We got pairs here */    
-    time_t date = values[0]->u.integer; /* Epoch */
+    time_t time = values[0]->u.integer; /* Epoch */
     char *sopen = values[1]->u.string.ptr;
     char *shigh = values[2]->u.string.ptr;
     char *slow = values[3]->u.string.ptr;
     char *sclose = values[4]->u.string.ptr;
     char *svol = values[6]->u.string.ptr;
     
-    time64_t time = time64_epoch(date);
     double open = kraken_dbl(k, sopen);
     double high = kraken_dbl(k, shigh);
     double low = kraken_dbl(k, slow);

@@ -20,7 +20,7 @@
 #define RSM   2
 
 static struct timeline *
-timeline_ref_create(const char *filename, const char *name, time64_t min) {
+timeline_ref_create(const char *filename, const char *name, time_t min) {
   
   struct yahoo *yahoo;
   struct timeline *timeline;
@@ -33,7 +33,7 @@ timeline_ref_create(const char *filename, const char *name, time64_t min) {
 }
 
 static struct timeline *
-timeline_create(const char *filename, const char *name, time64_t min,
+timeline_create(const char *filename, const char *name, time_t min,
 		list_head_t(struct timeline_n3) *ref_index) {
 
   struct yahoo *yahoo;
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     VERBOSE_LEVEL(DBG);
 
   /* 01/01/2000 */
-  time64_t time = TIME64_INIT(2000, 1, 1, 0, 0, 0, 0);
+  time_t time = TIME64_INIT(2000, 1, 1, 0, 0, 0, 0);
   cluster_init(&cluster, "my cluster", NULL, time, TIME64_MAX);
   t0 = timeline_ref_create("data/%5EFCHI.yahoo", "^FCHI", time);
   t1 = timeline_create("data/AF.yahoo", "AF", time, &t0->list_n3);

@@ -14,8 +14,8 @@
 #include <limits.h>
 
 #include "framework/list.h"
+#include "framework/time.h"
 #include "framework/alloc.h"
-#include "framework/time64.h"
 
 typedef enum {
   OPEN = 0, CLOSE = 1, HIGH = 2, LOW = 3, VOLUME = 4
@@ -30,7 +30,7 @@ struct quotes_n3 {
   /* Inherits from list */
   struct list list;
   /* Internal data */
-  time64_t time;
+  time_t time;
   union {
     struct { double open, close, high, low, volume; };
     double __quotes_n3_value__[0];
@@ -41,15 +41,14 @@ struct quotes_n3 {
   "o%.2f c%.2f h%.2f l%.2f v%.0f"
 #define quotes_n3_args(ctx)						\
   (ctx)->open, (ctx)->close, (ctx)->high, (ctx)->low, (ctx)->volume
-#define quotes_n3_str(ctx, buf)		     \
+#define quotes_n3_str(ctx, buf)               \
   sprintf(buf, quotes_n3_interface_fmt,       \
           quotes_n3_interface_args(ctx))
 
-static inline int quotes_n3_init(struct quotes_n3 *ctx,
-                                time64_t time,
-                                double open, double close,
-                                double high, double low,
-                                double volume)
+static inline int quotes_n3_init(struct quotes_n3 *ctx, time_t time,
+                                 double open, double close,
+                                 double high, double low,
+                                 double volume)
 {
   list_init(&ctx->list); /* super() */
   ctx->time = time;
@@ -66,7 +65,7 @@ static inline void quotes_n3_release(struct quotes_n3 *ctx)
   list_release(&ctx->list);
 }
 
-#define quotes_n3_alloc(ctx, time, open, close, high, low, volume) \
+#define quotes_n3_alloc(ctx, time, open, close, high, low, volume)  \
   DEFINE_ALLOC(struct quotes_n3, ctx, quotes_n3_init,               \
 	       time, open, close, high, low, volume)
 #define quotes_n3_free(ctx)			\

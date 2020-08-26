@@ -17,7 +17,7 @@
 
 #include "framework/quotes.h"
 #include "framework/verbose.h"
-#include "framework/time64.h"
+#include "framework/time.h"
 
 struct euronext {
   /* internals */
@@ -28,14 +28,6 @@ struct euronext {
   size_t len;
   json_value *data;
 };
-
-static time64_t euronext_time(struct euronext *ctx,
-			      const char *str)
-{
-  int y, m, d;
-  sscanf(str, "%d/%d/%d", &d, &m, &y);
-  return TIME64_INIT(y, m, d, 0, 0, 0, 0);
-}
 
 static double euronext_dbl(struct euronext *ctx, char *str)
 {
@@ -71,7 +63,7 @@ static struct quotes_n3 *euronext_read(struct quotes *ctx)
   char *slow = o->u.object.values[5].value->u.string.ptr;
   char *sclose = o->u.object.values[6].value->u.string.ptr;
   
-  time64_t time = euronext_time(e, date);
+  time_t time = iso8601_to_time(date);
   double open = euronext_dbl(e, sopen);
   double high = euronext_dbl(e, shigh);
   double low = euronext_dbl(e, slow);

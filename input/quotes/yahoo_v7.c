@@ -21,9 +21,8 @@ struct quotes_n3 *
 yahoo_v7_parse_n3(struct yahoo_v7 *ctx, char *str)
 {
   struct quotes_n3 *n3;
-
-  time64_t time = 0;
-  int year, month, day;
+  
+  time_t time = 0;
   double open = 0.0, close = 0.0;
   double high = 0.0, low = 0.0;
   double volume = 0.0;
@@ -43,21 +42,12 @@ yahoo_v7_parse_n3(struct yahoo_v7 *ctx, char *str)
     goto err;
   
   /* Set values */
-  sscanf(stime, "%d-%d-%d", &year, &month, &day);
+  time = iso8601_to_time(stime);
   sscanf(sopen, "%lf", &open);
   sscanf(sclose, "%lf", &close);
   sscanf(shi, "%lf", &high);
   sscanf(slo, "%lf", &low);
   sscanf(svol, "%lf", &volume);
-
-  /* Dummy values for control */
-  TIME64_SET_SECOND(time, 1);
-  TIME64_SET_MINUTE(time, 30);
-  TIME64_SET_HOUR(time, 17);
-  
-  TIME64_SET_DAY(time, day);
-  TIME64_SET_MONTH(time, month);
-  TIME64_SET_YEAR(time, year);
 
   if(open != 0.0 && close != 0.0 && high != 0.0 && low != 0.0)
     if(quotes_n3_alloc(n3, time, open, close, high, low, volume))
@@ -76,9 +66,7 @@ struct quotes_n3 *yahoo_v7_read(struct quotes *ctx)
   while(fgets(buf, sizeof buf, y->fp)){
     /* Parse n3 */
     if((n3 = yahoo_v7_parse_n3(y, buf))){
-      PR_DBG("%s %s loaded\n", ctx->filename,
-             time64_str_r(n3->time, GR_DAY, buf));
-      /* We got a new candle */
+      PR_DBG("%s %s loaded\n", ctx->filename, time_to_iso8601(n3->time));
       return n3;
     }
   }

@@ -38,10 +38,12 @@ static void feed_track_n3(struct engine_v2 *engine,
                           struct track_n3 *track_n3)
 {
   struct engine_v2_order *order;
-  int cur_month = TIME64_GET_MONTH(slice->time);
   unique_id_t uid = track_n3->track->uid;
   struct sell_in_may *ctx = track_n3->track->private;
   double amount = track_get_amount(track_n3->track, 500.0);
+
+  struct tm *tm = localtime(&slice->time);
+  int cur_month = tm->tm_mon + 1;
   
   if(cur_month != ctx->cur_month){
     if(cur_month != month){

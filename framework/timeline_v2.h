@@ -11,6 +11,7 @@
 
 #include <string.h>
 
+#include "framework/time.h"
 #include "framework/alloc.h"
 #include "framework/plist.h"
 #include "framework/track.h"
@@ -31,7 +32,7 @@
  */
 
 struct slice {
-  time64_t time;
+  time_t time;
   plist_head_t(struct track_n3) plist_track_n3s;
 };
 
@@ -40,7 +41,7 @@ struct slice {
 #define slice_free(ctx)                         \
   DEFINE_FREE(ctx, slice_release)
 
-int slice_init(struct slice *ctx, time64_t time);
+int slice_init(struct slice *ctx, time_t time);
 void slice_release(struct slice *ctx);
 
 struct track_n3 *slice_get_track_n3(struct slice *ctx, unique_id_t uid);
@@ -88,6 +89,7 @@ struct track *timeline_v2_find_track_by_uid(struct timeline_v2 *ctx, unique_id_t
 #define timeline_v2_ex_args                                             \
   "--track quotes.type [--balance-sheet balance.type] "                 \
   "[--income-statement income.type] [--cash-flow cash.type] "           \
-  "[--fundamentals fundamentals.type] [--fee fee] [--amount amount]"
+  "[--fundamentals fundamentals.type] [--fee(s) fee] [--amount amount] " \
+  "[--dividends dividends.type] [--splits splits.type]"
 
 #endif

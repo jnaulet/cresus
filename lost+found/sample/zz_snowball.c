@@ -84,7 +84,7 @@ static int feed(struct engine *e,
 }
 
 static struct timeline *
-timeline_create(const char *filename, time64_t min)
+timeline_create(const char *filename, time_t min)
 {
   struct yahoo *yahoo;
   struct zigzag *zigzag;

@@ -41,7 +41,7 @@ static int trend_set(trend_t trend) {
 
 
 static struct timeline *
-timeline_create(const char *filename, const char *name, time64_t min,
+timeline_create(const char *filename, const char *name, time_t min,
 		list_head_t(struct timeline_n3) *ref_index) {
 
   struct yahoo *yahoo;
@@ -197,7 +197,7 @@ static int sim_feed(struct sim *s, struct cluster *c) {
 /* more final functions */
 
 static void add_timeline_to_cluster(struct cluster *c, const char *path,
-				    const char *name, time64_t time) {
+				    const char *name, time_t time) {
 
   struct timeline *sub;
   sub = timeline_create(path, name, time, &__timeline__(c)->list_n3);
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
   
   /* 01/01/2000 */
   struct yahoo *yahoo;
-  time64_t time = START_TIME;
+  time_t time = START_TIME;
   /* Load ref data */
   yahoo_alloc(yahoo, "data/%5EFCHI.yahoo", START_TIME, TIME64_MAX);
   cluster_init(&cluster, "my cluster", __input__(yahoo), time, TIME64_MAX);

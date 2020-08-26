@@ -17,7 +17,7 @@
 
 #include "framework/balance-sheet.h"
 #include "framework/verbose.h"
-#include "framework/time64.h"
+#include "framework/time.h"
 
 struct eodhistoricaldata {
   char statement[256];
@@ -47,9 +47,9 @@ static char *java_to_c(const char *str)
   return buf;
 }
 
-static time64_t json_str_to_time64(json_value *value)
+static time_t json_str_to_time(json_value *value)
 {
-  if(value->u.string.ptr) return time64_atot(value->u.string.ptr);
+  if(value->u.string.ptr) return time_atot(value->u.string.ptr);
   else return 0;
 }
 
@@ -74,11 +74,13 @@ static int process_json_balance_sheet_n3(struct eodhistoricaldata *e,
     
     /* Create object */
     if(!strcasecmp("date", name))
-      n3 = balance_sheet_n3_alloc(n3, time64_atot(values->u.string.ptr));
+      n3 = balance_sheet_n3_alloc(n3, time_atot(values->u.string.ptr));
 
+#if 0
     /* Real date might be different (+1 month probably) */
     if(!strcasecmp("filing_date", name) && values->u.string.ptr)
-      n3->time = json_str_to_time64(values);
+      n3->time = json_str_to_time(values);
+#endif
 
     /* Big data */
     if(!strcasecmp("totalAssets", name)) n3->total_assets = json_str_to_int(values);
@@ -217,7 +219,7 @@ static int eodhistoricaldata_init(struct balance_sheet *ctx)
   if(!(e = calloc(1, sizeof(*e))))
     return -ENOMEM;
   
-  /* open*/
+  /* open */
   if((fd = open(ctx->filename, O_RDONLY)) < 0)
     goto err;
   /* Init +exception */

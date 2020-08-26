@@ -17,7 +17,7 @@
 
 #include "framework/quotes.h"
 #include "framework/verbose.h"
-#include "framework/time64.h"
+#include "framework/time.h"
 
 struct xtrade {
   int i;
@@ -25,14 +25,6 @@ struct xtrade {
   json_value *value;
   json_value *data;
 };
-
-static time64_t xtrade_time(struct xtrade *ctx,
-                            const char *str)
-{
-  int y, m, d;
-  sscanf(str, "%d-%d-%d", &y, &m, &d);
-  return TIME64_INIT(y, m, d, 0, 0, 0, 0);
-}
 
 static struct quotes_n3 *xtrade_read(struct quotes *ctx)
 {
@@ -50,7 +42,7 @@ static struct quotes_n3 *xtrade_read(struct quotes *ctx)
   double low = o->u.object.values[3].value->u.dbl;
   double high = o->u.object.values[4].value->u.dbl;
   
-  time64_t time = xtrade_time(x, str);
+  time_t time = iso8601_to_time(str);
   if(quotes_n3_alloc(n3, time, open, close, high, low, 0.0))
     return n3;
   

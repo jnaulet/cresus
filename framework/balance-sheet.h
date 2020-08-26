@@ -12,16 +12,17 @@
 #include <string.h>
 #include <limits.h>
 
+#include "framework/time.h"
 #include "framework/list.h"
 #include "framework/alloc.h"
-#include "framework/time64.h"
+#include "framework/types.h"
 
 /* Generic object */
 struct balance_sheet_n3 {
   /* Inherits from list */
   struct list list;
   /* Time */
-  time64_t time;
+  time_t time;
   /* Data */
   double total_assets;
   double intangible_assets;
@@ -80,7 +81,7 @@ struct balance_sheet_n3 {
 };
 
 static inline int balance_sheet_n3_init(struct balance_sheet_n3 *ctx,
-                                        time64_t time)
+                                        time_t time)
 {
   list_init(&ctx->list); /* super() */
   ctx->time = time;

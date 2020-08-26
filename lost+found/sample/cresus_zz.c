@@ -18,7 +18,7 @@ static double zz_thres = ZIGZAG_THRES;
 static int zz_window = ZIGZAG_WINDOW;
 
 static struct timeline *
-timeline_create(const char *filename, const char *name, time64_t min) {
+timeline_create(const char *filename, const char *name, time_t min) {
 
   struct yahoo *yahoo;
   struct zigzag *zigzag;
@@ -38,7 +38,7 @@ timeline_create(const char *filename, const char *name, time64_t min) {
 /* more final functions */
 
 static void add_timeline_to_cluster(struct cluster *c, const char *path,
-				    const char *name, time64_t time) {
+				    const char *name, time_t time) {
   
   struct timeline *sub;
   sub = timeline_create(path, name, time);
@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
   
   /* 01/01/2000 */
   struct yahoo *yahoo;
-  time64_t time = START_TIME;
+  time_t time = START_TIME;
   /* Load ref data */
   yahoo_alloc(yahoo, "data/%5EFCHI.yahoo", time, TIME64_MAX);
   cluster_init(&cluster, "my cluster", __input__(yahoo), time, TIME64_MAX);

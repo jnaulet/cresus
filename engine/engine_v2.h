@@ -9,10 +9,9 @@
 #ifndef ENGINE_V2_H
 #define ENGINE_V2_H
 
-#include "framework/time64.h"
-#include "framework/timeline_v2.h"
-
+#include "framework/time.h"
 #include "engine/portfolio.h"
+#include "framework/timeline_v2.h"
 
 /* 
  * Engine v2 orders management
@@ -78,8 +77,8 @@ struct engine_v2 {
   /* Orders & more */
   plist_head_t(struct engine_v2_order) plist_orders;
   /* Positions filter */
-  time64_t start_time;
-  time64_t end_time;
+  time_t start_time;
+  time_t end_time;
   /* Stats */
   double spent; /* Total money spent */
   double earned; /* Total money earned */

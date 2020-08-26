@@ -16,7 +16,7 @@
  * Timeline slice object
  */
 
-int slice_init(struct slice *ctx, time64_t time)
+int slice_init(struct slice *ctx, time_t time)
 {
   ctx->time = time;
   plist_head_init(&ctx->plist_track_n3s);
@@ -45,14 +45,14 @@ slice_get_track_n3(struct slice *ctx, unique_id_t uid)
  */
 
 static struct slice *
-timeline_v2_get_slice_anyway(struct timeline_v2 *ctx, time64_t time)
+timeline_v2_get_slice_anyway(struct timeline_v2 *ctx, time_t time)
 {
   struct plist *p;
   struct slice *slice;
   
   plist_for_each(&ctx->by_slice, p){
     struct slice *ptr = p->ptr;
-    time64_t cmp = TIME64CMP(ptr->time, time, GR_DAY);
+    time_t cmp = timecmp(ptr->time, time);
     /* Slice already exists, we go out */
     if(!cmp){
       PR_DBG("timeline_v2.c: slice already exists\n");
@@ -64,10 +64,8 @@ timeline_v2_get_slice_anyway(struct timeline_v2 *ctx, time64_t time)
       __try__(!slice_alloc(slice, time), err);
       plist_add_tail_ptr(p, slice); /* Insert before */
       /* Debug */
-      static char buf0[12], buf1[12];
       PR_DBG("timeline_v2.c: slice %s is missing, insertion before %s\n",
-	     time64_str_r(time, GR_DAY, buf0),
-	     time64_str_r(ptr->time, GR_DAY, buf1));
+	     time_to_iso8601(time), time_to_iso8601(ptr->time));
       /* Jump outside anyway */
       goto out;
     }
@@ -78,7 +76,7 @@ timeline_v2_get_slice_anyway(struct timeline_v2 *ctx, time64_t time)
   plist_add_tail_ptr(&ctx->by_slice, slice);
   
   /* Debug */
-  PR_DBG("timeline_v2.c: new slice at %s\n", time64_str(time, GR_DAY));
+  PR_DBG("timeline_v2.c: new slice at %s\n", time_to_iso8601(time));
   
  out:
   return slice;
@@ -182,11 +180,35 @@ static int timeline_v2_init_ex_cash_flow(struct timeline_v2 *ctx,
   return 0;
 }
 
+static int timeline_v2_init_ex_dividends(struct timeline_v2 *ctx,
+					 struct track *track,
+					 const char *filename)
+{
+  struct dividends *dividends;
+  dividends_alloc(dividends, filename);
+  track_add_dividends(track, dividends);
+
+  /* FIXME */
+  return 0;
+}
+
+static int timeline_v2_init_ex_splits(struct timeline_v2 *ctx,
+				      struct track *track,
+				      const char *filename)
+{
+  struct splits *splits;
+  splits_alloc(splits, filename);
+  track_add_splits(track, splits);
+  
+  /* FIXME */
+  return 0;
+}
+
 int timeline_v2_init_ex(struct timeline_v2 *ctx,
 			int argc, char **argv,
 			struct timeline_v2_ex_interface *itf)
 {
-  struct track *track = NULL;
+  static struct track *track = NULL;
   
   /* Base */
   timeline_v2_init(ctx);
@@ -219,8 +241,19 @@ int timeline_v2_init_ex(struct timeline_v2 *ctx,
       timeline_v2_init_ex_cash_flow(ctx, track, argv[i]);
       continue;
     }
+    /* Dividends */
+    if(!strcmp(argv[i], "--dividends")){
+      timeline_v2_init_ex_dividends(ctx, track, argv[++i]);
+      continue;
+    }
+    /* Splits */
+    if(!strcmp(argv[i], "--splits")){
+      timeline_v2_init_ex_splits(ctx, track, argv[++i]);
+      continue;
+    }
     /* Fees */
-    if(!strcmp(argv[i], "--fee")){
+    if(!strcmp(argv[i], "--fee") ||
+       !strcmp(argv[i], "--fees")){
       sscanf(argv[++i], "%lf", &ctx->transaction_fee);
       if(track) track->transaction_fee = ctx->transaction_fee;
       continue;
@@ -229,6 +262,11 @@ int timeline_v2_init_ex(struct timeline_v2 *ctx,
     if(!strcmp(argv[i], "--amount")){
       sscanf(argv[++i], "%lf", &ctx->amount);
       if(track) track->amount = ctx->amount;
+      continue;
+    }
+    /* Better name */
+    if(!strcmp(argv[i], "--name")){
+      strncpy(track->name, argv[++i], sizeof(track->name));
       continue;
     }
     /* Unknown command */

@@ -10,6 +10,7 @@
 #define TRACK_H
 
 #include "framework/list.h"
+#include "framework/time.h"
 #include "framework/alloc.h"
 #include "framework/plist.h"
 
@@ -18,13 +19,16 @@
 #include "framework/income-statement.h"
 #include "framework/cash-flow.h"
 
+#include "framework/splits.h"
+#include "framework/dividends.h"
+
 struct slice;
 struct indicator;
 struct indicator_n3;
 
 struct track_n3 {
   /* Internal entries */
-  time64_t time;
+  time_t time;
   struct quotes_n3 *quotes;
   
   /* Balance sheet */
@@ -53,6 +57,12 @@ struct track_n3 {
     };
     struct cash_flow_n3 *period[PERIOD_MAX];
   } cash_flow;
+
+  /* Dividends */
+  struct dividends_n3 *dividends;
+
+  /* Splits */
+  struct splits_n3 *splits;
   
   /* Indicators */
   plist_head_t(struct indicator_n3) plist_indicator_n3s;
@@ -63,6 +73,13 @@ struct track_n3 {
   struct plist *plist;
 };
 
+/* Shortcuts */
+
+#define period_of(type, x)						\
+  ((void*)(x) == (void*)((type)->quarterly) ? QUARTERLY : YEARLY)
+
+/* Init */
+
 #define track_n3_alloc(ctx, quotes_n3, track)                            \
   DEFINE_ALLOC(struct track_n3, ctx, track_n3_init, quotes_n3, track)
 #define track_n3_free(ctx)                      \
@@ -72,6 +89,11 @@ int track_n3_init(struct track_n3 *ctx, struct quotes_n3 *quotes_n3, struct trac
 void track_n3_release(struct track_n3 *ctx);
 
 /* Methods */
+
+#define track_n3_get_fundamental(ctx, type)		\
+  ((ctx)->type.quarterly != NULL ?			\
+   (ctx)->type.quarterly :				\
+   (ctx)->type.yearly)
 
 #define track_n3_add_indicator_n3(ctx, indicator_n3)            \
   plist_add_ptr(&(ctx)->plist_indicator_n3s, indicator_n3)
@@ -125,6 +147,8 @@ void track_release(struct track *ctx);
 int track_add_balance_sheet(struct track *ctx, struct balance_sheet *b);
 int track_add_income_statement(struct track *ctx, struct income_statement *i);
 int track_add_cash_flow(struct track *ctx, struct cash_flow *c);
+int track_add_dividends(struct track *ctx, struct dividends *d);
+int track_add_splits(struct track *ctx, struct splits *s);
 
 #define track_add_indicator(ctx, indicator)             \
   plist_add_ptr(&(ctx)->plist_indicators, indicator)

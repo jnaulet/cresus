@@ -31,8 +31,8 @@ quotes_ops_from_ext(struct quotes *ctx, const char *ext)
   else if(!strcmp("xtrade", ext)) return &xtrade_ops;
   else if(!strcmp("euronext", ext)) return &euronext_ops;
   else if(!strcmp("kraken", ext)) return &kraken_ops;
-  /* Default yahoo v7 */
-  else return &yahoo_v7_ops;
+  else if(!strcmp("yahoo", ext)) return &yahoo_v7_ops;
+  else if(!strcmp("eodhistoricaldata", ext)) return &yahoo_v7_ops;
   
   /* Fail */
   return NULL;
@@ -40,39 +40,13 @@ quotes_ops_from_ext(struct quotes *ctx, const char *ext)
 
 static int quotes_load(struct quotes *ctx)
 {
-  time64_t t;
-  struct list *l;
-  struct quotes_n3 *n3;
-  
   /* Read quotes */
-  while((n3 = ctx->ops->read(ctx)) != NULL){
-    /* Check errors */
-    struct quotes_n3 *p = (void*)ctx->list_quotes_n3s.prev;
-
-    if(list_is_head(&p->list))
-      goto next;
-    
-    t = TIME64CMP(n3->time, p->time, GR_DAY);
-    if(!t){ /* item already exists */
-      PR_WARN("quotes_load: new n3 (%s) already exists\n",
-              time64_str(n3->time, GR_DAY));
-      continue;
-    }
-    if(t < 0){ /* list is ahead, warn */
-      PR_WARN("quotes_load: new n3 (%s) comes before last n3 (%s)\n",
-              time64_str(n3->time, GR_DAY), time64_str(p->time, GR_DAY));
-      continue;
-    }
-    
-  next:
-    /* Append */
-    list_add_tail(&ctx->list_quotes_n3s, &n3->list);
-    PR_DBG("quotes.c: new n3 at %s\n", time64_str(n3->time, GR_DAY));
-  }
+  struct quotes_n3 *n3;
+  while((n3 = ctx->ops->read(ctx)) != NULL)
+    SORT_BY_TIME(&ctx->list_quotes_n3s, n3, ctx->filename);
   
   return 0;
 }
-
 
 /*
  * Public

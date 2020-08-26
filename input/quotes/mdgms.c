@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <json-parser/json.h>
 
+#include "framework/types.h"
 #include "framework/quotes.h"
 #include "framework/verbose.h"
 
@@ -42,7 +43,7 @@ static struct quotes_n3 *mdgms_read(struct quotes *ctx)
   __try__(m->i >= ts->u.array.length, err); /* EOF */
   
   /* How to check ? */
-  time_t t = ts->u.array.values[m->i]->u.integer;
+  time_t time = ts->u.array.values[m->i]->u.integer;
   double open = op->u.array.values[m->i]->u.dbl;
   double high = hi->u.array.values[m->i]->u.dbl;
   double low = lo->u.array.values[m->i]->u.dbl;
@@ -52,7 +53,6 @@ static struct quotes_n3 *mdgms_read(struct quotes *ctx)
   /* Increment */
   m->i++;
   
-  time64_t time = time64_epoch(t);
   if(quotes_n3_alloc(n3, time, open, close, high, low, vol))
     return n3;
   

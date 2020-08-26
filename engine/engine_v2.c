@@ -40,8 +40,8 @@ int engine_v2_init(struct engine_v2 *ctx, struct timeline_v2 *t)
   /* Timeline */
   ctx->timeline_v2 = t;
   /* Time */
-  ctx->start_time = TIME64_MIN;
-  ctx->end_time = TIME64_MAX;
+  ctx->start_time = 0;
+  ctx->end_time = TIME_MAX;
   /* Output */
   ctx->csv_output = -1;
 
@@ -77,12 +77,12 @@ int engine_v2_init_ex(struct engine_v2 *ctx, struct timeline_v2 *t,
     }
     /* Start */
     if(!strcmp(argv[i], "--start")){
-      ctx->start_time = time64_atot(argv[++i]);
+      ctx->start_time = iso8601_to_time(argv[++i]);
     }
     /* Stop/end */
     if(!strcmp(argv[i], "--stop") ||
        !strcmp(argv[i], "--end")){
-      ctx->end_time = time64_atot(argv[++i]);
+      ctx->end_time = iso8601_to_time(argv[++i]);
     }
     /* Verbosity */
     if(!strcmp(argv[i], "--verbose") ||
@@ -99,10 +99,10 @@ int engine_v2_init_ex(struct engine_v2 *ctx, struct timeline_v2 *t,
 #define engine_v2_performance_pcent(assets, spent, earned, fees)	\
   (((assets + earned) / (spent + fees) - 1.0) * 100.0)
 
-#define engine_v2_print_stats(name, value, spent, earned, fees)		\
-  PR_STAT("%s total %.2lf assets %.2lf spent %.2lf earned %.2lf "	\
-	  "fees %.2lf performance %.2lf%%\n",				\
-	  name, earned + value, value, spent, earned, fees,		\
+#define engine_v2_print_stats(name, value, div, spent, earned, fees)	\
+  PR_STAT("%s total %.2lf assets %.2lf dividends %.2lf "		\
+	  "spent %.2lf earned %.2lf fees %.2lf performance %.2lf%%\n",	\
+	  name, earned + value, value, div, spent, earned, fees,	\
 	  engine_v2_performance_pcent(value, spent, earned, fees));
 
 static double
@@ -136,17 +136,17 @@ static void engine_v2_csv_output(struct engine_v2 *ctx,
   
   dprintf(ctx->csv_output,
 	  "%s, %.2lf, %.2lf, %.2lf, %.2lf, %.2lf\n",
-	  time64_str(slice->time, GR_DAY), value,
+	  time_to_iso8601(slice->time), value,
 	  ctx->spent, ctx->earned, gainloss, index);
 }
 
 static void engine_v2_display_stats(struct engine_v2 *ctx)
 {
   struct plist *p;
+  double dividends = 0.0;
   double total_value = 0.0;
   
   /* Portfolio */
-  
   plist_for_each(&ctx->portfolio.plist_portfolio_n3s, p){
     struct portfolio_n3 *pos = p->ptr;
     /* Find track name by uid */
@@ -159,10 +159,11 @@ static void engine_v2_display_stats(struct engine_v2 *ctx)
     /* Display track stats */
     portfolio_n3_pr_stat(pos, track_n3->quotes->close);
     total_value += portfolio_n3_total_value(pos, track_n3->quotes->close);
+    dividends += portfolio_n3_dividends(pos);
   }
   
   /* Total */
-  engine_v2_print_stats("Total", total_value, ctx->spent,
+  engine_v2_print_stats("Total", total_value, dividends, ctx->spent,
 			ctx->earned, ctx->fees);
 }
 
@@ -270,6 +271,27 @@ static void engine_v2_run_orders(struct engine_v2 *ctx,
   }
 }
 
+static void engine_run_splits(struct engine_v2 *ctx,
+			      struct track_n3 *track_n3)
+{
+  if(track_n3->splits){
+    struct track *track = track_n3->track;
+    double fact = track_n3->splits->fact;
+    double denm = track_n3->splits->denm;
+    portfolio_add_split(&ctx->portfolio, track->name, track->uid, fact, denm);
+  }
+}
+
+static void engine_run_dividends(struct engine_v2 *ctx,
+                                 struct track_n3 *track_n3)
+{  
+  if(track_n3->dividends){
+    struct track *track = track_n3->track;
+    double dividends_per_share = track_n3->dividends->per_share;
+    portfolio_add_dividends_per_share(&ctx->portfolio, track->name, track->uid, dividends_per_share);
+  }
+}
+
 static void engine_run_before_start(struct engine_v2 *ctx,
 				    struct slice *slice,
 				    struct engine_v2_interface *i)
@@ -314,6 +336,10 @@ static void engine_run_after_start(struct engine_v2 *ctx,
       if(i->feed_indicator_n3)
 	i->feed_indicator_n3(ctx, track_n3, indicator_n3);
     }
+
+    /* Run splits dividends */
+    engine_run_splits(ctx, track_n3);
+    engine_run_dividends(ctx, track_n3);
   }
   
   /* Post-processing */
@@ -334,15 +360,15 @@ void engine_v2_run(struct engine_v2 *ctx,
   plist_for_each(&ctx->timeline_v2->by_slice, p){
     struct slice *slice = p->ptr;
     /* We MUST stop at end_time */
-    if(TIME64CMP(slice->time, ctx->end_time, GR_DAY) > 0)
+    if(timecmp(slice->time, ctx->end_time) > 0)
       break;
     
     /* Debug */
     PR_DBG("engine_v2.c: playing slice #%s\n",
-	   time64_str(slice->time, GR_DAY));
+	   time_to_iso8601(slice->time));
     
     /* Run in two-state mode */
-    if(TIME64CMP(slice->time, ctx->start_time, GR_DAY) < 0)
+    if(timecmp(slice->time, ctx->start_time) < 0)
       engine_run_before_start(ctx, slice, i);
     else
       engine_run_after_start(ctx, slice, i);

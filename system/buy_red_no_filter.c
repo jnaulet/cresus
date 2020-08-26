@@ -28,7 +28,7 @@ static int feed(struct engine *e,
 {
   /* Step by step loop */
   static int n = 0;
-  time64_t time = VAL_YEAR(year_min);
+  time_t time = VAL_YEAR(year_min);
   struct candle *c = __timeline_n3_self__(n3);
   
   if(TIME64CMP(n3->time, time, GR_YEAR) < 0)
