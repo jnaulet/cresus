@@ -20,6 +20,7 @@
 #include "framework/verbose.h"
 #include "framework/quotes.h"
 
+#include "indicator/rs_roc.h"
 #include "indicator/metrics.h"
 
 static int occurrence = 1;
@@ -31,6 +32,7 @@ static double de = 0.0;
 static double da = 0.0;
 
 #define METRICS_UID 0
+#define RS_UID      1
 
 struct buy_monthly {
   int last_month;
@@ -58,11 +60,24 @@ static void feed_track_n3(struct engine_v2 *engine,
   
   struct tm *tm = localtime(&slice->time);
   int month = tm->tm_mon + 1;
+
+  /* Ignore ref track */
+  if(!ctx) return;
   
   if(month != ctx->last_month && !(month % occurrence)){
     //PR_WARN("%s - BUY %d\n", track_n3_str(track_n3), amount);
     struct engine_v2_order *order;
     double amount = track_get_amount(track_n3->track, 500.0);
+
+    /* Indicators */
+    struct rs_roc_n3 *r = (void*)track_n3_get_indicator_n3(track_n3, RS_UID);
+    struct metrics_n3 *m = (void*)track_n3_get_indicator_n3(track_n3, METRICS_UID);
+
+    /* Check technical here */
+    if(r && r->value <= 0.0){
+      PR_WARN("Bad month: ignore order\n");
+      order_anyway = 0;
+    }
     
     /* Check fundamentals here */
     if(metrics && !ctx->metrics_ok){
@@ -74,8 +89,6 @@ static void feed_track_n3(struct engine_v2 *engine,
     }
     
     if(order_anyway){
-      struct metrics_n3 *m =
-	(void*)track_n3_get_indicator_n3(track_n3, METRICS_UID);
       /* Send order */
       engine_v2_order_alloc(order, uid, BUY, amount, CASH);
       engine_v2_set_order(engine, order);
@@ -104,6 +117,9 @@ static void feed_indicator_n3(struct engine_v2 *engine,
     if(de != 0.0 && (m->de > de || m->de < 0.0)) ctx->metrics_ok = 0;
     if(da != 0.0 && (m->da > da || m->da < 0.0)) ctx->metrics_ok = 0;
     break;
+
+  case RS_UID:
+    break; /* Nothing to do */
     
   default:
     PR_WARN("buy_monthly: unknown indicator %d\n",
@@ -124,17 +140,28 @@ static void custom_opt(struct timeline_v2 *t, char *opt, char *optarg)
   if(!strcmp(opt, "--pbv")) sscanf(optarg, "%lf", &pbv);
   if(!strcmp(opt, "--de")) sscanf(optarg, "%lf", &de);
   if(!strcmp(opt, "--da")) sscanf(optarg, "%lf", &da);
+  if(!strcmp(opt, "--ref")){ /* Or something */
+    struct quotes *quotes;
+    if(quotes_alloc(quotes, optarg)){
+      struct track *track;
+      track_alloc(track, -1, "ref", quotes);
+      timeline_v2_add_track(t, track); /* Hope everything goes well */
+    }
+  }
 }
 
 static void customize_track(struct timeline_v2 *t, struct track *track)
 {
   /* Allocate object */
+  struct rs_roc *rs_roc;
   struct metrics *metrics;
   struct buy_monthly *buy_monthly;
   
-  /* Add indicator. FIXME */
+  /* Add indicator(s) */
   if(metrics_alloc(metrics, METRICS_UID))
     track_add_indicator(track, &metrics->indicator);
+  if(rs_roc_alloc(rs_roc, RS_UID, 20, -1))
+    track_add_indicator(track, &rs_roc->indicator);
   
   track->private = buy_monthly_alloc(buy_monthly);
 }
