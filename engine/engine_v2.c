@@ -64,7 +64,7 @@ int engine_v2_init(struct engine_v2 *ctx, struct timeline_v2 *t)
 }
 
 int engine_v2_init_ex(struct engine_v2 *ctx, struct timeline_v2 *t,
-		      int argc, char **argv)
+                      int argc, char **argv)
 {
   /* Basics */
   engine_v2_init(ctx, t);
@@ -96,18 +96,18 @@ int engine_v2_init_ex(struct engine_v2 *ctx, struct timeline_v2 *t,
  * Stats. TODO : put somewhere else
  */
 
-#define engine_v2_performance_pcent(assets, spent, earned, fees)	\
+#define engine_v2_performance_pcent(assets, spent, earned, fees)        \
   (((assets + earned) / (spent + fees) - 1.0) * 100.0)
 
-#define engine_v2_print_stats(name, value, div, spent, earned, fees)	\
-  PR_STAT("%s total %.2lf assets %.2lf dividends %.2lf "		\
-	  "spent %.2lf earned %.2lf fees %.2lf performance %.2lf%%\n",	\
-	  name, earned + value, value, div, spent, earned, fees,	\
-	  engine_v2_performance_pcent(value, spent, earned, fees));
+#define engine_v2_print_stats(name, value, div, spent, earned, fees)    \
+  PR_STAT("%s total %.2lf assets %.2lf dividends %.2lf "                \
+          "spent %.2lf earned %.2lf fees %.2lf performance %.2lf%%\n",  \
+          name, earned + value, value, div, spent, earned, fees,        \
+          engine_v2_performance_pcent(value, spent, earned, fees));
 
 static double
 engine_v2_total_value(struct engine_v2 *ctx,
-		      struct slice *slice)
+                      struct slice *slice)
 {
   struct plist *p;
   double total_value = 0.0;
@@ -127,7 +127,7 @@ engine_v2_total_value(struct engine_v2 *ctx,
 }
 
 static void engine_v2_csv_output(struct engine_v2 *ctx,
-				 struct slice *slice)
+                                 struct slice *slice)
 {
   double value = engine_v2_total_value(ctx, slice);
   double balance = (ctx->spent + ctx->earned);
@@ -135,12 +135,12 @@ static void engine_v2_csv_output(struct engine_v2 *ctx,
   double index = balance != 0.0 ? (gainloss / balance) : 0.0;
   
   dprintf(ctx->csv_output,
-	  "%s, %.2lf, %.2lf, %.2lf, %.2lf, %.2lf\n",
-	  time_to_iso8601(slice->time), value,
-	  ctx->spent, ctx->earned, gainloss, index);
+          "%s, %.2lf, %.2lf, %.2lf, %.2lf, %.2lf\n",
+          time_to_iso8601(slice->time), value,
+          ctx->spent, ctx->earned, gainloss, index);
 }
 
-static void engine_v2_display_stats(struct engine_v2 *ctx)
+void engine_v2_display_stats(struct engine_v2 *ctx)
 {
   struct plist *p;
   double dividends = 0.0;
@@ -164,11 +164,10 @@ static void engine_v2_display_stats(struct engine_v2 *ctx)
   
   /* Total */
   engine_v2_print_stats("Total", total_value, dividends, ctx->spent,
-			ctx->earned, ctx->fees);
+                        ctx->earned, ctx->fees);
 }
 
-static void
-engine_v2_display_pending_orders(struct engine_v2 *ctx)
+void engine_v2_display_pending_orders(struct engine_v2 *ctx)
 {
   struct plist *p;
   
@@ -181,21 +180,15 @@ engine_v2_display_pending_orders(struct engine_v2 *ctx)
     struct track_n3 *track_n3 =
       track->plist_track_n3s.prev->ptr;
     
-    fprintf(stdout, "%s %.2lf %s %.2lf %d\n",
-	    track->name, track_n3->quotes->close,
-	    (order->type == BUY ? "buy" : "sell"),
-	    order->value, order->level);
+    fprintf(stdout, "%s %s %.2lf %.2lf %d\n",
+            (order->type == BUY ? "buy" : "sell"),
+            track->name, track_n3->quotes->close,
+            order->value, order->level);
   }
 }
 
 void engine_v2_release(struct engine_v2 *ctx)
-{
-  /* Display stats */
-  engine_v2_display_stats(ctx);
-
-  /* Display pending orders */
-  engine_v2_display_pending_orders(ctx);
-  
+{  
   /* Clean portfolio */
   portfolio_release(&ctx->portfolio);
 
@@ -205,50 +198,50 @@ void engine_v2_release(struct engine_v2 *ctx)
 }
 
 static void engine_v2_buy_cash(struct engine_v2 *ctx,
-			       struct track_n3 *track_n3,
-			       struct engine_v2_order *order)
+                               struct track_n3 *track_n3,
+                               struct engine_v2_order *order)
 {
   /* Convert CASH to shares */
   double shares = engine_v2_order_shares(order,
-					 track_n3->quotes->open);
+                                         track_n3->quotes->open);
   
   /* Portfolio */
   portfolio_add(&ctx->portfolio,
-		track_n3->track->name, order->track_uid,
-		shares, track_n3->quotes->open);
+                track_n3->track->name, order->track_uid,
+                shares, track_n3->quotes->open);
   
   /* Stats */
   ctx->spent += order->value;
   ctx->fees += track_n3->track->transaction_fee;
   
   PR_INFO("%s - Buy %.4lf securities for %.2lf CASH\n",
-	  track_n3_str(track_n3), shares, order->value);
+          track_n3_str(track_n3), shares, order->value);
 }
 
 static void engine_v2_sell_cash(struct engine_v2 *ctx,
-				struct track_n3 *track_n3,
-				struct engine_v2_order *order)
+                                struct track_n3 *track_n3,
+                                struct engine_v2_order *order)
 {
   /* Convert CASH to shares */
   double shares = engine_v2_order_shares(order,
-					 track_n3->quotes->open);
+                                         track_n3->quotes->open);
   
   /* Portfolio */
   order->value = portfolio_sub(&ctx->portfolio,
-			       track_n3->track->name,
-			       order->track_uid, shares,
-			       track_n3->quotes->open);
+                               track_n3->track->name,
+                               order->track_uid, shares,
+                               track_n3->quotes->open);
   
   /* Stats */
   ctx->earned += order->value;
   ctx->fees += track_n3->track->transaction_fee;
   
   PR_INFO("%s - Sell %.4lf securities for %.2lf CASH\n",
-	  track_n3_str(track_n3), shares, order->value);
+          track_n3_str(track_n3), shares, order->value);
 }
 
 static void engine_v2_run_orders(struct engine_v2 *ctx,
-				 struct track_n3 *track_n3)
+                                 struct track_n3 *track_n3)
 {
   struct plist *p, *safe;
   
@@ -272,7 +265,7 @@ static void engine_v2_run_orders(struct engine_v2 *ctx,
 }
 
 static void engine_run_splits(struct engine_v2 *ctx,
-			      struct track_n3 *track_n3)
+                              struct track_n3 *track_n3)
 {
   if(track_n3->splits){
     struct track *track = track_n3->track;
@@ -293,8 +286,8 @@ static void engine_run_dividends(struct engine_v2 *ctx,
 }
 
 static void engine_run_before_start(struct engine_v2 *ctx,
-				    struct slice *slice,
-				    struct engine_v2_interface *i)
+                                    struct slice *slice,
+                                    struct engine_v2_interface *i)
 {
 #if 0
   struct indicator_n3 *indicator_n3;
@@ -305,15 +298,15 @@ static void engine_run_before_start(struct engine_v2 *ctx,
     /* Run "new" indicators */
     track_n3_for_each_indicator_n3(track_n3, indicator_n3){
       if(i->feed_indicator_n3)
-	i->feed_indicator_n3(ctx, track_n3, indicator_n3);
+        i->feed_indicator_n3(ctx, track_n3, indicator_n3);
     }
   }
 #endif
 }
 
 static void engine_run_after_start(struct engine_v2 *ctx,
-				   struct slice *slice,
-				   struct engine_v2_interface *i)
+                                   struct slice *slice,
+                                   struct engine_v2_interface *i)
 {
   struct track_n3 *track_n3;
   struct indicator_n3 *indicator_n3;
@@ -334,7 +327,7 @@ static void engine_run_after_start(struct engine_v2 *ctx,
     /* Run "new" indicators */
     track_n3_for_each_indicator_n3(track_n3, indicator_n3){
       if(i->feed_indicator_n3)
-	i->feed_indicator_n3(ctx, track_n3, indicator_n3);
+        i->feed_indicator_n3(ctx, track_n3, indicator_n3);
     }
 
     /* Run splits dividends */
@@ -352,7 +345,7 @@ static void engine_run_after_start(struct engine_v2 *ctx,
 }
 
 void engine_v2_run(struct engine_v2 *ctx,
-		   struct engine_v2_interface *i)
+                   struct engine_v2_interface *i)
 {
   struct plist *p;
 
@@ -365,7 +358,7 @@ void engine_v2_run(struct engine_v2 *ctx,
     
     /* Debug */
     PR_DBG("engine_v2.c: playing slice #%s\n",
-	   time_to_iso8601(slice->time));
+           time_to_iso8601(slice->time));
     
     /* Run in two-state mode */
     if(timecmp(slice->time, ctx->start_time) < 0)
@@ -379,7 +372,7 @@ void engine_v2_run(struct engine_v2 *ctx,
 }
 
 int engine_v2_set_order(struct engine_v2 *ctx,
-			struct engine_v2_order *order)
+                        struct engine_v2_order *order)
 {
   plist_add_ptr(&ctx->plist_orders, order);
   return 0;

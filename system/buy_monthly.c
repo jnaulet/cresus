@@ -46,7 +46,7 @@ static int buy_monthly_init(struct buy_monthly *ctx)
   return 0;
 }
 
-#define buy_monthly_alloc(ctx)					\
+#define buy_monthly_alloc(ctx)                                  \
   DEFINE_ALLOC(struct buy_monthly, ctx, buy_monthly_init)
 
 /* For each track */
@@ -82,8 +82,8 @@ static void feed_track_n3(struct engine_v2 *engine,
     /* Check fundamentals here */
     if(metrics && !ctx->metrics_ok){
       PR_DBG("%s: %s metrics are trash\n",
-	     time_to_iso8601(track_n3->time),
-	     track_n3->track->name);
+             time_to_iso8601(track_n3->time),
+             track_n3->track->name);
       
       order_anyway = 0;
     }
@@ -192,6 +192,10 @@ int main(int argc, char **argv)
 
   /* Start engine */
   engine_v2_run(&engine, &engine_itf);
+
+  /* Display info & pending orders */
+  engine_v2_display_stats(&engine);
+  engine_v2_display_pending_orders(&engine);
   
   /* Release engine & more */
   engine_v2_release(&engine);
@@ -201,6 +205,6 @@ int main(int argc, char **argv)
 
  __catch__(usage):
   fprintf(stderr, "Usage: %s %s %s [--modulo m] [--check-income n]\n",
-	  argv[0], timeline_v2_ex_args, engine_v2_init_ex_args);
+          argv[0], timeline_v2_ex_args, engine_v2_init_ex_args);
   return -1;
 }

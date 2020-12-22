@@ -45,7 +45,7 @@ int buy_red_sell_green_init(struct buy_red_sell_green *ctx)
   return 0;
 }
 
-#define buy_red_sell_green_alloc(ctx)					\
+#define buy_red_sell_green_alloc(ctx)                                   \
   DEFINE_ALLOC(struct buy_red_sell_green, ctx, buy_red_sell_green_init)
 
 static void feed_track_n3(struct engine_v2 *engine,
@@ -126,6 +126,10 @@ int main(int argc, char **argv)
   
   /* Run */
   engine_v2_run(&engine, &engine_itf);
+
+  /* Display info & pending orders */
+  engine_v2_display_stats(&engine);
+  engine_v2_display_pending_orders(&engine);
   
   /* Release engine & more */
   engine_v2_release(&engine);
@@ -134,8 +138,8 @@ int main(int argc, char **argv)
   return 0;
   
  __catch__(usage):
-  fprintf(stdout, "Usage: %s %s %s [--buy buy_min] "	\
-	  "[--sell sell_min]\n",
-	  argv[0], timeline_v2_ex_args, engine_v2_init_ex_args);
+  fprintf(stdout, "Usage: %s %s %s [--buy buy_min] "    \
+          "[--sell sell_min]\n",
+          argv[0], timeline_v2_ex_args, engine_v2_init_ex_args);
   return -1;
 }

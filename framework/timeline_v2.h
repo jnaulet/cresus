@@ -47,9 +47,9 @@ void slice_release(struct slice *ctx);
 struct track_n3 *slice_get_track_n3(struct slice *ctx, unique_id_t uid);
 
 #define slice_for_each_track_n3(ctx, n3)                                \
-  for(struct plist *__p__ = ((ctx)->plist_track_n3s.next);		\
-      __p__ != &(ctx)->plist_track_n3s &&				\
-	(n3 = ((struct track_n3*)(__p__)->ptr));                        \
+  for(struct plist *__p__ = ((ctx)->plist_track_n3s.next);              \
+      __p__ != &(ctx)->plist_track_n3s &&                               \
+        (n3 = ((struct track_n3*)(__p__)->ptr));                        \
       __p__ = __p__->next)
 
 /*
@@ -78,7 +78,7 @@ void timeline_v2_release(struct timeline_v2 *ctx);
 
 /* Special case */
 int timeline_v2_init_ex(struct timeline_v2 *ctx, int argc, char **argv,
-			struct timeline_v2_ex_interface *itf);
+                        struct timeline_v2_ex_interface *itf);
 
 int timeline_v2_add_track(struct timeline_v2 *ctx, struct track *track);
 struct track *timeline_v2_find_track_by_uid(struct timeline_v2 *ctx, unique_id_t uid);

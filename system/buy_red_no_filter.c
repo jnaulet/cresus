@@ -23,8 +23,8 @@
 double last_close;
 
 static int feed(struct engine *e,
-		struct timeline *t,
-		struct timeline_n3 *n3)
+                struct timeline *t,
+                struct timeline_n3 *n3)
 {
   /* Step by step loop */
   static int n = 0;
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     double total = engine.npos * last_close;
     double pcent = ((total / amount) - 1.0) * 100.0;
     PR_ERR("Have %.2lf positions paid %.2lf worth %.2lf (%.2lf%%)\n",
-	   engine.npos, amount, total, pcent);
+           engine.npos, amount, total, pcent);
     
     /* TODO : Don't forget to release everything */
     engine_release(&engine);

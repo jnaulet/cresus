@@ -39,7 +39,7 @@ static int buy_red_filtered_init(struct buy_red_filtered *ctx)
   return 0;
 }
 
-#define buy_red_filtered_alloc(ctx)					\
+#define buy_red_filtered_alloc(ctx)                                     \
   DEFINE_ALLOC(struct buy_red_filtered, ctx, buy_red_filtered_init)
 
 static void feed_track_n3(struct engine_v2 *engine,
@@ -92,7 +92,7 @@ static struct timeline_v2_ex_interface timeline_itf = {
 static void print_usage(const char *argv0)
 {
   fprintf(stderr, "Usage: %s %s %s\n", argv0,
-	  timeline_v2_ex_args, engine_v2_init_ex_args);
+          timeline_v2_ex_args, engine_v2_init_ex_args);
 }
 
 int main(int argc, char **argv)
@@ -116,6 +116,10 @@ int main(int argc, char **argv)
   
   /* Run */
   engine_v2_run(&engine, &engine_itf);
+
+  /* Display info & pending orders */
+  engine_v2_display_stats(&engine);
+  engine_v2_display_pending_orders(&engine);
   
   /* Release engine & more */
   engine_v2_release(&engine);

@@ -18,7 +18,7 @@
 #include "framework/verbose.h"
 #include "framework/quotes.h"
 
-static int month = 5; /* Defautl : sell in May. June seems better :/ */
+static int month = 5; /* Default : sell in May. June seems better :/ */
 
 struct sell_in_may {
   int cur_month;
@@ -101,6 +101,10 @@ int main(int argc, char **argv)
   
   /* Run */
   engine_v2_run(&engine, &engine_itf);
+
+  /* "normal" output */
+  engine_v2_display_stats(&engine);
+  engine_v2_display_pending_orders(&engine);
   
   /* Release engine & more */
   engine_v2_release(&engine);
@@ -110,6 +114,6 @@ int main(int argc, char **argv)
   
  __catch__(usage):
   fprintf(stdout, "Usage: %s %s %s [--month m]\n", argv[0],
-	  timeline_v2_ex_args, engine_v2_init_ex_args);
+          timeline_v2_ex_args, engine_v2_init_ex_args);
   return -1;
 }

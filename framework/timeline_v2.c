@@ -65,7 +65,7 @@ timeline_v2_get_slice_anyway(struct timeline_v2 *ctx, time_t time)
       plist_add_tail_ptr(p, slice); /* Insert before */
       /* Debug */
       PR_DBG("timeline_v2.c: slice %s is missing, insertion before %s\n",
-	     time_to_iso8601(time), time_to_iso8601(ptr->time));
+             time_to_iso8601(time), time_to_iso8601(ptr->time));
       /* Jump outside anyway */
       goto out;
     }
@@ -181,8 +181,8 @@ static int timeline_v2_init_ex_cash_flow(struct timeline_v2 *ctx,
 }
 
 static int timeline_v2_init_ex_dividends(struct timeline_v2 *ctx,
-					 struct track *track,
-					 const char *filename)
+                                         struct track *track,
+                                         const char *filename)
 {
   struct dividends *dividends;
   dividends_alloc(dividends, filename);
@@ -193,8 +193,8 @@ static int timeline_v2_init_ex_dividends(struct timeline_v2 *ctx,
 }
 
 static int timeline_v2_init_ex_splits(struct timeline_v2 *ctx,
-				      struct track *track,
-				      const char *filename)
+                                      struct track *track,
+                                      const char *filename)
 {
   struct splits *splits;
   splits_alloc(splits, filename);
@@ -205,8 +205,8 @@ static int timeline_v2_init_ex_splits(struct timeline_v2 *ctx,
 }
 
 int timeline_v2_init_ex(struct timeline_v2 *ctx,
-			int argc, char **argv,
-			struct timeline_v2_ex_interface *itf)
+                        int argc, char **argv,
+                        struct timeline_v2_ex_interface *itf)
 {
   static struct track *track = NULL;
   
@@ -284,7 +284,7 @@ void timeline_v2_release(struct timeline_v2 *ctx)
 }
 
 int timeline_v2_add_track(struct timeline_v2 *ctx,
-		       struct track *track)
+                       struct track *track)
 {
   struct plist *p, *q;
   struct slice *slice;
@@ -311,7 +311,7 @@ int timeline_v2_add_track(struct timeline_v2 *ctx,
 
 struct track *
 timeline_v2_find_track_by_uid(struct timeline_v2 *ctx,
-			      unique_id_t uid)
+                              unique_id_t uid)
 {
   struct plist *p;
   plist_for_each(&ctx->by_track, p){

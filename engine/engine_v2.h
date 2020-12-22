@@ -33,10 +33,10 @@ struct engine_v2_order {
 
 static inline int
 engine_v2_order_init(struct engine_v2_order *ctx,
-		     unique_id_t track_uid,
-		     engine_v2_order_t type,
-		     double value,
-		     engine_v2_order_by_t by)
+                     unique_id_t track_uid,
+                     engine_v2_order_t type,
+                     double value,
+                     engine_v2_order_by_t by)
 {
   /* common */
   ctx->track_uid = track_uid;
@@ -50,9 +50,9 @@ engine_v2_order_init(struct engine_v2_order *ctx,
 }
 
 #define engine_v2_order_alloc(ctx, track_uid, type, value, by)   \
-  DEFINE_ALLOC(struct engine_v2_order, ctx,			 \
-	       engine_v2_order_init, track_uid, type, value, by)
-#define engine_v2_order_free(ctx)		\
+  DEFINE_ALLOC(struct engine_v2_order, ctx,                      \
+               engine_v2_order_init, track_uid, type, value, by)
+#define engine_v2_order_free(ctx)               \
   DEFINE_FREE(ctx, release_dummy)
 
 /* Set extra infos */
@@ -64,7 +64,7 @@ engine_v2_order_set_level(struct engine_v2_order *ctx, int level)
 }
 
 /* Shortcuts */
-#define engine_v2_order_shares(ctx, quotes)	\
+#define engine_v2_order_shares(ctx, quotes)     \
   ((ctx)->value / (quotes))
 
 /*
@@ -110,8 +110,12 @@ void engine_v2_release(struct engine_v2 *ctx);
 void engine_v2_run(struct engine_v2 *ctx, struct engine_v2_interface *i);
 int engine_v2_set_order(struct engine_v2 *ctx, struct engine_v2_order *order);
 
-#define engine_v2_init_ex_args				\
-  "[--csv output.csv] [--start YYYY-MM-DD] "		\
+void engine_v2_display_stats(struct engine_v2 *ctx);
+/* output format is "act tuple close amount" */
+void engine_v2_display_pending_orders(struct engine_v2 *ctx);
+
+#define engine_v2_init_ex_args                          \
+  "[--csv output.csv] [--start YYYY-MM-DD] "            \
   "[--stop/--end YYYY-MM-DD] [--verbose/--debug]"
 
 #endif

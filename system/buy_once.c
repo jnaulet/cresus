@@ -27,7 +27,7 @@ static int buy_once_init(struct buy_once *ctx)
   return 0;
 }
 
-#define buy_once_alloc(ctx)				\
+#define buy_once_alloc(ctx)                             \
   DEFINE_ALLOC(struct buy_once, ctx, buy_once_init)
 
 /* For each track */
@@ -83,6 +83,10 @@ int main(int argc, char **argv)
 
   /* Run */
   engine_v2_run(&engine, &engine_itf);
+
+  /* Display info & pending orders */
+  engine_v2_display_stats(&engine);
+  engine_v2_display_pending_orders(&engine);
   
   /* Release engine & more */
   engine_v2_release(&engine);
@@ -92,6 +96,6 @@ int main(int argc, char **argv)
 
  __catch__(usage):
   fprintf(stderr, "Usage: %s %s %s\n", argv[0],
-	  timeline_v2_ex_args, engine_v2_init_ex_args);
+          timeline_v2_ex_args, engine_v2_init_ex_args);
   return -1;
 }
