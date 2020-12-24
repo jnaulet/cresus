@@ -112,10 +112,10 @@ int main(int argc, char **argv)
   
   /* Basics */
   timeline_v2_init_ex(&timeline, argc, argv, &timeline_itf);
-  engine_v2_init_ex(&engine, &timeline, argc, argv);
+  engine_v2_init_ex(&engine, &timeline, argc, argv, &engine_itf);
   
   /* Run */
-  engine_v2_run(&engine, &engine_itf);
+  engine_v2_run(&engine);
 
   /* Display info & pending orders */
   engine_v2_display_stats(&engine);

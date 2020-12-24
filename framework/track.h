@@ -128,6 +128,8 @@ struct track {
   /* Fee depends on track, not engine */
   double amount;
   double transaction_fee;
+  /* Mioght be useful */
+  size_t length;
   /* User might want ot expand this object */
   void *private;
 };

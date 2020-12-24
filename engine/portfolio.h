@@ -72,13 +72,14 @@ portfolio_n3_init(struct portfolio_n3 *ctx,
   ((portfolio_n3_total_value(ctx, price) /	\
     portfolio_n3_total_cost(ctx)) - 1.0)
 
+/* FIXME : put in engine ? */
 static inline void
 portfolio_n3_pr_stat(struct portfolio_n3 *ctx,
 		     double price)
 {
   PR_STAT("%s [price] %.2lf [cost price] %.2lf [cost] %.2lf "   \
 	  "[+/-] %.2lf [dividends] %.2lf [total] %.2lf "        \
-          "[performance] %.2lf%% [nbuy] %d [nsell] %d\n",
+          "[performance] %.2lf%% [nbuy] %d [nsell] %d ",
 	  ctx->name, price, ctx->cost_price,
 	  portfolio_n3_total_cost(ctx),
 	  portfolio_n3_pmvalue(ctx, price),

@@ -67,6 +67,22 @@ engine_v2_order_set_level(struct engine_v2_order *ctx, int level)
 #define engine_v2_order_shares(ctx, quotes)     \
   ((ctx)->value / (quotes))
 
+/* External pointer to plugin */
+struct engine_v2;
+typedef void (*engine_v2_feed_slice_ptr)(struct engine_v2*, struct slice*);
+typedef void (*engine_v2_feed_track_n3_ptr)(struct engine_v2*, struct slice*, struct track_n3*);
+typedef void (*engine_v2_feed_indicator_n3_ptr)(struct engine_v2*, struct track_n3*, struct indicator_n3*);
+typedef void (*engine_v2_post_slice_ptr)(struct engine_v2*, struct slice*);
+typedef void (*engine_v2_append_stat_ptr)(struct engine_v2*, struct track*);
+
+struct engine_v2_interface {
+  engine_v2_feed_slice_ptr feed_slice; /* On every new slice */
+  engine_v2_feed_track_n3_ptr feed_track_n3; /* On every track_n3 from current slice */
+  engine_v2_feed_indicator_n3_ptr feed_indicator_n3; /* On every indicator_n3 from current track_n3 */
+  engine_v2_post_slice_ptr post_slice; /* After every slice */
+  engine_v2_append_stat_ptr append_stat; /* On every stat line */
+};
+
 /*
  * Main object
  */
@@ -74,6 +90,8 @@ engine_v2_order_set_level(struct engine_v2_order *ctx, int level)
 struct engine_v2 {
   /* Main part, the timeline */
   struct timeline_v2 *timeline_v2;
+  /* External plugin interface */
+  struct engine_v2_interface *interface;
   /* Orders & more */
   plist_head_t(struct engine_v2_order) plist_orders;
   /* Positions filter */
@@ -90,24 +108,11 @@ struct engine_v2 {
   int csv_output;
 };
 
-/* External pointer to plugin */
-typedef void (*engine_v2_feed_slice_ptr)(struct engine_v2*, struct slice*);
-typedef void (*engine_v2_feed_track_n3_ptr)(struct engine_v2*, struct slice*, struct track_n3*);
-typedef void (*engine_v2_feed_indicator_n3_ptr)(struct engine_v2*, struct track_n3*, struct indicator_n3*);
-typedef void (*engine_v2_post_slice_ptr)(struct engine_v2*, struct slice*);
-
-struct engine_v2_interface {
-  engine_v2_feed_slice_ptr feed_slice; /* On every new slice */
-  engine_v2_feed_track_n3_ptr feed_track_n3; /* On every track_n3 from current slice */
-  engine_v2_feed_indicator_n3_ptr feed_indicator_n3; /* On every indicator_n3 from current track_n3 */
-  engine_v2_post_slice_ptr post_slice; /* After every slice */
-};
-
-int engine_v2_init(struct engine_v2 *ctx, struct timeline_v2 *t);
-int engine_v2_init_ex(struct engine_v2 *ctx, struct timeline_v2 *t, int argc, char **argv);
+int engine_v2_init(struct engine_v2 *ctx, struct timeline_v2 *t, struct engine_v2_interface *i);
+int engine_v2_init_ex(struct engine_v2 *ctx, struct timeline_v2 *t, int argc, char **argv, struct engine_v2_interface *i);
 void engine_v2_release(struct engine_v2 *ctx);
 
-void engine_v2_run(struct engine_v2 *ctx, struct engine_v2_interface *i);
+void engine_v2_run(struct engine_v2 *ctx);
 int engine_v2_set_order(struct engine_v2 *ctx, struct engine_v2_order *order);
 
 void engine_v2_display_stats(struct engine_v2 *ctx);

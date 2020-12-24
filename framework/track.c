@@ -108,6 +108,7 @@ static int track_add_quotes(struct track *ctx, struct quotes *quotes)
     track_n3->plist = p;
     /* Register track n3 */
     plist_add_tail(&ctx->plist_track_n3s, p);
+    ctx->length++;
   }
   
   return 0;
@@ -125,6 +126,7 @@ int track_init(struct track *ctx, unique_id_t uid,
   plist_head_init(&ctx->plist_indicators);
   ctx->amount = 0;
   ctx->transaction_fee = 0;
+  ctx->length = 0;
   ctx->private = NULL;
   return track_add_quotes(ctx, quotes);
 }

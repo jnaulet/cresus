@@ -35,10 +35,12 @@ static void engine_v2_init_indicators(struct engine_v2 *ctx)
  * Engine v2
  */
 
-int engine_v2_init(struct engine_v2 *ctx, struct timeline_v2 *t)
+int engine_v2_init(struct engine_v2 *ctx, struct timeline_v2 *t,
+                   struct engine_v2_interface *i)
 {
   /* Timeline */
   ctx->timeline_v2 = t;
+  ctx->interface = i;
   /* Time */
   ctx->start_time = 0;
   ctx->end_time = TIME_MAX;
@@ -64,10 +66,11 @@ int engine_v2_init(struct engine_v2 *ctx, struct timeline_v2 *t)
 }
 
 int engine_v2_init_ex(struct engine_v2 *ctx, struct timeline_v2 *t,
-                      int argc, char **argv)
+                      int argc, char **argv,
+                      struct engine_v2_interface *i)
 {
   /* Basics */
-  engine_v2_init(ctx, t);
+  engine_v2_init(ctx, t, i);
 
   for(int i = 0; i < argc; i++){
     /* Csv output */
@@ -158,6 +161,13 @@ void engine_v2_display_stats(struct engine_v2 *ctx)
     
     /* Display track stats */
     portfolio_n3_pr_stat(pos, track_n3->quotes->close);
+    if(ctx->interface->append_stat)
+      ctx->interface->append_stat(ctx, track_n3->track);
+    
+    /* Conclude line */
+    PR_STAT("\n");
+    
+    /* Inc values */
     total_value += portfolio_n3_total_value(pos, track_n3->quotes->close);
     dividends += portfolio_n3_dividends(pos);
   }
@@ -285,35 +295,15 @@ static void engine_run_dividends(struct engine_v2 *ctx,
   }
 }
 
-static void engine_run_before_start(struct engine_v2 *ctx,
-                                    struct slice *slice,
-                                    struct engine_v2_interface *i)
-{
-#if 0
-  struct indicator_n3 *indicator_n3;
-  struct track_n3 *track_n3;
-  
-  /* Run "new" track */
-  slice_for_each_track_n3(slice, track_n3){
-    /* Run "new" indicators */
-    track_n3_for_each_indicator_n3(track_n3, indicator_n3){
-      if(i->feed_indicator_n3)
-        i->feed_indicator_n3(ctx, track_n3, indicator_n3);
-    }
-  }
-#endif
-}
-
 static void engine_run_after_start(struct engine_v2 *ctx,
-                                   struct slice *slice,
-                                   struct engine_v2_interface *i)
+                                   struct slice *slice)
 {
   struct track_n3 *track_n3;
   struct indicator_n3 *indicator_n3;
   
   /* Run "new" slice */
-  if(i->feed_slice)
-    i->feed_slice(ctx, slice);
+  if(ctx->interface->feed_slice)
+    ctx->interface->feed_slice(ctx, slice);
   
   /* Run "new" track */
   slice_for_each_track_n3(slice, track_n3){
@@ -321,13 +311,13 @@ static void engine_run_after_start(struct engine_v2 *ctx,
     engine_v2_run_orders(ctx, track_n3);
 
     /* Callback */
-    if(i->feed_track_n3)
-      i->feed_track_n3(ctx, slice, track_n3);
+    if(ctx->interface->feed_track_n3)
+      ctx->interface->feed_track_n3(ctx, slice, track_n3);
     
     /* Run "new" indicators */
     track_n3_for_each_indicator_n3(track_n3, indicator_n3){
-      if(i->feed_indicator_n3)
-        i->feed_indicator_n3(ctx, track_n3, indicator_n3);
+      if(ctx->interface->feed_indicator_n3)
+        ctx->interface->feed_indicator_n3(ctx, track_n3, indicator_n3);
     }
 
     /* Run splits dividends */
@@ -336,16 +326,15 @@ static void engine_run_after_start(struct engine_v2 *ctx,
   }
   
   /* Post-processing */
-  if(i->post_slice)
-    i->post_slice(ctx, slice);
+  if(ctx->interface->post_slice)
+    ctx->interface->post_slice(ctx, slice);
   
   /* Csv output */
   if(ctx->csv_output != -1)
     engine_v2_csv_output(ctx, slice);
 }
 
-void engine_v2_run(struct engine_v2 *ctx,
-                   struct engine_v2_interface *i)
+void engine_v2_run(struct engine_v2 *ctx)
 {
   struct plist *p;
 
@@ -361,10 +350,8 @@ void engine_v2_run(struct engine_v2 *ctx,
            time_to_iso8601(slice->time));
     
     /* Run in two-state mode */
-    if(timecmp(slice->time, ctx->start_time) < 0)
-      engine_run_before_start(ctx, slice, i);
-    else
-      engine_run_after_start(ctx, slice, i);
+    if(timecmp(slice->time, ctx->start_time) >= 0)
+      engine_run_after_start(ctx, slice);
     
     /* Remember last slice for stats */
     ctx->last_slice = slice;
