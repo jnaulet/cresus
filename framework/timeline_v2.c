@@ -95,6 +95,7 @@ int timeline_v2_init(struct timeline_v2 *ctx)
   ctx->track_uid = 0;
   ctx->amount = 0.0;
   ctx->transaction_fee = 0.0;
+  ctx->type = NULL;
   
   return 0;
 }
@@ -113,7 +114,7 @@ timeline_v2_init_ex_track(struct timeline_v2 *ctx,
   struct quotes *quotes;
   struct track *track = NULL;
   
-  quotes_alloc(quotes, filename);
+  quotes_alloc(quotes, filename, ctx->type);
   track_alloc(track, ctx->track_uid++, basename(filename), quotes);
   /* Callback for indicators here */
   if(itf && itf->customize_track)
@@ -214,6 +215,11 @@ int timeline_v2_init_ex(struct timeline_v2 *ctx,
   timeline_v2_init(ctx);
 
   for(int i = 0; i < argc; i++){
+    /* Types */
+    if(!strcmp(argv[i], "--type")){
+      ctx->type = argv[++i];
+      continue;
+    }
     /* Quotes */
     if(!strcmp(argv[i], "--track")){
       track = timeline_v2_init_ex_track(ctx, argv[++i], itf);

@@ -142,7 +142,7 @@ static void custom_opt(struct timeline_v2 *t, char *opt, char *optarg)
   if(!strcmp(opt, "--da")) sscanf(optarg, "%lf", &da);
   if(!strcmp(opt, "--ref")){ /* Or something */
     struct quotes *quotes;
-    if(quotes_alloc(quotes, optarg)){
+    if(quotes_alloc(quotes, optarg, NULL)){
       struct track *track;
       track_alloc(track, -1, "ref", quotes);
       timeline_v2_add_track(t, track); /* Hope everything goes well */

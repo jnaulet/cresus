@@ -52,9 +52,9 @@ static int quotes_load(struct quotes *ctx)
  * Public
  */
 
-int quotes_init(struct quotes *ctx, const char *filename)
+int quotes_init(struct quotes *ctx, const char *filename,
+                const char *type)
 {
-  char *ext;
   int err = 0;
   
   ctx->private = NULL;
@@ -62,9 +62,11 @@ int quotes_init(struct quotes *ctx, const char *filename)
   strncpy(ctx->filename, filename, sizeof ctx->filename);
   
   /* Wrapper */
-  ext = strrchr(filename, '.') + 1;
-  if(!(ctx->ops = quotes_ops_from_ext(ctx, ext))){
-    PR_ERR("Unable to find quotes loader for extension .%s\n", ext);
+  if(!type)
+    type = strrchr(filename, '.') + 1;
+  
+  if(!(ctx->ops = quotes_ops_from_ext(ctx, type))){
+    PR_ERR("Unable to find quotes loader for type %s\n", type);
     return -1;
   }
   

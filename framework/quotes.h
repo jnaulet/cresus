@@ -91,11 +91,11 @@ struct quotes {
  * Main quotes object
  */
 
-int quotes_init(struct quotes *ctx, const char *filename);
+int quotes_init(struct quotes *ctx, const char *filename, const char *type);
 void quotes_release(struct quotes *ctx);
 
-#define quotes_alloc(ctx, filename)                             \
-  DEFINE_ALLOC(struct quotes, ctx, quotes_init, filename)
+#define quotes_alloc(ctx, filename, type)                       \
+  DEFINE_ALLOC(struct quotes, ctx, quotes_init, filename, type)
 #define quotes_free(ctx)                        \
   DEFINE_FREE(ctx, quotes_release)
 
