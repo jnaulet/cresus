@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <float.h>
 
 static void engine_v2_init_indicators(struct engine_v2 *ctx)
 {
@@ -250,6 +251,24 @@ static void engine_v2_sell_cash(struct engine_v2 *ctx,
           track_n3_str(track_n3), shares, order->value);
 }
 
+static void engine_v2_sell_all(struct engine_v2 *ctx,
+                               struct track_n3 *track_n3,
+                               struct engine_v2_order *order)
+{
+  /* Portfolio */
+  order->value = portfolio_sub(&ctx->portfolio,
+                               track_n3->track->name,
+                               order->track_uid, DBL_MAX,
+                               track_n3->quotes->open);
+  
+  /* Stats */
+  ctx->earned += order->value;
+  ctx->fees += track_n3->track->transaction_fee;
+
+  PR_INFO("%s - Sell all securities for %.2lf CASH\n",
+          track_n3_str(track_n3), order->value);
+}
+
 static void engine_v2_run_orders(struct engine_v2 *ctx,
                                  struct track_n3 *track_n3)
 {
@@ -266,6 +285,7 @@ static void engine_v2_run_orders(struct engine_v2 *ctx,
     switch(order->type){
     case BUY: engine_v2_buy_cash(ctx, track_n3, order); break;
     case SELL: engine_v2_sell_cash(ctx, track_n3, order); break;
+    case SELL_ALL: engine_v2_sell_all(ctx, track_n3, order); break;
     }
     
     /* Remove executed order */

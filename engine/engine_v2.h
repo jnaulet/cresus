@@ -17,7 +17,7 @@
  * Engine v2 orders management
  */
 
-typedef enum { BUY, SELL } engine_v2_order_t;
+typedef enum { BUY, SELL, SELL_ALL } engine_v2_order_t;
 typedef enum { CASH, SHARES } engine_v2_order_by_t;
 
 struct engine_v2_order {
