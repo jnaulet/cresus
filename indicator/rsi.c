@@ -13,13 +13,13 @@
 #include "mobile.h"
 
 static int rsi_feed(struct indicator *i, struct track_n3 *e)
-{  
-  double h, b, sub;
+{
   struct rsi *ctx = (void*)i;
-  struct candle *c = (void*)e;
   
-  if(!ctx->last)
-    goto out;
+  /* Get relative n3 */
+  struct rsi_n3 *n3;
+  double h, b, sub, value;
+  struct track_n3 *last = track_n3_prev(e, ctx->period);
   
   /* RSI formula :
    * 100.0 - (100.0 / (1 + h / b))
@@ -28,52 +28,45 @@ static int rsi_feed(struct indicator *i, struct track_n3 *e)
    * where h is the ema of ups of last n days
    * and b is the fabs ema of downs of last n days
    */
-  sub = c->quotes->close - ctx->last->quotes->close;
+  sub = e->quotes->close - last->quotes->close;
   if(sub > 0) h = average_update(&ctx->h, sub);
   if(sub < 0) b = average_update(&ctx->b, fabs(sub));
-  /* Compute RSI the easy way */
-  ctx->value = (h / (h + b)) * 100.0;
   
-  /* TODO : add event management */
- out:
-  ctx->last = c;
+  /* Compute RSI the easy way */
+  value = (h / (h + b)) * 100.0;
+  
+  if(rsi_n3_alloc(n3, i, value)){
+    track_n3_add_indicator_n3(e, &n3->indicator_n3);
+    return 1;
+  }
+  
   return 0;
 }
 
 static void rsi_reset(struct indicator *i)
 {
   struct rsi *ctx = (void*)i;
-  /* RAZ */
-  ctx->value = 0.0;
-  ctx->last = NULL;
   /* Avg */
   average_reset(&ctx->h);
   average_reset(&ctx->b);
 }
 
-int rsi_init(struct rsi *ctx, unique_id_t id, int period)
+int rsi_init(struct rsi *ctx, unique_id_t uid, int period)
 {
   /* Super() */
-  __indicator_init__(ctx, id, rsi_feed, rsi_reset);
-  __indicator_set_string__(ctx, "rsi[%d]", period);
-  
-  ctx->value = 0.0;
-  ctx->last = NULL;
+  indicator_init(&ctx->indicator, uid, rsi_feed, rsi_reset);
+  indicator_set_string(&ctx->indicator, "rsi[%d]", period);
   
   average_init(&ctx->h, AVERAGE_EXP, period);
   average_init(&ctx->b, AVERAGE_EXP, period);
   
+  ctx->period = period;
   return 0;
 }
 
 void rsi_release(struct rsi *ctx)
 {
-  __indicator_release__(ctx);
+  indicator_release(&ctx->indicator);
   average_release(&ctx->h);
   average_release(&ctx->b);
-}
-
-double rsi_value(struct rsi *ctx)
-{  
-  return ctx->value;
 }

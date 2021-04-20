@@ -14,7 +14,7 @@ add_library(indicator OBJECT
   mobile.c
   roc.c
   rs_dorsey.c
-  #  rsi.c
+  rsi.c
   rs_mansfield.c
   rs_roc.c
   #  smi.c
