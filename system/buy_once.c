@@ -64,8 +64,6 @@ static struct timeline_v2_ex_interface timeline_itf = {
 
 int main(int argc, char **argv)
 {
-  VERBOSE_LEVEL(INFO);
-  
   /*
    * Data
    */

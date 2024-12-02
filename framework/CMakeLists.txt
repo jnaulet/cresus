@@ -4,7 +4,6 @@ project(cresus)
 # Src for cresus framework
 add_library(framework OBJECT
   indicator.c
-  verbose.c
   track.c
   timeline_v2.c
   )

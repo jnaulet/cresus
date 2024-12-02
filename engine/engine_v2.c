@@ -88,11 +88,6 @@ int engine_v2_init_ex(struct engine_v2 *ctx, struct timeline_v2 *t,
        !strcmp(argv[i], "--end")){
       ctx->end_time = iso8601_to_time(argv[++i]);
     }
-    /* Verbosity */
-    if(!strcmp(argv[i], "--verbose") ||
-       !strcmp(argv[i], "--debug")){
-      VERBOSE_LEVEL(DBG);
-    }
   }
 }
 

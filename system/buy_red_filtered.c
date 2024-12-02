@@ -97,8 +97,6 @@ static void print_usage(const char *argv0)
 
 int main(int argc, char **argv)
 {
-  VERBOSE_LEVEL(INFO);
-  
   /*
    * Data
    */

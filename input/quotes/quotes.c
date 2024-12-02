@@ -18,6 +18,7 @@ extern struct quotes_ops xtrade_ops;
 extern struct quotes_ops euronext_ops;
 extern struct quotes_ops kraken_ops;
 extern struct quotes_ops yahoo_v7_ops;
+extern struct quotes_ops eodhd_ops;
 
 /*
  * Private
@@ -32,7 +33,7 @@ quotes_ops_from_ext(struct quotes *ctx, const char *ext)
   else if(!strcmp("euronext", ext)) return &euronext_ops;
   else if(!strcmp("kraken", ext)) return &kraken_ops;
   else if(!strcmp("yahoo", ext)) return &yahoo_v7_ops;
-  else if(!strcmp("eodhistoricaldata", ext)) return &yahoo_v7_ops;
+  else if(!strcmp("eodhd", ext)) return &eodhd_ops;
   
   /* Fail */
   return NULL;

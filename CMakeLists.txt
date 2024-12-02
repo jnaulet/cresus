@@ -30,7 +30,7 @@ add_library(cresus SHARED
   $<TARGET_OBJECTS:splits>
   )
 
-target_link_libraries(cresus m jsonparser)
+target_link_libraries(cresus m jsonparser systemd)
 
 # add_subdirectory(sample)
 add_subdirectory(system)

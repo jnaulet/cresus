@@ -10,4 +10,5 @@ add_library(quotes OBJECT
   mdgms.c
   xtrade.c
   kraken.c
+  eodhd.c
   )
