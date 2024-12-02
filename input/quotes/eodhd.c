@@ -43,7 +43,7 @@ eodhd_parse_n3(struct eodhd *ctx, char *str)
     goto err;
   
   /* Set values */
-  time = iso8601_to_time(stime);
+  sscanf(stime, "%ld", &time);
   sscanf(sopen, "%lf", &open);
   sscanf(sclose, "%lf", &close);
   sscanf(shi, "%lf", &high);

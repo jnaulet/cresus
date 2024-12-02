@@ -15,7 +15,7 @@
 #define PR(level, ...) \
   (void) sd_journal_print(level, __VA_ARGS__)
 
-#define PR_DBG(format, ...)  PR(LOG_DEBUG, format, ##__VA_ARGS__)
+#define PR_DBG(format, ...)  // PR(LOG_DEBUG, format, ##__VA_ARGS__)
 #define PR_INFO(format, ...) PR(LOG_INFO, format, ##__VA_ARGS__)
 #define PR_WARN(format, ...) PR(LOG_WARNING, format, ##__VA_ARGS__)
 #define PR_ERR(format, ...)  PR(LOG_ERR, format, ##__VA_ARGS__)
